@@ -66,7 +66,14 @@ PKG_PROG_PKG_CONFIG
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([sys/stdlib.h, querysort/querysort.h])
+AC_CHECK_HEADERS([sys/stdlib.h])
+
+# Check for querysort-devel
+AC_CHECK_FILES(
+	[/usr/include/querysort/querysort.h /usr/lib/libquerysort_nonshared.a],
+	[],
+	[AC_MSG_FAILURE([Can't find QuerySort development files. Please install the querysort-devel package.])]
+)
 
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])

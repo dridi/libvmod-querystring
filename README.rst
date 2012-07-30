@@ -56,6 +56,20 @@ Build Varnish::
  ./configure
  make
 
+You also need QuerySort development files. You can either install the
+devel package or install it using make. See installation instuctions
+(https://github.com/dridi/querysort).
+
+For manual installation, download the appropriate QuerySort source
+tarball and extract it somewhere on your disk (eg. /usr/src/).
+
+Build QuerySort::
+
+ cd /usr/src/querysort-1.0.x/
+ make
+ sudo make install
+ sudo ldconfig
+
 The libvmod-querystring module can then be built.
 
 Usage::
