@@ -1,6 +1,6 @@
-==============
+================
 vmod_querystring
-==============
+================
 
 --------------------------
 Varnish QueryString Module
@@ -47,7 +47,8 @@ using the varnishtest tool.
 
 You need to download Varnish source code and build it locally. It is
 needed for varnishtest invocation. Download the appropriate Varnish 3
-source tarball and extract it somewhere on your disk (eg. /usr/src/).
+source tarball (http://repo.varnish-cache.org/source/) and extract it
+somewhere on your disk (eg. /usr/src/).
 
 Build Varnish::
 
@@ -61,7 +62,8 @@ devel package or install it using make. See installation instuctions
 (https://github.com/dridi/querysort).
 
 For manual installation, download the appropriate QuerySort source
-tarball and extract it somewhere on your disk (eg. /usr/src/).
+tarball (https://github.com/dridi/querysort/downloads) and extract it
+somewhere on your disk (eg. /usr/src/).
 
 Build QuerySort::
 
