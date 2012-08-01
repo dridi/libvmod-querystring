@@ -1,5 +1,5 @@
 /*
- * libvmod-querystring - querytring manipulation module for Varnish
+ * libvmod-querystring - querystring manipulation module for Varnish
  *
  * Copyright (C) 2012, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <stdlib.h>
-#include <querysort/querysort.h>
+#include <querysort.h>
 
 #include "vrt.h"
 #include "bin/varnishd/cache.h"

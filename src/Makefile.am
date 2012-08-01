@@ -1,5 +1,5 @@
 #
-# libvmod-querystring - querytring manipulation module for Varnish
+# libvmod-querystring - querystring manipulation module for Varnish
 #
 # Copyright (C) 2012, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
@@ -30,7 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)
+LIBS = $(QUERYSORT_LIB)
+INCLUDES = $(QUERYSORT_INCLUDE) -I$(VARNISHSRC)/include -I$(VARNISHSRC)
 
 vmoddir = $(VMODDIR)
 vmod_LTLIBRARIES = libvmod_querystring.la

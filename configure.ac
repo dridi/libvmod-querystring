@@ -1,5 +1,5 @@
 #
-# libvmod-querystring - querytring manipulation module for Varnish
+# libvmod-querystring - querystring manipulation module for Varnish
 #
 # Copyright (C) 2012, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
@@ -68,11 +68,47 @@ PKG_PROG_PKG_CONFIG
 AC_HEADER_STDC
 AC_CHECK_HEADERS([sys/stdlib.h])
 
-# Check for querysort-devel
-AC_CHECK_FILES(
-	[/usr/include/querysort/querysort.h /usr/lib/libquerysort_nonshared.a],
+# Check for querysort option
+AC_ARG_WITH(
+	[querysort-src],
+	[AS_HELP_STRING(
+		[--with-querysort-src],
+		[path to querysort sources (optional)]
+	)],
 	[],
-	[AC_MSG_FAILURE([Can't find QuerySort development files. Please install the querysort-devel package.])]
+	[with_querysort_src=no]
+)
+
+# Check for querysort dependency
+AS_IF(
+	[test "x$with_querysort_src" = "xno"],
+	[
+		# Define querysort-devel files
+		QUERYSORT_HEADER=/usr/include/querysort/querysort.h
+		QUERYSORT_ARCHIVE=/usr/lib/libquerysort_nonshared.a
+		QUERYSORT_ERROR="Can't find QuerySort development files. Please install the querysort-devel package."
+		QUERYSORT_INCLUDE=-I/usr/include/querysort
+	],
+	[test -d "$with_querysort_src" -a -r "$with_querysort_src/src/querysort.h"],
+	[
+		# Define querysort source files
+		QUERYSORT_HEADER=$with_querysort_src/src/querysort.h
+		QUERYSORT_ARCHIVE=$with_querysort_src/src/libquerysort_nonshared.a
+		QUERYSORT_ERROR="Can't find $QUERYSORT_ARCHIVE. Please build your querysort source directory"
+		QUERYSORT_INCLUDE=-I`cd $with_querysort_src && pwd`/src
+		QUERYSORT_LIB=-L`cd $with_querysort_src && pwd`/src
+	],
+	[AC_MSG_ERROR([QuerySort source directory not found : $with_querysort_src])]
+)
+
+# Check for querysort dependency files
+AC_CHECK_FILES(
+	[$QUERYSORT_HEADER $QUERYSORT_ARCHIVE],
+	[
+		AC_ARG_VAR([QUERYSORT_INCLUDE])
+		AC_ARG_VAR([QUERYSORT_LIB])
+	],
+	[AC_MSG_FAILURE([$QUERYSORT_ERROR])]
 )
 
 # Check for python
