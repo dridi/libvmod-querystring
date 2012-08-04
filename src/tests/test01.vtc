@@ -34,21 +34,40 @@ varnishtest "Test querystring vmod"
 
 server s1 {
 	rxreq
-	txresp
+	txresp -body "ABC\n"
 } -start
 
 varnish v1 -vcl+backend {
-	# this import is currently broken, probably because of libquerysort.so
 	import querystring from "${vmod_topbuild}/src/.libs/libvmod_querystring.so";
 
-	sub vcl_recv {
+	sub vcl_hash {
 		set req.url = querystring.sort(req.url);
 	}
 } -start
 
+varnish v1 -expect n_object == 0
+varnish v1 -expect cache_miss == 0
+
 client c1 {
 	txreq -url "/?b&a"
 	rxresp
-	expect req.url == "/?a&b"
+	expect resp.status == 200
 } -run
+
+varnish v1 -expect n_object == 1
+varnish v1 -expect cache_miss == 1
+
+client c1 -run
+
+varnish v1 -expect n_object == 1
+varnish v1 -expect cache_miss == 1
+
+client c2 {
+	txreq -url "/?a&b"
+	rxresp
+	expect resp.status == 200
+} -run
+
+varnish v1 -expect n_object == 1
+varnish v1 -expect cache_miss == 1
 
