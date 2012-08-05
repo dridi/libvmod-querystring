@@ -30,10 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-varnishtest "Test querystring vmod"
+varnishtest "Test sort req.url in vcl_hash"
 
 server s1 {
 	rxreq
+	expect req.url == "/?a&b"
 	txresp -body "ABC\n"
 } -start
 
@@ -45,29 +46,38 @@ varnish v1 -vcl+backend {
 	}
 } -start
 
-varnish v1 -expect n_object == 0
-varnish v1 -expect cache_miss == 0
-
 client c1 {
 	txreq -url "/?b&a"
 	rxresp
 	expect resp.status == 200
-} -run
+	expect resp.http.X-Varnish == "1001"
 
-varnish v1 -expect n_object == 1
-varnish v1 -expect cache_miss == 1
-
-client c1 -run
-
-varnish v1 -expect n_object == 1
-varnish v1 -expect cache_miss == 1
+	txreq -url "/?b&a"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.X-Varnish == "1002 1001"
+}
 
 client c2 {
 	txreq -url "/?a&b"
 	rxresp
 	expect resp.status == 200
-} -run
+	expect resp.http.X-Varnish == "1003 1001"
+}
+
+varnish v1 -expect n_object == 0
+varnish v1 -expect cache_miss == 0
+varnish v1 -expect cache_hit == 0
+
+client c1 -run
 
 varnish v1 -expect n_object == 1
 varnish v1 -expect cache_miss == 1
+varnish v1 -expect cache_hit == 1
+
+client c2 -run
+
+varnish v1 -expect n_object == 1
+varnish v1 -expect cache_miss == 1
+varnish v1 -expect cache_hit == 2
 
