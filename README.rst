@@ -19,7 +19,8 @@ import querystring;
 DESCRIPTION
 ===========
 
-Varnish multi-purpose vmod for URI query-string manipulation.
+Varnish multi-purpose vmod for URI query-string manipulation. Can be used to
+normalize for instance request URLs or Location response headers.
 
 FUNCTIONS
 =========
@@ -37,6 +38,20 @@ Description
 Example
         ::
                 set req.url = querystring.sort(req.url);
+
+remove
+------
+
+Prototype
+        ::
+                remove(STRING URI)
+Return value
+	STRING
+Description
+	Returns The given URI with its query-string removed
+Example
+        ::
+                set req.url = querystring.remove(req.url);
 
 EXAMPLE
 =======
