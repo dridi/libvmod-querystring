@@ -20,24 +20,26 @@ DESCRIPTION
 ===========
 
 Varnish multi-purpose vmod for URI query-string manipulation. Can be used to
-normalize for instance request URLs or Location response headers.
+normalize for instance request URLs or Location response headers in various
+ways. It is recommended to at least clean incoming request URLs (removing empty
+query-strings), all other functions do the cleaning.
 
 FUNCTIONS
 =========
 
-sort
-----
+clean
+------
 
 Prototype
         ::
-                sort(STRING URI)
+                clean(STRING URI)
 Return value
 	STRING
 Description
-	Returns The given URI with its query-string sorted
+	Returns The given URI with its query-string removed if empty
 Example
         ::
-                set req.url = querystring.sort(req.url);
+                set req.url = querystring.clean(req.url);
 
 remove
 ------
@@ -52,6 +54,20 @@ Description
 Example
         ::
                 set req.url = querystring.remove(req.url);
+
+sort
+----
+
+Prototype
+        ::
+                sort(STRING URI)
+Return value
+	STRING
+Description
+	Returns The given URI with its query-string sorted
+Example
+        ::
+                set req.url = querystring.sort(req.url);
 
 EXAMPLE
 =======

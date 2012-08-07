@@ -44,11 +44,69 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	return 0;
 }
 
+static const char *
+clean_uri_querystring(struct sess *sp, const char *uri, const char *query_string)
+{
+	struct ws *ws = sp->wrk->ws;
+	int query_string_position = query_string - uri;
+	char *clean_uri = WS_Alloc(ws, query_string_position);
+
+	WS_Assert(ws);
+
+	if (clean_uri == NULL) {
+		return uri;
+	}
+
+	memcpy(clean_uri, uri, query_string_position);
+	clean_uri[query_string_position] = '\0';
+
+	return clean_uri;
+}
+
+const char *
+vmod_clean(struct sess *sp, const char *uri)
+{
+	if (uri == NULL) {
+		return NULL;
+	}
+
+	char *query_string = strchr(uri, '?');
+	if (query_string == NULL || query_string[1] != '\0') {
+		return uri;
+	}
+
+	return clean_uri_querystring(sp, uri, query_string);
+}
+
+const char *
+vmod_remove(struct sess *sp, const char *uri)
+{
+	if (uri == NULL) {
+		return NULL;
+	}
+
+	char *query_string = strchr(uri, '?');
+	if (query_string == NULL) {
+		return uri;
+	}
+
+	return clean_uri_querystring(sp, uri, query_string);
+}
+
 const char *
 vmod_sort(struct sess *sp, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
+	}
+
+	char *query_string = strchr(uri, '?');
+	if (query_string == NULL) {
+		return uri;
+	}
+
+	if (query_string[1] == '\0') {
+		return clean_uri_querystring(sp, uri, query_string);
 	}
 	
 	struct ws *ws = sp->wrk->ws;
@@ -65,33 +123,5 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 	
 	return sorted_uri;
-}
-
-const char *
-vmod_remove(struct sess *sp, const char *uri)
-{
-	if (uri == NULL) {
-		return NULL;
-	}
-	
-	char *query_string = strchr(uri, '?');
-	if (query_string == NULL) {
-		return uri;
-	}
-	
-	struct ws *ws = sp->wrk->ws;
-	int query_string_position = query_string - uri;
-	char *clean_uri = WS_Alloc(ws, query_string_position + 1);
-	
-	WS_Assert(ws);
-	
-	if (clean_uri == NULL) {
-		return NULL;
-	}
-	
-	memcpy(clean_uri, uri, query_string_position);
-	clean_uri[query_string_position] = '\0';
-	
-	return clean_uri;
 }
 

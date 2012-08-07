@@ -30,7 +30,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-varnishtest "Test without querystring vmod"
+varnishtest "Test sort without querystring vmod"
 
 server s1 {
 	rxreq
@@ -76,7 +76,7 @@ varnish v1 -expect cache_hit == 1
 
 client c2 -run
 
-varnish v1 -expect n_object == 1
+varnish v1 -expect n_object == 2
 varnish v1 -expect cache_miss == 2
 varnish v1 -expect cache_hit == 1
 
