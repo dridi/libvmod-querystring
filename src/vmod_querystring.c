@@ -31,6 +31,8 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <querysort.h>
 
 #include "vrt.h"
@@ -123,5 +125,102 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 	
 	return sorted_uri;
+}
+
+static bool
+is_param_filtered(const char *param, int length, const char *params, va_list ap)
+{
+	const char *p = params;
+
+	while (p != vrt_magic_string_end) {
+		if (p != NULL && strlen(p) == length && strncmp(param, p, length) == 0) {
+			return true;
+		}
+		p = va_arg(ap, const char *);
+	}
+
+	return false;
+}
+
+static void
+append_string(char **begin, const char *end, const char *string, int length)
+{
+	if (*begin + length < end) {
+		memcpy(*begin, string, length);
+	}
+	*begin += length;
+}
+
+const char *
+vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
+{
+	if (uri == NULL) {
+		return NULL;
+	}
+
+	char *query_string = strchr(uri, '?');
+	if (query_string == NULL) {
+		return uri;
+	}
+
+	if (query_string[1] == '\0') {
+		return clean_uri_querystring(sp, uri, query_string);
+	}
+	
+	unsigned available = WS_Reserve(sp->wrk->ws, 0);
+	char *begin = sp->wrk->ws->f;
+	char *end = &begin[available];
+	
+	append_string(&begin, end, uri, query_string - uri + 1);
+
+	char *current_position = query_string;
+	while (*current_position != '\0' && begin < end) {
+		const char *param_position = ++current_position;
+		const char *equal_position = NULL;
+
+		while (*current_position != '\0' && *current_position != '&') {
+			if (equal_position == NULL && *current_position == '=') {
+				equal_position = current_position;
+			}
+			current_position++;
+		}
+		
+		int param_name_length =
+			(equal_position ? equal_position : current_position) - param_position;
+
+		va_list ap;
+		va_start(ap, params);
+		if ( ! is_param_filtered(param_position, param_name_length, params, ap) ) {
+			append_string(&begin, end, param_position, current_position - param_position);
+			if (*current_position == '&') {
+				*begin = '&';
+				begin++;
+			}
+		}
+		va_end(ap);
+	}
+
+	if (begin < end) {
+		begin -= (begin[-1] == '&');
+		*begin = '\0';
+	}
+	
+	begin++;
+
+	if (begin > end) {
+		WS_Release(sp->wrk->ws, 0);
+		return uri;
+	}
+
+	end = begin;
+	begin = sp->wrk->ws->f;
+	WS_Release(sp->wrk->ws, end - begin);
+	return begin;
+}
+
+const char *
+vmod_filtersep(struct sess *sp)
+{
+	return NULL;
 }
 

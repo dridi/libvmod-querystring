@@ -3,4 +3,6 @@ Init init_function
 Function STRING clean(STRING)
 Function STRING remove(STRING)
 Function STRING sort(STRING)
+Function STRING filter(STRING, STRING_LIST)
+Function STRING filtersep()
 
