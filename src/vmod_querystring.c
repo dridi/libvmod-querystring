@@ -224,3 +224,96 @@ vmod_filtersep(struct sess *sp)
 	return NULL;
 }
 
+static bool
+is_param_regfiltered(const char *param, int length, void *re)
+{
+	char p[length + 1];
+
+	memcpy(p, param, length);
+	p[length + 1] = '\0';
+
+	return (bool) VRT_re_match(p, re);
+}
+
+void *
+compile_regex(const char *regex)
+{
+	void *re;
+	const char *error;
+	int error_offset;
+
+	re = VRE_compile(regex, 0, &error, &error_offset);
+	return re;
+}
+
+const char *
+vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
+{
+	if (uri == NULL) {
+		return NULL;
+	}
+
+	char *query_string = strchr(uri, '?');
+	if (query_string == NULL) {
+		return uri;
+	}
+
+	if (query_string[1] == '\0') {
+		return clean_uri_querystring(sp, uri, query_string);
+	}
+
+	void *re = compile_regex(regex);
+	if (re == NULL) {
+		return uri;
+	}
+
+	unsigned available = WS_Reserve(sp->wrk->ws, 0);
+	char *begin = sp->wrk->ws->f;
+	char *end = &begin[available];
+	
+	append_string(&begin, end, uri, query_string - uri + 1);
+
+	char *current_position = query_string;
+	while (*current_position != '\0' && begin < end) {
+		const char *param_position = ++current_position;
+		const char *equal_position = NULL;
+
+		while (*current_position != '\0' && *current_position != '&') {
+			if (equal_position == NULL && *current_position == '=') {
+				equal_position = current_position;
+			}
+			current_position++;
+		}
+		
+		int param_name_length =
+			(equal_position ? equal_position : current_position) - param_position;
+
+		if ( ! is_param_regfiltered(param_position, param_name_length, re) ) {
+			append_string(&begin, end, param_position, current_position - param_position);
+			if (*current_position == '&') {
+				*begin = '&';
+				begin++;
+			}
+		}
+	}
+	
+	VRT_re_fini(re);
+
+	if (begin < end) {
+		begin -= (begin[-1] == '&');
+		*begin = '\0';
+	}
+	
+	begin++;
+
+	if (begin > end) {
+		WS_Release(sp->wrk->ws, 0);
+		return uri;
+	}
+
+	end = begin;
+	begin = sp->wrk->ws->f;
+	WS_Release(sp->wrk->ws, end - begin);
+	return begin;
+}
+
