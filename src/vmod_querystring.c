@@ -120,7 +120,7 @@ vmod_sort(struct sess *sp, const char *uri)
 		return NULL;
 	}
 	
-	if (qs_sort(uri, sorted_uri) != QS_OK) {
+	if (qs_sort_clean(uri, sorted_uri) != QS_OK) {
 		return NULL;
 	}
 	
@@ -130,6 +130,10 @@ vmod_sort(struct sess *sp, const char *uri)
 static bool
 is_param_filtered(const char *param, int length, const char *params, va_list ap)
 {
+	if (length == 0) {
+		return true;
+	}
+
 	const char *p = params;
 
 	while (p != vrt_magic_string_end) {
@@ -227,6 +231,10 @@ vmod_filtersep(struct sess *sp)
 static bool
 is_param_regfiltered(const char *param, int length, void *re)
 {
+	if (length == 0) {
+		return true;
+	}
+
 	char p[length + 1];
 
 	memcpy(p, param, length);
