@@ -39,6 +39,10 @@
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
+#include "vmod_querystring.h"
+
+/* End Of Query Parameter */
+#define EOQP(c) (*c == '\0' || *c == '&')
 
 int
 init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
@@ -229,7 +233,7 @@ vmod_filtersep(struct sess *sp)
 }
 
 static bool
-is_param_regfiltered(const char *param, int length, void *re)
+IS_PARAM_REGFILTERED(struct sess *sp, const char *param, int length, void *re)
 {
 	if (length == 0) {
 		return true;
@@ -240,7 +244,7 @@ is_param_regfiltered(const char *param, int length, void *re)
 	memcpy(p, param, length);
 	p[length + 1] = '\0';
 
-	return (bool) VRT_re_match(p, re);
+	return (bool) VRT_RE_MATCH(sp, p, re);
 }
 
 void *
@@ -296,7 +300,7 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 		int param_name_length =
 			(equal_position ? equal_position : current_position) - param_position;
 
-		if ( ! is_param_regfiltered(param_position, param_name_length, re) ) {
+		if ( ! IS_PARAM_REGFILTERED(sp, param_position, param_name_length, re) ) {
 			append_string(&begin, end, param_position, current_position - param_position);
 			if (*current_position == '&') {
 				*begin = '&';

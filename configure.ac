@@ -54,6 +54,9 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
+AC_PROG_SED
+AC_PROG_EGREP
+
 # Check for rst utilities
 AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], "no")
 if test "x$RST2MAN" = "xno"; then
@@ -131,6 +134,27 @@ AC_CHECK_FILE([$VARNISHSRC/bin/varnishtest/varnishtest],
 	[AC_MSG_FAILURE([Can't find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
 )
 
+# Check vanish ABI version
+AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
+	[
+		AC_MSG_CHECKING([varnish ABI version])
+		[VMOD_ABI_Version=`$EGREP -o '[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+' $VARNISHSRC/include/vmod_abi.h`]
+		AC_MSG_RESULT([$VMOD_ABI_Version])
+	],
+	[
+		[VMOD_ABI_Version=3.0.0]
+		AC_MSG_NOTICE([Can't find "$VARNISHSRC/include/vmod_abi.h". Assuming varnish 3.0.0 ABI version])
+	]
+)
+
+[VMOD_ABI_Version_MAJOR=`echo $VMOD_ABI_Version | $EGREP -o '^[[:digit:]]+'`]
+[VMOD_ABI_Version_MINOR=`echo $VMOD_ABI_Version | $EGREP -o '\.[[:digit:]]+\.' | $SED 's/\.//g'`]
+[VMOD_ABI_Version_PATCH=`echo $VMOD_ABI_Version | $EGREP -o '[[:digit:]]+$'`]
+
+AS_IF([test $VMOD_ABI_Version_MINOR -gt 0 -o $VMOD_ABI_Version_PATCH -ge 3],
+	[AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])]
+)
+
 # vmod installation dir
 AC_ARG_VAR([VMODDIR], [vmod installation directory @<:@LIBDIR/varnish/vmods@:>@])
 if test "x$VMODDIR" = x; then
@@ -144,4 +168,6 @@ AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
 ])
+
 AC_OUTPUT
+
