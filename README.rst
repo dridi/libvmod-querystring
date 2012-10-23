@@ -8,7 +8,7 @@ Varnish QueryString Module
 
 :Author: Dridi Boukelmoune
 :Date: 2012-06-18
-:Version: 1.0
+:Version: 0.1
 :Manual section: 3
 
 SYNOPSIS

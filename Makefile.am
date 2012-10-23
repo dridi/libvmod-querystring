@@ -51,3 +51,6 @@ else
 	@false
 endif
 
+src-dist:
+	@git archive -o $(PACKAGE)-$(VERSION)-src.tar.gz --prefix=$(PACKAGE)-$(VERSION)/ HEAD
+
