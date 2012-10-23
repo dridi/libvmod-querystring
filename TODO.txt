@@ -1,5 +1,0 @@
-* 1.0
-- sort (sort the querystring with libquerysort)
-- remove
-- filter
-

@@ -20,14 +20,6 @@ cd /usr/src/varnish-3.0.x/
 ./configure
 make
 
-QuerySort
----------
-
-You also need QuerySort development files. You can either install the devel
-package or install it using make. QuerySort is statically linked to the module,
-therefore, it is only required at build time. See installation instuctions
-(https://github.com/dridi/querysort).
-
 The libvmod-querystring module can then be built:
 
 cd /path/to/git/repository
@@ -49,27 +41,4 @@ Make targets:
 * make - builds the vmod
 * make install - installs your vmod in `VMODDIR`
 * make check - runs the unit tests in ``src/tests/*.vtc``
-
-
-Building QuerySort from the sources
------------------------------------
-
-If you're not using an RPM-based OS, or simply don't want to install QuerySort,
-it is possible to build libvmod-querystring against a locally-built QuerySort.
-Download the appropriate QuerySort source tarball
-(https://github.com/dridi/querysort/downloads) and extract it somewhere on your
-disk (eg. /usr/src/).
-
-Build QuerySort:
-
-cd /usr/src/querysort-1.0.x/
-make
-
-The libvmod-querystring module can then be built:
-
-cd /path/to/git/repository
-./autogen.sh
-./configure VARNISHSRC=/usr/src/varnish-3.0.x/ [VMODDIR=`DIR`] --with-querysort-src=/usr/src/querysort-1.0.x
-make
-sudo make install
 

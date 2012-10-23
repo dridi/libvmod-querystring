@@ -89,8 +89,3 @@ libvmod-querystring project. See LICENSE for details.
 
 * Copyright (c) 2012 Dridi Boukelmoune
 
-SEE ALSO
-========
-
-querysort(3)
-

@@ -31,13 +31,12 @@
 #
 
 CFLAGS = @DEFINE_ABI@
-LIBS = $(QUERYSORT_LIB)
-INCLUDES = $(QUERYSORT_INCLUDE) -I$(VARNISHSRC)/include -I$(VARNISHSRC)
+INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)
 
 vmoddir = $(VMODDIR)
 vmod_LTLIBRARIES = libvmod_querystring.la
 
-libvmod_querystring_la_LDFLAGS = -module -export-dynamic -avoid-version -lquerysort_nonshared
+libvmod_querystring_la_LDFLAGS = -module -export-dynamic -avoid-version
 
 libvmod_querystring_la_SOURCES = \
 	vcc_if.c \

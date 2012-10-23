@@ -31,15 +31,19 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <querysort.h>
 
 #include "vrt.h"
+#include "vre.h"
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
 #include "vmod_querystring.h"
+
+/* End Of Query Parameter */
+#define EOQP(c) (*c == '\0' || *c == '&')
 
 /* End Of Query Parameter */
 #define EOQP(c) (*c == '\0' || *c == '&')
@@ -99,6 +103,23 @@ vmod_remove(struct sess *sp, const char *uri)
 	return clean_uri_querystring(sp, uri, query_string);
 }
 
+struct query_param {
+	const char *value;
+	short length;
+};
+
+static int
+compare_params(const char* a, const char* b) {
+	while (*a == *b) {
+		if (EOQP(a) || EOQP(b)) {
+			return 0;
+		}
+		a++;
+		b++;
+	}
+	return *a - *b;
+}
+
 const char *
 vmod_sort(struct sess *sp, const char *uri)
 {
@@ -115,19 +136,107 @@ vmod_sort(struct sess *sp, const char *uri)
 		return clean_uri_querystring(sp, uri, query_string);
 	}
 	
+	/* reserve some memory */
 	struct ws *ws = sp->wrk->ws;
+	char *snapshot = WS_Snapshot(ws);
 	char *sorted_uri = WS_Alloc(ws, strlen(uri) + 1);
 	
 	WS_Assert(ws);
 	
 	if (sorted_uri == NULL) {
-		return NULL;
+		WS_Reset(ws, snapshot);
+		return uri;
 	}
 	
-	if (qs_sort_clean(uri, sorted_uri) != QS_OK) {
-		return NULL;
+	unsigned available = WS_Reserve(ws, 0);
+	struct query_param *params = (struct query_param*) ws->f;
+	struct query_param *end = params + available;
+	
+	/* initialize the params array */
+	int head = 10;
+	
+	if (&params[head + 1] > end) {
+		head = 0;
 	}
 	
+	if (&params[head + 1] > end) {
+		WS_Release(ws, 0);
+		WS_Reset(ws, snapshot);
+		return uri;
+	}
+	
+	int tail = head;
+	int last_param = head;
+	
+	/* search and sort params */
+	bool sorted = true;
+	char *c = query_string + 1;
+	params[head].value = c;
+	
+	for (; *c != '\0' && &params[tail+1] < end; c++) {
+		if (*c != '&') {
+			continue;
+		}
+
+		const char *current_param = c+1;
+		params[last_param].length = c - params[last_param].value;
+
+		if (head > 0 && compare_params(params[head].value, current_param) > -1) {
+			sorted = false;
+			params[--head].value = current_param;
+			last_param = head;
+			continue;
+		}
+
+		if (compare_params(params[tail].value, current_param) < 1) {
+			params[++tail].value = current_param;
+			last_param = tail;
+			continue;
+		}
+
+		sorted = false;
+
+		int i = tail++;
+		params[tail] = params[i];
+		
+		int previous = i-1;
+		while (i > head && compare_params(params[previous].value, current_param) > -1) {
+			params[i--] = params[previous--];
+		}
+
+		params[i].value = current_param;
+		last_param = i;
+	}
+	
+	if (sorted == true || &params[tail+1] >= end || tail - head < 1) {
+		WS_Release(ws, 0);
+		WS_Reset(ws, snapshot);
+		return uri;
+	}
+
+	params[last_param].length = c - params[last_param].value;
+	
+	/* copy the url parts */
+	char *position = mempcpy(sorted_uri, uri, query_string - uri + 1);
+	int count = tail-head;
+
+	for (;count > 0; count--, ++head) {
+		if (params[head].length > 0) {
+			position = mempcpy(position, params[head].value, params[head].length);
+			*position++ = '&';
+		}
+	}
+	
+	if (params[head].length > 0) {
+		position = mempcpy(position, params[head].value, params[head].length);
+	}
+	else {
+		position--;
+	}
+	
+	*position = '\0';
+	
+	WS_Release(ws, 0);
 	return sorted_uri;
 }
 

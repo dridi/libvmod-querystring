@@ -67,52 +67,12 @@ AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
 # Check for pkg-config
 PKG_PROG_PKG_CONFIG
 
-# Checks for header files.
+# Checks for header files
 AC_HEADER_STDC
 AC_CHECK_HEADERS([sys/stdlib.h])
 
-# Check for querysort option
-AC_ARG_WITH(
-	[querysort-src],
-	[AS_HELP_STRING(
-		[--with-querysort-src],
-		[path to querysort sources (optional)]
-	)],
-	[],
-	[with_querysort_src=no]
-)
-
-# Check for querysort dependency
-AS_IF(
-	[test "x$with_querysort_src" = "xno"],
-	[
-		# Define querysort-devel files
-		QUERYSORT_HEADER=/usr/include/querysort/querysort.h
-		QUERYSORT_ARCHIVE=/usr/lib/libquerysort_nonshared.a
-		QUERYSORT_ERROR="Can't find QuerySort development files. Please install the querysort-devel package."
-		QUERYSORT_INCLUDE=-I/usr/include/querysort
-	],
-	[test -d "$with_querysort_src" -a -r "$with_querysort_src/src/querysort.h"],
-	[
-		# Define querysort source files
-		QUERYSORT_HEADER=$with_querysort_src/src/querysort.h
-		QUERYSORT_ARCHIVE=$with_querysort_src/src/libquerysort_nonshared.a
-		QUERYSORT_ERROR="Can't find $QUERYSORT_ARCHIVE. Please build your querysort source directory"
-		QUERYSORT_INCLUDE=-I`cd $with_querysort_src && pwd`/src
-		QUERYSORT_LIB=-L`cd $with_querysort_src && pwd`/src
-	],
-	[AC_MSG_ERROR([QuerySort source directory not found : $with_querysort_src])]
-)
-
-# Check for querysort dependency files
-AC_CHECK_FILES(
-	[$QUERYSORT_HEADER $QUERYSORT_ARCHIVE],
-	[
-		AC_ARG_VAR([QUERYSORT_INCLUDE])
-		AC_ARG_VAR([QUERYSORT_LIB])
-	],
-	[AC_MSG_FAILURE([$QUERYSORT_ERROR])]
-)
+# Check for functions
+AC_CHECK_FUNCS([mempcpy])
 
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
