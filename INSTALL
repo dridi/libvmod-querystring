@@ -20,7 +20,10 @@ cd /usr/src/varnish-3.0.x/
 ./configure
 make
 
-The libvmod-querystring module can then be built:
+libvmod-querystring
+-------------------
+
+Once you have a Varnish build, the libvmod-querystring module can then be built:
 
 cd /path/to/git/repository
 ./autogen.sh
@@ -40,5 +43,5 @@ Make targets:
 
 * make - builds the vmod
 * make install - installs your vmod in `VMODDIR`
-* make check - runs the unit tests in ``src/tests/*.vtc``
+* make check - runs the tests in `src/tests/*.vtc`
 

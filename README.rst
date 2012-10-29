@@ -1,3 +1,33 @@
+.. libvmod-querystring - querystring manipulation module for Varnish
+
+   Copyright (C) 2012, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+   All rights reserved.
+
+   Redistribution  and use in source and binary forms, with or without
+   modification,  are permitted provided that the following conditions
+   are met:
+
+   1. Redistributions   of  source   code   must   retain  the   above
+      copyright  notice, this  list of  conditions  and the  following
+      disclaimer.
+   2. Redistributions   in  binary  form  must  reproduce  the   above
+      copyright  notice, this  list of  conditions and  the  following
+      disclaimer   in  the   documentation   and/or  other   materials
+      provided with the distribution.
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS  IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT
+   LIMITED  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND  FITNESS
+   FOR  A  PARTICULAR  PURPOSE ARE DISCLAIMED. IN NO EVENT  SHALL  THE
+   COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+   INCIDENTAL,    SPECIAL,   EXEMPLARY,   OR   CONSEQUENTIAL   DAMAGES
+   (INCLUDING,  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+   SERVICES;  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+   STRICT  LIABILITY,  OR  TORT (INCLUDING  NEGLIGENCE  OR  OTHERWISE)
+   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+   OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ================
 vmod_querystring
 ================
@@ -19,7 +49,7 @@ import querystring;
 DESCRIPTION
 ===========
 
-Varnish multi-purpose vmod for URI query-string manipulation. Can be used to
+Varnish multipurpose vmod for URI query-string manipulation. Can be used to
 normalize for instance request URLs or Location response headers in various
 ways. It is recommended to at least clean incoming request URLs (removing empty
 query-strings), all other functions do the cleaning.
@@ -31,55 +61,94 @@ clean
 ------
 
 Prototype
-        ::
-                clean(STRING URI)
+   clean(STRING url)
 Return value
-	STRING
+   STRING
 Description
-	Returns The given URI with its query-string removed if empty
+   Returns the given URI with its query-string removed if empty
 Example
-        ::
-                set req.url = querystring.clean(req.url);
+   set req.url = querystring.clean(req.url);
 
 remove
 ------
 
 Prototype
-        ::
-                remove(STRING URI)
+   remove(STRING url)
 Return value
-	STRING
+   STRING
 Description
-	Returns The given URI with its query-string removed
+   Returns the given URI with its query-string removed
 Example
-        ::
-                set req.url = querystring.remove(req.url);
+   set req.url = querystring.remove(req.url);
 
 sort
 ----
 
 Prototype
-        ::
-                sort(STRING URI)
+   sort(STRING url)
 Return value
-	STRING
+   STRING
 Description
-	Returns The given URI with its query-string sorted
+   Returns the given URI with its query-string sorted
 Example
-        ::
-                set req.url = querystring.sort(req.url);
+   set req.url = querystring.sort(req.url);
+
+filter
+------
+
+Prototype
+   filter(STRING url, STRING_LIST parameter_names)
+Return value
+   STRING
+Description
+   Returns the given URI without the listed parameters
+Example
+   .. sourcecode::
+
+      set req.url = querystring.filter(req.url,
+        "utm_source" + querystring.filtersep() +
+        "utm_medium" + querystring.filtersep() +
+        "utm_campaign");
+
+filtersep
+---------
+
+Prototype
+   filtersep()
+Return value
+   STRING
+Description
+   Returns the separator needed by the filter function
+
+regfilter
+---------
+
+Prototype
+   regfilter(STRING url, STRING parameter_names_regex)
+Return value
+   STRING
+Description
+   Returns the given URI without the parameters matching a regular expression
+Example
+   set req.url = querystring.regfilter(req.url, "utm\_.*");
 
 EXAMPLE
 =======
 
 In your VCL you could then use this vmod along the following lines::
 
-        import querystring;
+   import querystring;
 
-        sub vcl_hash {
-                # sort the URL before the request hashing
-                set req.url = querystring.sort(req.url);
-        }
+   sub vcl_hash {
+      # sort the URL before the request hashing
+      set req.url = querystring.sort(req.url);
+   }
+
+ACKNOWLEDGMENT
+==============
+
+The sort algorithm is an adaptation of Jason Mooberry's Swkurly for the Varnish
+workspace memory model of the worker threads.
 
 COPYRIGHT
 =========
