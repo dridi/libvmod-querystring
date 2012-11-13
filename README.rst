@@ -73,7 +73,7 @@ EXAMPLE
 =======
 
 In your VCL you could then use this vmod along the following lines::
-        
+
         import querystring;
 
         sub vcl_hash {

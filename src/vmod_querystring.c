@@ -135,44 +135,44 @@ vmod_sort(struct sess *sp, const char *uri)
 	if (query_string[1] == '\0') {
 		return clean_uri_querystring(sp, uri, query_string);
 	}
-	
+
 	/* reserve some memory */
 	struct ws *ws = sp->wrk->ws;
 	char *snapshot = WS_Snapshot(ws);
 	char *sorted_uri = WS_Alloc(ws, strlen(uri) + 1);
-	
+
 	WS_Assert(ws);
-	
+
 	if (sorted_uri == NULL) {
 		WS_Reset(ws, snapshot);
 		return uri;
 	}
-	
+
 	unsigned available = WS_Reserve(ws, 0);
 	struct query_param *params = (struct query_param*) ws->f;
 	struct query_param *end = params + available;
-	
+
 	/* initialize the params array */
 	int head = 10;
-	
+
 	if (&params[head + 1] > end) {
 		head = 0;
 	}
-	
+
 	if (&params[head + 1] > end) {
 		WS_Release(ws, 0);
 		WS_Reset(ws, snapshot);
 		return uri;
 	}
-	
+
 	int tail = head;
 	int last_param = head;
-	
+
 	/* search and sort params */
 	bool sorted = true;
 	char *c = query_string + 1;
 	params[head].value = c;
-	
+
 	for (; *c != '\0' && &params[tail+1] < end; c++) {
 		if (*c != '&') {
 			continue;
@@ -198,7 +198,7 @@ vmod_sort(struct sess *sp, const char *uri)
 
 		int i = tail++;
 		params[tail] = params[i];
-		
+
 		int previous = i-1;
 		while (i > head && compare_params(params[previous].value, current_param) > -1) {
 			params[i--] = params[previous--];
@@ -207,7 +207,7 @@ vmod_sort(struct sess *sp, const char *uri)
 		params[i].value = current_param;
 		last_param = i;
 	}
-	
+
 	if (sorted == true || &params[tail+1] >= end || tail - head < 1) {
 		WS_Release(ws, 0);
 		WS_Reset(ws, snapshot);
@@ -215,7 +215,7 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 
 	params[last_param].length = c - params[last_param].value;
-	
+
 	/* copy the url parts */
 	char *position = mempcpy(sorted_uri, uri, query_string - uri + 1);
 	int count = tail-head;
@@ -226,16 +226,16 @@ vmod_sort(struct sess *sp, const char *uri)
 			*position++ = '&';
 		}
 	}
-	
+
 	if (params[head].length > 0) {
 		position = mempcpy(position, params[head].value, params[head].length);
 	}
 	else {
 		position--;
 	}
-	
+
 	*position = '\0';
-	
+
 	WS_Release(ws, 0);
 	return sorted_uri;
 }
@@ -283,11 +283,11 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 	if (query_string[1] == '\0') {
 		return clean_uri_querystring(sp, uri, query_string);
 	}
-	
+
 	unsigned available = WS_Reserve(sp->wrk->ws, 0);
 	char *begin = sp->wrk->ws->f;
 	char *end = &begin[available];
-	
+
 	append_string(&begin, end, uri, query_string - uri + 1);
 
 	char *current_position = query_string;
@@ -301,7 +301,7 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 			}
 			current_position++;
 		}
-		
+
 		int param_name_length =
 			(equal_position ? equal_position : current_position) - param_position;
 
@@ -321,7 +321,7 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 		begin -= (begin[-1] == '&');
 		*begin = '\0';
 	}
-	
+
 	begin++;
 
 	if (begin > end) {
@@ -391,7 +391,7 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 	unsigned available = WS_Reserve(sp->wrk->ws, 0);
 	char *begin = sp->wrk->ws->f;
 	char *end = &begin[available];
-	
+
 	append_string(&begin, end, uri, query_string - uri + 1);
 
 	char *current_position = query_string;
@@ -405,7 +405,7 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 			}
 			current_position++;
 		}
-		
+
 		int param_name_length =
 			(equal_position ? equal_position : current_position) - param_position;
 
@@ -417,14 +417,14 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 			}
 		}
 	}
-	
+
 	VRT_re_fini(re);
 
 	if (begin < end) {
 		begin -= (begin[-1] == '&');
 		*begin = '\0';
 	}
-	
+
 	begin++;
 
 	if (begin > end) {
