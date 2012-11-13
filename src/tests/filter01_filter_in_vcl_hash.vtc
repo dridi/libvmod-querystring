@@ -36,7 +36,7 @@ server s1 {
 	rxreq
 	expect req.url == "/article?lang=fr"
 	txresp -body "ABC\n"
-	
+
 	rxreq
 	expect req.url == "/article?lang=fr&page=2"
 	txresp -body "DEF\n"
@@ -58,7 +58,7 @@ client c1 {
 	rxresp
 	expect resp.status == 200
 	expect resp.http.X-Varnish == "1001"
-	
+
 	txreq -url "/article?lang=fr&page=2"
 	rxresp
 	expect resp.status == 200
@@ -70,7 +70,7 @@ client c2 {
 	rxresp
 	expect resp.status == 200
 	expect resp.http.X-Varnish == "1003 1001"
-	
+
 	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest&page=2"
 	rxresp
 	expect resp.status == 200

@@ -33,7 +33,7 @@
 /*
  * This file defines macros that serve as API in order to cross-compile against
  * different versions of Varnish:
- * 
+ *
  * * Varnish 3.0.3
  * - IS_PARAM_REGFILTERED(sp, param, length, re)
  * - VRT_RE_MATCH(sp, p, re)
