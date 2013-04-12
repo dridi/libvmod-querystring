@@ -77,6 +77,8 @@ varnish v1 -expect cache_hit == 1
 
 client c2 -run
 
+varnish v1 -wait
+
 varnish v1 -expect n_object == 1
 varnish v1 -expect cache_miss == 1
 varnish v1 -expect cache_hit == 2

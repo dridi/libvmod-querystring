@@ -48,7 +48,7 @@
 
 #else
 
-/* XXX Only tested with Varnish 3.0.2 */
+/* Tested with every versions of Varnish from 3.0.0 to 3.0.2 */
 #define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(param, length, re)
 #define VRT_RE_MATCH(sp, p, re) VRT_re_match(p, re)
 

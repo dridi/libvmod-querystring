@@ -356,7 +356,7 @@ IS_PARAM_REGFILTERED(struct sess *sp, const char *param, int length, void *re)
 	return (bool) VRT_RE_MATCH(sp, p, re);
 }
 
-void *
+static void *
 compile_regex(const char *regex)
 {
 	void *re;

@@ -66,4 +66,5 @@ client c1 {
 }
 
 client c1 -run
+server s1 -wait
 
