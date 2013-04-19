@@ -1,4 +1,6 @@
 .gitattributes export-ignore
 .gitignore     export-ignore
+dist.sh        export-ignore
 m4/.gitignore  export-ignore
+redhat/        export-ignore
 
