@@ -54,6 +54,11 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	return 0;
 }
 
+void *mempcpy(void *dst, const void *src, size_t len)
+{
+	return (void*)(((char*)memcpy(dst, src, len)) + len);
+}
+
 static const char *
 clean_uri_querystring(struct sess *sp, const char *uri, const char *query_string)
 {
