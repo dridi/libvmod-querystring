@@ -36,12 +36,13 @@ INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)/bin/varnishd -I$(VARNISHSRC)
 vmoddir = $(VMODDIR)
 vmod_LTLIBRARIES = libvmod_querystring.la
 
-libvmod_querystring_la_LDFLAGS = -module -export-dynamic -avoid-version
+libvmod_querystring_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
 
 libvmod_querystring_la_SOURCES = \
 	vcc_if.c \
 	vcc_if.h \
-	vmod_querystring.c
+	vmod_querystring.c \
+	vmod_querystring.h
 
 vcc_if.c vcc_if.h: vmod_querystring.vcc
 	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring.vcc

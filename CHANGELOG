@@ -1,0 +1,12 @@
+libvmod-querystring changelog
+=============================
+
+Changes in version 0.2 (2013-07-23)
+-----------------------------------
+
+* Improved documentation
+* Builds in FreeBSD thanks to Wesley Overdijk (#4)
+* Varnish 3.0.4 support
+* Varnish 4 "trunk" support
+* Conditional logging of functions calls and returns
+* RPM packaging

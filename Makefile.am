@@ -36,6 +36,7 @@ SUBDIRS = src
 
 EXTRA_DIST = README.rst
 
+dist_doc_DATA = LICENSE CONTRIBUTORS CHANGELOG
 dist_man_MANS = vmod_querystring.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)
 

@@ -1,0 +1,13 @@
+--- lib/libvarnish/vre.c.orig	2012-08-28 23:56:02.163515172 +0200
++++ lib/libvarnish/vre.c	2012-08-28 23:56:18.111315730 +0200
+@@ -40,9 +40,7 @@
+ 	pcre_extra		*re_extra;
+ };
+ 
+-#ifndef PCRE_STUDY_JIT_COMPILE
+-#define PCRE_STUDY_JIT_COMPILE 0
+-#endif
++#define PCRE_STUDY_JIT_COMPILE 0
+ 
+ /*
+  * We don't want to spread or even expose the majority of PCRE options

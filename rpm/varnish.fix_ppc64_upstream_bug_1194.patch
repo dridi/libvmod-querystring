@@ -1,0 +1,11 @@
+--- bin/varnishd/cache_ban.c.orig	2012-09-18 11:44:55.867165803 +0200
++++ bin/varnishd/cache_ban.c	2012-09-18 11:45:37.879300620 +0200
+@@ -81,7 +81,7 @@
+ 	const void		*arg2_spec;
+ };
+ 
+-static VTAILQ_HEAD(banhead_s,ban) ban_head = VTAILQ_HEAD_INITIALIZER(ban_head);
++static volatile VTAILQ_HEAD(banhead_s,ban) ban_head = VTAILQ_HEAD_INITIALIZER(ban_head);
+ static struct lock ban_mtx;
+ static struct ban *ban_magic;
+ static pthread_t ban_thread;

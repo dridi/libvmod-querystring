@@ -52,3 +52,18 @@ Make targets:
 * make install - installs your vmod in `VMODDIR`
 * make check - runs the tests in `src/tests/*.vtc`
 
+RPM packages
+------------
+
+Instead of a manual installation, you can build RPM packages from the source.
+You need two source tarballs in your rpmbuild `SOURCES` directory. Download the
+appropriate Varnish 3 source tarball (http://repo.varnish-cache.org/source/) and
+put it with the libvmod-querystring tarball in the `SOURCES` directory. Since
+the 0.2 release, it is possible to make the tarball from the git repository:
+
+cd /path/to/git/repository
+./dist.sh 0.2
+mv v0.2.tar.gz /path/to/rpmbuild/SOURCES/
+cp rpm/*.patch /path/to/rpmbuild/SOURCES/
+rpmbuild -bb --define 'VARNISHVER 3.0.x' rpm/varnish-vmod-querystring.spec
+
