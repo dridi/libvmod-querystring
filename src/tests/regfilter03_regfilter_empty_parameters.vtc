@@ -54,13 +54,12 @@ client c1 {
 	txreq -url "/article?lang=fr&utm_source=git&&utm_campaign=filter&utm_medium=varnishtest"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1001"
 
 	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest&page=2&&"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1002"
 }
 
 client c1 -run
+server s1 -wait
 

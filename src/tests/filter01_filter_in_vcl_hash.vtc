@@ -57,24 +57,20 @@ client c1 {
 	txreq -url "/article?lang=fr"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1001"
 
 	txreq -url "/article?lang=fr&page=2"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1002"
 }
 
 client c2 {
 	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1003 1001"
 
 	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest&page=2"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1004 1002"
 }
 
 varnish v1 -expect n_object == 0
@@ -82,14 +78,14 @@ varnish v1 -expect cache_miss == 0
 varnish v1 -expect cache_hit == 0
 
 client c1 -run
+delay .1
 
 varnish v1 -expect n_object == 2
 varnish v1 -expect cache_miss == 2
 varnish v1 -expect cache_hit == 0
 
 client c2 -run
-
-varnish v1 -wait
+delay .1
 
 varnish v1 -expect n_object == 2
 varnish v1 -expect cache_miss == 2

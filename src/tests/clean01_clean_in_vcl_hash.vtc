@@ -54,15 +54,13 @@ client c1 {
 	txreq -url "/"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1001"
 
 	txreq -url "/?"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.X-Varnish == "1002 1001"
 } -run
 
-varnish v1 -wait
+delay .1
 
 varnish v1 -expect n_object == 1
 varnish v1 -expect cache_miss == 1
