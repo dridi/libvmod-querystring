@@ -82,28 +82,37 @@ AC_ARG_VAR([VARNISHSRC], [path to Varnish source tree (mandatory)])
 if test "x$VARNISHSRC" = x; then
 	AC_MSG_ERROR([No Varnish source tree specified])
 fi
+
 VARNISHSRC=`cd $VARNISHSRC && pwd`
-AC_CHECK_FILE([$VARNISHSRC/include/varnishapi.h],
-	[],
-	[AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
+Varnish_Version_MAJOR=
+
+# Is it a Varnish 3 or 4 source tree ?
+AC_CHECK_FILE([$VARNISHSRC/lib/libvmod_std/vmod.py], [Varnish_Version_MAJOR=3])
+AC_CHECK_FILE([$VARNISHSRC/lib/libvcl/vmodtool.py],  [Varnish_Version_MAJOR=4])
+
+# Can we build a VMOD with VARNISHSRC ?
+AS_CASE(["$Varnish_Version_MAJOR"],
+	[4], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcl/vmodtool.py'])],
+	[3], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvmod_std/vmod.py'])],
+	     [AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
 )
 
 # Check that varnishtest is built in the varnish source directory
 AC_CHECK_FILE([$VARNISHSRC/bin/varnishtest/varnishtest],
 	[],
-	[AC_MSG_FAILURE([Can't find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
+	[AC_MSG_FAILURE([Could not find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
 )
 
 # Check vanish ABI version
 AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 	[
 		AC_MSG_CHECKING([varnish ABI version])
-		[VMOD_ABI_Version=`$EGREP -o '[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+' $VARNISHSRC/include/vmod_abi.h`]
+		[VMOD_ABI_Version=`cut -d ' ' -f 4 "$VARNISHSRC/include/vmod_abi.h"`]
 		AC_MSG_RESULT([$VMOD_ABI_Version])
 	],
 	[
 		[VMOD_ABI_Version=3.0.0]
-		AC_MSG_NOTICE([Can't find "$VARNISHSRC/include/vmod_abi.h". Assuming varnish 3.0.0 ABI version])
+		AC_MSG_NOTICE([Could not find "$VARNISHSRC/include/vmod_abi.h". Assuming varnish 3.0.0 ABI version])
 	]
 )
 
@@ -111,8 +120,10 @@ AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 [VMOD_ABI_Version_MINOR=`echo $VMOD_ABI_Version | $EGREP -o '\.[[:digit:]]+\.' | $SED 's/\.//g'`]
 [VMOD_ABI_Version_PATCH=`echo $VMOD_ABI_Version | $EGREP -o '[[:digit:]]+$'`]
 
-AS_IF([test $VMOD_ABI_Version_MINOR -gt 0 -o $VMOD_ABI_Version_PATCH -ge 3],
-	[AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])]
+AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
+	[*trunk*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
+	[*3.0.3*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])],
+	           [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_0])]
 )
 
 # vmod installation dir
@@ -120,7 +131,7 @@ AC_ARG_VAR([VMODDIR], [vmod installation directory @<:@LIBDIR/varnish/vmods@:>@]
 if test "x$VMODDIR" = x; then
 	VMODDIR=`pkg-config --variable=vmoddir varnishapi`
 	if test "x$VMODDIR" = x; then
-		AC_MSG_FAILURE([Can't determine vmod installation directory])
+		AC_MSG_FAILURE([Could not determine vmod installation directory])
 	fi
 fi
 

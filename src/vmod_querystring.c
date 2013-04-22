@@ -37,10 +37,9 @@
 
 #include "vrt.h"
 #include "vre.h"
-#include "bin/varnishd/cache.h"
+#include "vmod_querystring.h"
 
 #include "vcc_if.h"
-#include "vmod_querystring.h"
 
 /* End Of Query Parameter */
 #define EOQP(c) (*c == '\0' || *c == '&')
@@ -64,13 +63,13 @@ void *mempcpy(void *dst, const void *src, size_t len)
 #endif
 
 static const char *
-clean_uri_querystring(struct sess *sp, const char *uri, const char *query_string)
+clean_uri_querystring(vmod_request *sp, const char *uri, const char *query_string)
 {
-	struct ws *ws = sp->wrk->ws;
+	struct ws *WS = sp->wrk->WS;
 	int query_string_position = query_string - uri;
-	char *clean_uri = WS_Alloc(ws, query_string_position);
+	char *clean_uri = WS_Alloc(WS, query_string_position);
 
-	WS_Assert(ws);
+	WS_Assert(WS);
 
 	if (clean_uri == NULL) {
 		return uri;
@@ -83,7 +82,7 @@ clean_uri_querystring(struct sess *sp, const char *uri, const char *query_string
 }
 
 const char *
-vmod_clean(struct sess *sp, const char *uri)
+vmod_clean(vmod_request *sp, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -98,7 +97,7 @@ vmod_clean(struct sess *sp, const char *uri)
 }
 
 const char *
-vmod_remove(struct sess *sp, const char *uri)
+vmod_remove(vmod_request *sp, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -130,7 +129,7 @@ compare_params(const char* a, const char* b) {
 }
 
 const char *
-vmod_sort(struct sess *sp, const char *uri)
+vmod_sort(vmod_request *sp, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -146,19 +145,19 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 
 	/* reserve some memory */
-	struct ws *ws = sp->wrk->ws;
-	char *snapshot = WS_Snapshot(ws);
-	char *sorted_uri = WS_Alloc(ws, strlen(uri) + 1);
+	struct ws *WS = sp->wrk->WS;
+	char *snapshot = WS_Snapshot(WS);
+	char *sorted_uri = WS_Alloc(WS, strlen(uri) + 1);
 
-	WS_Assert(ws);
+	WS_Assert(WS);
 
 	if (sorted_uri == NULL) {
-		WS_Reset(ws, snapshot);
+		WS_Reset(WS, snapshot);
 		return uri;
 	}
 
-	unsigned available = WS_Reserve(ws, 0);
-	struct query_param *params = (struct query_param*) ws->f;
+	unsigned available = WS_Reserve(WS, 0);
+	struct query_param *params = (struct query_param*) WS->f;
 	struct query_param *end = params + available;
 
 	/* initialize the params array */
@@ -169,8 +168,8 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 
 	if (&params[head + 1] > end) {
-		WS_Release(ws, 0);
-		WS_Reset(ws, snapshot);
+		WS_Release(WS, 0);
+		WS_Reset(WS, snapshot);
 		return uri;
 	}
 
@@ -218,8 +217,8 @@ vmod_sort(struct sess *sp, const char *uri)
 	}
 
 	if (sorted == true || &params[tail+1] >= end || tail - head < 1) {
-		WS_Release(ws, 0);
-		WS_Reset(ws, snapshot);
+		WS_Release(WS, 0);
+		WS_Reset(WS, snapshot);
 		return uri;
 	}
 
@@ -245,7 +244,7 @@ vmod_sort(struct sess *sp, const char *uri)
 
 	*position = '\0';
 
-	WS_Release(ws, 0);
+	WS_Release(WS, 0);
 	return sorted_uri;
 }
 
@@ -278,7 +277,7 @@ append_string(char **begin, const char *end, const char *string, int length)
 }
 
 const char *
-vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
+vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -293,8 +292,8 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 		return clean_uri_querystring(sp, uri, query_string);
 	}
 
-	unsigned available = WS_Reserve(sp->wrk->ws, 0);
-	char *begin = sp->wrk->ws->f;
+	unsigned available = WS_Reserve(sp->wrk->WS, 0);
+	char *begin = sp->wrk->WS->f;
 	char *end = &begin[available];
 
 	append_string(&begin, end, uri, query_string - uri + 1);
@@ -334,24 +333,24 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 	begin++;
 
 	if (begin > end) {
-		WS_Release(sp->wrk->ws, 0);
+		WS_Release(sp->wrk->WS, 0);
 		return uri;
 	}
 
 	end = begin;
-	begin = sp->wrk->ws->f;
-	WS_Release(sp->wrk->ws, end - begin);
+	begin = sp->wrk->WS->f;
+	WS_Release(sp->wrk->WS, end - begin);
 	return begin;
 }
 
 const char *
-vmod_filtersep(struct sess *sp)
+vmod_filtersep(vmod_request *sp)
 {
 	return NULL;
 }
 
 static bool
-IS_PARAM_REGFILTERED(struct sess *sp, const char *param, int length, void *re)
+IS_PARAM_REGFILTERED(vmod_request *sp, const char *param, int length, void *re)
 {
 	if (length == 0) {
 		return true;
@@ -377,7 +376,7 @@ compile_regex(const char *regex)
 }
 
 const char *
-vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
+vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -397,8 +396,8 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 		return uri;
 	}
 
-	unsigned available = WS_Reserve(sp->wrk->ws, 0);
-	char *begin = sp->wrk->ws->f;
+	unsigned available = WS_Reserve(sp->wrk->WS, 0);
+	char *begin = sp->wrk->WS->f;
 	char *end = &begin[available];
 
 	append_string(&begin, end, uri, query_string - uri + 1);
@@ -437,13 +436,13 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 	begin++;
 
 	if (begin > end) {
-		WS_Release(sp->wrk->ws, 0);
+		WS_Release(sp->wrk->WS, 0);
 		return uri;
 	}
 
 	end = begin;
-	begin = sp->wrk->ws->f;
-	WS_Release(sp->wrk->ws, end - begin);
+	begin = sp->wrk->WS->f;
+	WS_Release(sp->wrk->WS, end - begin);
 	return begin;
 }
 

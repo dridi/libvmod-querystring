@@ -31,22 +31,58 @@
  */
 
 /*
- * This file defines macros that serve as API in order to cross-compile against
+ * This file manages API changes in order to cross-compile against
  * different versions of Varnish:
+ *
+ * * Varnish 4.0.0
+ * - cache.h has been moved
+ * - struct sess renamed to req
+ * - worker.ws renamed worker.aws
  *
  * * Varnish 3.0.3
  * - IS_PARAM_REGFILTERED(sp, param, length, re)
  * - VRT_RE_MATCH(sp, p, re)
  */
 
+#ifdef HAVE_VARNISH_4_0_0
 
-#ifdef HAVE_VARNISH_3_0_3
+#include "cache/cache.h"
+
+typedef struct req vmod_request;
+
+#define WS aws
 
 /* VRT_re_match needs a pointer to the session */
 #define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(sp, param, length, re)
 #define VRT_RE_MATCH(sp, p, re) VRT_re_match(sp, p, re)
 
-#else
+#endif
+
+/* ------------------------------------------------------------------- */
+
+#ifdef HAVE_VARNISH_3_0_3
+
+#include "cache.h"
+
+typedef struct sess vmod_request;
+
+#define WS ws
+
+/* VRT_re_match needs a pointer to the session */
+#define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(sp, param, length, re)
+#define VRT_RE_MATCH(sp, p, re) VRT_re_match(sp, p, re)
+
+#endif
+
+/* ------------------------------------------------------------------- */
+
+#ifdef HAVE_VARNISH_3_0_0
+
+#include "cache.h"
+
+typedef struct sess vmod_request;
+
+#define WS ws
 
 /* Tested with every versions of Varnish from 3.0.0 to 3.0.2 */
 #define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(param, length, re)

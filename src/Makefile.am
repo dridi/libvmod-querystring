@@ -31,7 +31,7 @@
 #
 
 CFLAGS = @DEFINE_ABI@
-INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)
+INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)/bin/varnishd -I$(VARNISHSRC)
 
 vmoddir = $(VMODDIR)
 vmod_LTLIBRARIES = libvmod_querystring.la
@@ -43,8 +43,8 @@ libvmod_querystring_la_SOURCES = \
 	vcc_if.h \
 	vmod_querystring.c
 
-vcc_if.c vcc_if.h: $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_querystring.vcc
-	@PYTHON@ $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_querystring.vcc
+vcc_if.c vcc_if.h: vmod_querystring.vcc
+	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring.vcc
 
 VMOD_TESTS = tests/*.vtc
 .PHONY: $(VMOD_TESTS)
