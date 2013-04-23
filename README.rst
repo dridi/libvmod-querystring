@@ -67,7 +67,9 @@ Return value
 Description
    Returns the given URI with its query-string removed if empty
 Example
-   set req.url = querystring.clean(req.url);
+   .. sourcecode::
+
+      set req.url = querystring.clean(req.url);
 
 remove
 ------
@@ -79,7 +81,9 @@ Return value
 Description
    Returns the given URI with its query-string removed
 Example
-   set req.url = querystring.remove(req.url);
+   .. sourcecode::
+
+      set req.url = querystring.remove(req.url);
 
 sort
 ----
@@ -91,7 +95,9 @@ Return value
 Description
    Returns the given URI with its query-string sorted
 Example
-   set req.url = querystring.sort(req.url);
+   .. sourcecode::
+
+      set req.url = querystring.sort(req.url);
 
 filter
 ------
@@ -130,7 +136,9 @@ Return value
 Description
    Returns the given URI without the parameters matching a regular expression
 Example
-   set req.url = querystring.regfilter(req.url, "utm\_.*");
+   .. sourcecode::
+
+      set req.url = querystring.regfilter(req.url, "utm\_.*");
 
 EXAMPLE
 =======
