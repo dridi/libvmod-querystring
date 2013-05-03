@@ -56,8 +56,15 @@ typedef const struct vrt_ctx re_ctx;
 
 #include "cache.h"
 
-#ifdef HAVE_VARNISH_3_0_3 || HAVE_VARNISH_3_0_4
+#ifdef HAVE_VARNISH_3_0_3
 #define QS_NEED_RE_CTX
+#endif
+
+#ifdef HAVE_VARNISH_3_0_4
+#define QS_NEED_RE_CTX
+#endif
+
+#ifdef QS_NEED_RE_CTX
 typedef struct sess re_ctx;
 #endif
 
