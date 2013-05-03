@@ -44,14 +44,7 @@
 /* End Of Query Parameter */
 #define EOQP(c) (*c == '\0' || *c == '&')
 
-/* End Of Query Parameter */
-#define EOQP(c) (*c == '\0' || *c == '&')
-
-int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
-{
-	return 0;
-}
+/***********************************************************************/
 
 #ifndef HAVE_MEMPCPY
 
@@ -62,14 +55,20 @@ void *mempcpy(void *dst, const void *src, size_t len)
 
 #endif
 
-static const char *
-clean_uri_querystring(vmod_request *sp, const char *uri, const char *query_string)
-{
-	struct ws *WS = sp->wrk->WS;
-	int query_string_position = query_string - uri;
-	char *clean_uri = WS_Alloc(WS, query_string_position);
+/***********************************************************************
+ * The static functions below contain the actual implementation of the
+ * module with the least possible coupling to Varnish. This helps keep a
+ * single code base for all Varnish versions.
+ */
 
-	WS_Assert(WS);
+static const char *
+truncate_querystring(struct ws *ws, const char *uri, const char *query_string)
+{
+	int query_string_position;
+	char *clean_uri;
+
+	query_string_position = query_string - uri;
+	clean_uri = WS_Alloc(ws, query_string_position);
 
 	if (clean_uri == NULL) {
 		return uri;
@@ -81,8 +80,8 @@ clean_uri_querystring(vmod_request *sp, const char *uri, const char *query_strin
 	return clean_uri;
 }
 
-const char *
-vmod_clean(vmod_request *sp, const char *uri)
+static const char *
+clean_uri(struct ws *ws, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -93,11 +92,13 @@ vmod_clean(vmod_request *sp, const char *uri)
 		return uri;
 	}
 
-	return clean_uri_querystring(sp, uri, query_string);
+	// TODO clean empty params
+
+	return truncate_querystring(ws, uri, query_string);
 }
 
-const char *
-vmod_remove(vmod_request *sp, const char *uri)
+static const char *
+remove_querystring(struct ws *ws, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -108,7 +109,7 @@ vmod_remove(vmod_request *sp, const char *uri)
 		return uri;
 	}
 
-	return clean_uri_querystring(sp, uri, query_string);
+	return truncate_querystring(ws, uri, query_string);
 }
 
 struct query_param {
@@ -117,7 +118,8 @@ struct query_param {
 };
 
 static int
-compare_params(const char* a, const char* b) {
+compare_params(const char* a, const char* b)
+{
 	while (*a == *b) {
 		if (EOQP(a) || EOQP(b)) {
 			return 0;
@@ -128,8 +130,8 @@ compare_params(const char* a, const char* b) {
 	return *a - *b;
 }
 
-const char *
-vmod_sort(vmod_request *sp, const char *uri)
+static const char *
+sort_querystring(struct ws *ws, const char *uri)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -141,23 +143,22 @@ vmod_sort(vmod_request *sp, const char *uri)
 	}
 
 	if (query_string[1] == '\0') {
-		return clean_uri_querystring(sp, uri, query_string);
+		return truncate_querystring(ws, uri, query_string);
 	}
 
 	/* reserve some memory */
-	struct ws *WS = sp->wrk->WS;
-	char *snapshot = WS_Snapshot(WS);
-	char *sorted_uri = WS_Alloc(WS, strlen(uri) + 1);
+	char *snapshot = WS_Snapshot(ws);
+	char *sorted_uri = WS_Alloc(ws, strlen(uri) + 1);
 
-	WS_Assert(WS);
+	WS_Assert(ws);
 
 	if (sorted_uri == NULL) {
-		WS_Reset(WS, snapshot);
+		WS_Reset(ws, snapshot);
 		return uri;
 	}
 
-	unsigned available = WS_Reserve(WS, 0);
-	struct query_param *params = (struct query_param*) WS->f;
+	unsigned available = WS_Reserve(ws, 0);
+	struct query_param *params = (struct query_param*) ws->f;
 	struct query_param *end = params + available;
 
 	/* initialize the params array */
@@ -168,8 +169,8 @@ vmod_sort(vmod_request *sp, const char *uri)
 	}
 
 	if (&params[head + 1] > end) {
-		WS_Release(WS, 0);
-		WS_Reset(WS, snapshot);
+		WS_Release(ws, 0);
+		WS_Reset(ws, snapshot);
 		return uri;
 	}
 
@@ -217,8 +218,8 @@ vmod_sort(vmod_request *sp, const char *uri)
 	}
 
 	if (sorted == true || &params[tail+1] >= end || tail - head < 1) {
-		WS_Release(WS, 0);
-		WS_Reset(WS, snapshot);
+		WS_Release(ws, 0);
+		WS_Reset(ws, snapshot);
 		return uri;
 	}
 
@@ -244,7 +245,7 @@ vmod_sort(vmod_request *sp, const char *uri)
 
 	*position = '\0';
 
-	WS_Release(WS, 0);
+	WS_Release(ws, 0);
 	return sorted_uri;
 }
 
@@ -276,8 +277,8 @@ append_string(char **begin, const char *end, const char *string, int length)
 	*begin += length;
 }
 
-const char *
-vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
+static const char *
+filter_querystring(struct ws *ws, const char *uri, const char *params, va_list ap)
 {
 	if (uri == NULL) {
 		return NULL;
@@ -289,11 +290,11 @@ vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
 	}
 
 	if (query_string[1] == '\0') {
-		return clean_uri_querystring(sp, uri, query_string);
+		return truncate_querystring(ws, uri, query_string);
 	}
 
-	unsigned available = WS_Reserve(sp->wrk->WS, 0);
-	char *begin = sp->wrk->WS->f;
+	unsigned available = WS_Reserve(ws, 0);
+	char *begin = ws->f;
 	char *end = &begin[available];
 
 	append_string(&begin, end, uri, query_string - uri + 1);
@@ -313,8 +314,6 @@ vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
 		int param_name_length =
 			(equal_position ? equal_position : current_position) - param_position;
 
-		va_list ap;
-		va_start(ap, params);
 		if ( ! is_param_filtered(param_position, param_name_length, params, ap) ) {
 			append_string(&begin, end, param_position, current_position - param_position);
 			if (*current_position == '&') {
@@ -322,7 +321,6 @@ vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
 				begin++;
 			}
 		}
-		va_end(ap);
 	}
 
 	if (begin < end) {
@@ -333,24 +331,24 @@ vmod_filter(vmod_request *sp, const char *uri, const char *params, ...)
 	begin++;
 
 	if (begin > end) {
-		WS_Release(sp->wrk->WS, 0);
+		WS_Release(ws, 0);
 		return uri;
 	}
 
 	end = begin;
-	begin = sp->wrk->WS->f;
-	WS_Release(sp->wrk->WS, end - begin);
+	begin = ws->f;
+	WS_Release(ws, end - begin);
 	return begin;
 }
 
-const char *
-vmod_filtersep(vmod_request *sp)
-{
-	return NULL;
-}
+
 
 static bool
-IS_PARAM_REGFILTERED(vmod_request *sp, const char *param, int length, void *re)
+#ifdef QS_NEED_RE_CTX
+is_param_regfiltered(const char *param, int length, void *re, re_ctx *re_ctx)
+#else
+is_param_regfiltered(const char *param, int length, void *re)
+#endif
 {
 	if (length == 0) {
 		return true;
@@ -361,7 +359,11 @@ IS_PARAM_REGFILTERED(vmod_request *sp, const char *param, int length, void *re)
 	memcpy(p, param, length);
 	p[length + 1] = '\0';
 
-	return (bool) VRT_RE_MATCH(sp, p, re);
+#ifdef QS_NEED_RE_CTX
+	return (bool) VRT_re_match(re_ctx, p, re);
+#else
+	return (bool) VRT_re_match(p, re);
+#endif
 }
 
 static void *
@@ -375,8 +377,12 @@ compile_regex(const char *regex)
 	return re;
 }
 
-const char *
-vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
+static const char *
+#ifdef QS_NEED_RE_CTX
+regfilter_querystring(struct ws *ws, const char *uri, const char *regex, re_ctx *re_ctx)
+#else
+regfilter_querystring(struct ws *ws, const char *uri, const char *regex)
+#endif
 {
 	if (uri == NULL) {
 		return NULL;
@@ -388,7 +394,7 @@ vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
 	}
 
 	if (query_string[1] == '\0') {
-		return clean_uri_querystring(sp, uri, query_string);
+		return truncate_querystring(ws, uri, query_string);
 	}
 
 	void *re = compile_regex(regex);
@@ -396,8 +402,8 @@ vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
 		return uri;
 	}
 
-	unsigned available = WS_Reserve(sp->wrk->WS, 0);
-	char *begin = sp->wrk->WS->f;
+	unsigned available = WS_Reserve(ws, 0);
+	char *begin = ws->f;
 	char *end = &begin[available];
 
 	append_string(&begin, end, uri, query_string - uri + 1);
@@ -417,7 +423,11 @@ vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
 		int param_name_length =
 			(equal_position ? equal_position : current_position) - param_position;
 
-		if ( ! IS_PARAM_REGFILTERED(sp, param_position, param_name_length, re) ) {
+#ifdef QS_NEED_RE_CTX
+		if ( ! is_param_regfiltered(param_position, param_name_length, re, re_ctx) ) {
+#else
+		if ( ! is_param_regfiltered(param_position, param_name_length, re) ) {
+#endif
 			append_string(&begin, end, param_position, current_position - param_position);
 			if (*current_position == '&') {
 				*begin = '&';
@@ -436,13 +446,131 @@ vmod_regfilter(vmod_request *sp, const char *uri, const char *regex)
 	begin++;
 
 	if (begin > end) {
-		WS_Release(sp->wrk->WS, 0);
+		WS_Release(ws, 0);
 		return uri;
 	}
 
 	end = begin;
-	begin = sp->wrk->WS->f;
-	WS_Release(sp->wrk->WS, end - begin);
+	begin = ws->f;
+	WS_Release(ws, end - begin);
 	return begin;
 }
+
+/***********************************************************************
+ * Below are the functions that will actually be linked by Varnish.
+ */
+
+#if VARNISH_MAJOR == 3
+
+const char *
+vmod_clean(struct sess *sp, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	return clean_uri(sp->ws, uri);
+}
+
+const char *
+vmod_remove(struct sess *sp, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	return remove_querystring(sp->ws, uri);
+}
+
+const char *
+vmod_sort(struct sess *sp, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	return sort_querystring(sp->ws, uri);
+}
+
+const char *
+vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
+{
+	va_list ap;
+	const char *filtered_uri;
+
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+
+	va_start(ap, params);
+	filtered_uri = filter_querystring(sp->ws, uri, params, ap);
+	va_end(ap);
+
+	return filtered_uri;
+}
+
+const char *
+vmod_filtersep(struct sess *sp)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	return NULL;
+}
+
+const char *
+vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+#ifdef QS_NEED_RE_CTX
+	return regfilter_querystring(sp->ws, uri, regex, sp);
+#else
+	return regfilter_querystring(sp->ws, uri, regex);
+#endif
+}
+
+#endif
+
+/***********************************************************************/
+
+#if VARNISH_MAJOR == 4
+
+const char *
+vmod_clean(const struct vrt_ctx *ctx, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return clean_uri(ctx->ws, uri);
+}
+
+const char *
+vmod_remove(const struct vrt_ctx *ctx, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return remove_querystring(ctx->ws, uri);
+}
+
+const char *
+vmod_sort(const struct vrt_ctx *ctx, const char *uri)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return sort_querystring(ctx->ws, uri);
+}
+
+const char *
+vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
+{
+	va_list ap;
+	const char *filtered_uri;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+
+	va_start(ap, params);
+	filtered_uri = filter_querystring(ctx->ws, uri, params, ap);
+	va_end(ap);
+
+	return filtered_uri;
+}
+
+const char *
+vmod_filtersep(const struct vrt_ctx *ctx)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return NULL;
+}
+
+const char *
+vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return regfilter_querystring(ctx->ws, uri, regex, ctx);
+}
+
+#endif
 

@@ -1,5 +1,4 @@
 Module querystring
-Init init_function
 Function STRING clean(STRING)
 Function STRING remove(STRING)
 Function STRING sort(STRING)

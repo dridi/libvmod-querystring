@@ -90,6 +90,8 @@ Varnish_Version_MAJOR=
 AC_CHECK_FILE([$VARNISHSRC/lib/libvmod_std/vmod.py], [Varnish_Version_MAJOR=3])
 AC_CHECK_FILE([$VARNISHSRC/lib/libvcl/vmodtool.py],  [Varnish_Version_MAJOR=4])
 
+AC_SUBST([DEFINE_MAJOR], [-DVARNISH_MAJOR=$Varnish_Version_MAJOR])
+
 # Can we build a VMOD with VARNISHSRC ?
 AS_CASE(["$Varnish_Version_MAJOR"],
 	[4], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcl/vmodtool.py'])],

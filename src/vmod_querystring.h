@@ -28,65 +28,38 @@
  * STRICT  LIABILITY,  OR  TORT (INCLUDING  NEGLIGENCE  OR  OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
+ *
+ *
  * This file manages API changes in order to cross-compile against
  * different versions of Varnish:
  *
  * * Varnish 4.0.0
  * - cache.h has been moved
- * - struct sess renamed to req
- * - worker.ws renamed worker.aws
+ * - provides vtr_ctx instead of sess
  *
  * * Varnish 3.0.3
- * - IS_PARAM_REGFILTERED(sp, param, length, re)
- * - VRT_RE_MATCH(sp, p, re)
+ * - VRT_re_match needs a sess pointer
  */
 
-#ifdef HAVE_VARNISH_4_0_0
+#if VARNISH_MAJOR == 4
 
 #include "cache/cache.h"
 
-typedef struct req vmod_request;
+#define QS_NEED_RE_CTX
+typedef const struct vrt_ctx re_ctx;
 
-#define WS aws
-
-/* VRT_re_match needs a pointer to the session */
-#define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(sp, param, length, re)
-#define VRT_RE_MATCH(sp, p, re) VRT_re_match(sp, p, re)
-
-#endif
+#endif // VARNISH_MAJOR == 4
 
 /* ------------------------------------------------------------------- */
 
-#ifdef HAVE_VARNISH_3_0_3
+#if VARNISH_MAJOR == 3
 
 #include "cache.h"
 
-typedef struct sess vmod_request;
-
-#define WS ws
-
-/* VRT_re_match needs a pointer to the session */
-#define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(sp, param, length, re)
-#define VRT_RE_MATCH(sp, p, re) VRT_re_match(sp, p, re)
-
+#ifdef HAVE_VARNISH_3_0_3 || HAVE_VARNISH_3_0_4
+#define QS_NEED_RE_CTX
+typedef struct sess re_ctx;
 #endif
 
-/* ------------------------------------------------------------------- */
-
-#ifdef HAVE_VARNISH_3_0_0
-
-#include "cache.h"
-
-typedef struct sess vmod_request;
-
-#define WS ws
-
-/* Tested with every versions of Varnish from 3.0.0 to 3.0.2 */
-#define IS_PARAM_REGFILTERED(sp, param, length, re) is_param_regfiltered(param, length, re)
-#define VRT_RE_MATCH(sp, p, re) VRT_re_match(p, re)
-
-#endif
+#endif // VARNISH_MAJOR == 3
 
