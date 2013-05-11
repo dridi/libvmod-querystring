@@ -3,14 +3,17 @@
 
 
 Summary: QueryString VMOD for Varnish
-Name:    vmod-querystring
+Name:    varnish-vmod-querystring
 Version: 0.2
-Release: 0.gitb3868eb.v%{VARNISHVER}%{?dist}
-Group:   System Environment/Librairies
+Release: 0.wip.varnish%{VARNISHVER}%{?dist}
+Group:   System Environment/Libraries
 URL:     https://www.varnish-cache.org/vmod/querystring
 License: BSD
+
+# VMODs need a varnish build from the source, this is by design
 Source0: libvmod-querystring-%{version}.tar.gz
 Source1: http://repo.varnish-cache.org/source/varnish-%{VARNISHVER}.tar.gz
+
 # fedora patches for varnish 3.0.3
 Patch1:  varnish.no_pcre_jit.patch
 Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
@@ -18,11 +21,11 @@ Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
 BuildRoot:     %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires:      varnish = %{VARNISHVER}
 BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel
-BuildRequires: python-docutils
+BuildRequires: autoconf automake libtool python-docutils
 
 
 %description
-Varnish multipurpose vmod for URI query-string manipulation. Can be used to
+Varnish multipurpose module for URI query-string manipulation. Can be used to
 normalize for instance request URLs or Location response headers in various
 ways. It is recommended to at least clean incoming request URLs (removing empty
 query-strings), all other functions do the cleaning.
