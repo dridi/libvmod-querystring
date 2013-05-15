@@ -35,11 +35,25 @@
  *
  * * Varnish 4.0.0
  * - cache.h has been moved
- * - provides vtr_ctx instead of sess
+ * - provides vrt_ctx instead of sess
  *
  * * Varnish 3.0.3
  * - VRT_re_match needs a sess pointer
  */
+
+#if VARNISH_MAJOR == 3
+
+#include "cache.h"
+
+#if defined HAVE_VARNISH_3_0_3 || defined HAVE_VARNISH_3_0_4
+#define QS_NEED_RE_CTX
+#endif
+
+typedef struct sess re_ctx;
+
+#endif // VARNISH_MAJOR == 3
+
+/* ------------------------------------------------------------------- */
 
 #if VARNISH_MAJOR == 4
 
@@ -52,21 +66,33 @@ typedef const struct vrt_ctx re_ctx;
 
 /* ------------------------------------------------------------------- */
 
-#if VARNISH_MAJOR == 3
+struct query_param {
+	const char *value;
+	short length;
+};
 
-#include "cache.h"
+enum filter_type {clean, filter, regfilter};
 
-#ifdef HAVE_VARNISH_3_0_3
-#define QS_NEED_RE_CTX
-#endif
+struct filter_params {
+	const char *params;
+	va_list    ap;
+};
 
-#ifdef HAVE_VARNISH_3_0_4
-#define QS_NEED_RE_CTX
-#endif
+struct regfilter_params {
+	const char *regex;
+	void       *re;
+	re_ctx     *re_ctx;
+};
 
-#ifdef QS_NEED_RE_CTX
-typedef struct sess re_ctx;
-#endif
-
-#endif // VARNISH_MAJOR == 3
+struct filter_context {
+	enum filter_type type;
+	struct ws        *ws;
+	const char       *uri;
+	const char       *query_string;
+	union {
+		struct filter_params    filter;
+		struct regfilter_params regfilter;
+	} params;
+	bool (*is_filtered) (const char*, int, struct filter_context*);
+};
 

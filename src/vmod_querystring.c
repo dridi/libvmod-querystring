@@ -65,36 +65,19 @@ static const char *
 truncate_querystring(struct ws *ws, const char *uri, const char *query_string)
 {
 	int query_string_position;
-	char *clean_uri;
+	char *truncated_uri;
 
 	query_string_position = query_string - uri;
-	clean_uri = WS_Alloc(ws, query_string_position);
+	truncated_uri = WS_Alloc(ws, query_string_position);
 
-	if (clean_uri == NULL) {
+	if (truncated_uri == NULL) {
 		return uri;
 	}
 
-	memcpy(clean_uri, uri, query_string_position);
-	clean_uri[query_string_position] = '\0';
+	memcpy(truncated_uri, uri, query_string_position);
+	truncated_uri[query_string_position] = '\0';
 
-	return clean_uri;
-}
-
-static const char *
-clean_uri(struct ws *ws, const char *uri)
-{
-	if (uri == NULL) {
-		return NULL;
-	}
-
-	char *query_string = strchr(uri, '?');
-	if (query_string == NULL || query_string[1] != '\0') {
-		return uri;
-	}
-
-	// TODO clean empty params
-
-	return truncate_querystring(ws, uri, query_string);
+	return truncated_uri;
 }
 
 static const char *
@@ -111,11 +94,6 @@ remove_querystring(struct ws *ws, const char *uri)
 
 	return truncate_querystring(ws, uri, query_string);
 }
-
-struct query_param {
-	const char *value;
-	short length;
-};
 
 static int
 compare_params(const char* a, const char* b)
@@ -249,25 +227,6 @@ sort_querystring(struct ws *ws, const char *uri)
 	return sorted_uri;
 }
 
-static bool
-is_param_filtered(const char *param, int length, const char *params, va_list ap)
-{
-	if (length == 0) {
-		return true;
-	}
-
-	const char *p = params;
-
-	while (p != vrt_magic_string_end) {
-		if (p != NULL && strlen(p) == length && strncmp(param, p, length) == 0) {
-			return true;
-		}
-		p = va_arg(ap, const char *);
-	}
-
-	return false;
-}
-
 static void
 append_string(char **begin, const char *end, const char *string, int length)
 {
@@ -277,78 +236,36 @@ append_string(char **begin, const char *end, const char *string, int length)
 	*begin += length;
 }
 
-static const char *
-filter_querystring(struct ws *ws, const char *uri, const char *params, va_list ap)
+static bool
+is_param_cleaned(const char *param, int length, struct filter_context *context)
 {
-	if (uri == NULL) {
-		return NULL;
-	}
-
-	char *query_string = strchr(uri, '?');
-	if (query_string == NULL) {
-		return uri;
-	}
-
-	if (query_string[1] == '\0') {
-		return truncate_querystring(ws, uri, query_string);
-	}
-
-	unsigned available = WS_Reserve(ws, 0);
-	char *begin = ws->f;
-	char *end = &begin[available];
-
-	append_string(&begin, end, uri, query_string - uri + 1);
-
-	char *current_position = query_string;
-	while (*current_position != '\0' && begin < end) {
-		const char *param_position = ++current_position;
-		const char *equal_position = NULL;
-
-		while (*current_position != '\0' && *current_position != '&') {
-			if (equal_position == NULL && *current_position == '=') {
-				equal_position = current_position;
-			}
-			current_position++;
-		}
-
-		int param_name_length =
-			(equal_position ? equal_position : current_position) - param_position;
-
-		if ( ! is_param_filtered(param_position, param_name_length, params, ap) ) {
-			append_string(&begin, end, param_position, current_position - param_position);
-			if (*current_position == '&') {
-				*begin = '&';
-				begin++;
-			}
-		}
-	}
-
-	if (begin < end) {
-		begin -= (begin[-1] == '&');
-		*begin = '\0';
-	}
-
-	begin++;
-
-	if (begin > end) {
-		WS_Release(ws, 0);
-		return uri;
-	}
-
-	end = begin;
-	begin = ws->f;
-	WS_Release(ws, end - begin);
-	return begin;
+	return length == 0;
 }
 
+static bool
+is_param_filtered(const char *param, int length, struct filter_context *context)
+{
+	va_list aq;
+	if (length == 0) {
+		return true;
+	}
 
+	const char *p = context->params.filter.params;
+
+	va_copy(aq, context->params.filter.ap);
+	while (p != vrt_magic_string_end) {
+		if (p != NULL && strlen(p) == length && strncmp(param, p, length) == 0) {
+			return true;
+		}
+		p = va_arg(aq, const char*);
+	}
+	va_end(aq);
+
+	return false;
+}
 
 static bool
-#ifdef QS_NEED_RE_CTX
-is_param_regfiltered(const char *param, int length, void *re, re_ctx *re_ctx)
-#else
-is_param_regfiltered(const char *param, int length, void *re)
-#endif
+is_param_regfiltered(const char *param, int length, struct filter_context *context)
 {
 	if (length == 0) {
 		return true;
@@ -360,9 +277,10 @@ is_param_regfiltered(const char *param, int length, void *re)
 	p[length + 1] = '\0';
 
 #ifdef QS_NEED_RE_CTX
-	return (bool) VRT_re_match(re_ctx, p, re);
+	return (bool) VRT_re_match(context->params.regfilter.re_ctx, p,
+	                           context->params.regfilter.re);
 #else
-	return (bool) VRT_re_match(p, re);
+	return (bool) VRT_re_match(p, context->params.regfilter.re);
 #endif
 }
 
@@ -377,83 +295,96 @@ compile_regex(const char *regex)
 	return re;
 }
 
-static const char *
-#ifdef QS_NEED_RE_CTX
-regfilter_querystring(struct ws *ws, const char *uri, const char *regex, re_ctx *re_ctx)
-#else
-regfilter_querystring(struct ws *ws, const char *uri, const char *regex)
-#endif
+static const char*
+apply_filter(struct filter_context *context)
 {
-	if (uri == NULL) {
-		return NULL;
-	}
-
-	char *query_string = strchr(uri, '?');
-	if (query_string == NULL) {
-		return uri;
-	}
-
-	if (query_string[1] == '\0') {
-		return truncate_querystring(ws, uri, query_string);
-	}
-
-	void *re = compile_regex(regex);
-	if (re == NULL) {
-		return uri;
-	}
-
-	unsigned available = WS_Reserve(ws, 0);
-	char *begin = ws->f;
+	const char *params = context->params.filter.params;
+	unsigned available = WS_Reserve(context->ws, 0);
+	char *begin = context->ws->f;
 	char *end = &begin[available];
+	const char *cursor = context->query_string;
 
-	append_string(&begin, end, uri, query_string - uri + 1);
+	append_string(&begin, end, context->uri, cursor - context->uri + 1);
 
-	char *current_position = query_string;
-	while (*current_position != '\0' && begin < end) {
-		const char *param_position = ++current_position;
+	while (*cursor != '\0' && begin < end) {
+		const char *param_position = ++cursor;
 		const char *equal_position = NULL;
 
-		while (*current_position != '\0' && *current_position != '&') {
-			if (equal_position == NULL && *current_position == '=') {
-				equal_position = current_position;
+		while (*cursor != '\0' && *cursor != '&') {
+			if (equal_position == NULL && *cursor == '=') {
+				equal_position = cursor;
 			}
-			current_position++;
+			cursor++;
 		}
 
 		int param_name_length =
-			(equal_position ? equal_position : current_position) - param_position;
+			(equal_position ? equal_position : cursor) - param_position;
 
-#ifdef QS_NEED_RE_CTX
-		if ( ! is_param_regfiltered(param_position, param_name_length, re, re_ctx) ) {
-#else
-		if ( ! is_param_regfiltered(param_position, param_name_length, re) ) {
-#endif
-			append_string(&begin, end, param_position, current_position - param_position);
-			if (*current_position == '&') {
+		if ( ! context->is_filtered(param_position, param_name_length, context) ) {
+			append_string(&begin, end, param_position, cursor - param_position);
+			if (*cursor == '&') {
 				*begin = '&';
 				begin++;
 			}
 		}
 	}
 
-	VRT_re_fini(re);
-
 	if (begin < end) {
 		begin -= (begin[-1] == '&');
+		begin -= (begin[-1] == '?');
 		*begin = '\0';
 	}
 
 	begin++;
 
 	if (begin > end) {
-		WS_Release(ws, 0);
-		return uri;
+		WS_Release(context->ws, 0);
+		return context->uri;
 	}
 
 	end = begin;
-	begin = ws->f;
-	WS_Release(ws, end - begin);
+	begin = context->ws->f;
+	WS_Release(context->ws, end - begin);
 	return begin;
+}
+
+static const char *
+filter_querystring(struct filter_context *context)
+{
+	const char *uri = context->uri;
+	const char *query_string;
+	const char *filtered_uri;
+
+	if (uri == NULL) {
+		return NULL;
+	}
+
+	query_string = strchr(uri, '?');
+
+	if (query_string == NULL) {
+		return uri;
+	}
+
+	if (query_string[1] == '\0') {
+		return truncate_querystring(context->ws, uri, query_string);
+	}
+
+	if (context->type == regfilter) {
+		void *re = compile_regex(context->params.regfilter.regex);
+		if (re == NULL) {
+			return uri;
+		}
+		context->params.regfilter.re = re;
+	}
+
+	context->query_string = query_string;
+	filtered_uri = apply_filter(context);
+
+	if (context->type == regfilter) {
+		VRT_re_fini(context->params.regfilter.re);
+	}
+
+	return filtered_uri;
 }
 
 /***********************************************************************
@@ -465,35 +396,62 @@ regfilter_querystring(struct ws *ws, const char *uri, const char *regex)
 const char *
 vmod_clean(struct sess *sp, const char *uri)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	return clean_uri(sp->ws, uri);
+
+	context.type = clean;
+	context.ws = sp->ws;
+	context.uri = uri;
+	context.is_filtered = &is_param_cleaned;
+
+	filtered_uri = filter_querystring(&context);
+
+	return filtered_uri;
 }
 
 const char *
 vmod_remove(struct sess *sp, const char *uri)
 {
+	const char *cleaned_uri;
+
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	return remove_querystring(sp->ws, uri);
+
+	cleaned_uri = remove_querystring(sp->ws, uri);
+
+	return cleaned_uri;
 }
 
 const char *
 vmod_sort(struct sess *sp, const char *uri)
 {
+	const char *sorted_uri;
+
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	return sort_querystring(sp->ws, uri);
+
+	sorted_uri = sort_querystring(sp->ws, uri);
+
+	return sorted_uri;
 }
 
 const char *
 vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 {
-	va_list ap;
+	struct filter_context context;
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
 
-	va_start(ap, params);
-	filtered_uri = filter_querystring(sp->ws, uri, params, ap);
-	va_end(ap);
+	context.type = filter;
+	context.ws = sp->ws;
+	context.uri = uri;
+	context.params.filter.params = params;
+	context.is_filtered = &is_param_filtered;
+
+	va_start(context.params.filter.ap, params);
+	filtered_uri = filter_querystring(&context);
+	va_end(context.params.filter.ap);
 
 	return filtered_uri;
 }
@@ -508,12 +466,21 @@ vmod_filtersep(struct sess *sp)
 const char *
 vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-#ifdef QS_NEED_RE_CTX
-	return regfilter_querystring(sp->ws, uri, regex, sp);
-#else
-	return regfilter_querystring(sp->ws, uri, regex);
-#endif
+
+	context.type = regfilter;
+	context.ws = sp->ws;
+	context.uri = uri;
+	context.params.regfilter.regex = regex;
+	context.params.regfilter.re_ctx = sp;
+	context.is_filtered = &is_param_regfiltered;
+
+	filtered_uri = filter_querystring(&context);
+
+	return filtered_uri;
 }
 
 #endif
@@ -525,35 +492,62 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 const char *
 vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return clean_uri(ctx->ws, uri);
+
+	context.type = clean;
+	context.ws = ctx->ws;
+	context.uri = uri;
+	context.is_filtered = &is_param_cleaned;
+
+	filtered_uri = filter_querystring(&context);
+
+	return filtered_uri;
 }
 
 const char *
 vmod_remove(const struct vrt_ctx *ctx, const char *uri)
 {
+	const char *cleaned_uri;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return remove_querystring(ctx->ws, uri);
+
+	cleaned_uri = remove_querystring(ctx->ws, uri);
+
+	return cleaned_uri;
 }
 
 const char *
 vmod_sort(const struct vrt_ctx *ctx, const char *uri)
 {
+	const char *sorted_uri;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return sort_querystring(ctx->ws, uri);
+
+	sorted_uri = sort_querystring(ctx->ws, uri);
+
+	return sorted_uri;
 }
 
 const char *
 vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 {
-	va_list ap;
+	struct filter_context context;
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 
-	va_start(ap, params);
-	filtered_uri = filter_querystring(ctx->ws, uri, params, ap);
-	va_end(ap);
+	context.type = filter;
+	context.ws = ctx->ws;
+	context.uri = uri;
+	context.params.filter.params = params;
+	context.is_filtered = &is_param_filtered;
+
+	va_start(context.params.filter.ap, params);
+	filtered_uri = filter_querystring(&context);
+	va_end(context.params.filter.ap);
 
 	return filtered_uri;
 }
@@ -568,8 +562,21 @@ vmod_filtersep(const struct vrt_ctx *ctx)
 const char *
 vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return regfilter_querystring(ctx->ws, uri, regex, ctx);
+
+	context.type = regfilter;
+	context.ws = ctx->ws;
+	context.uri = uri;
+	context.params.regfilter.regex = regex;
+	context.params.regfilter.re_ctx = ctx;
+	context.is_filtered = &is_param_regfiltered;
+
+	filtered_uri = filter_querystring(&context);
+
+	return filtered_uri;
 }
 
 #endif

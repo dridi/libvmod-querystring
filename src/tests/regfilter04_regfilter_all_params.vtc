@@ -30,16 +30,12 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-varnishtest "Test regfilter empty parameters"
+varnishtest "Test regfilter all parameters"
 
 server s1 {
 	rxreq
-	expect req.url == "/article?lang=fr"
+	expect req.url == "/"
 	txresp -body "ABC\n"
-
-	rxreq
-	expect req.url == "/article?lang=fr&page=2"
-	txresp -body "DEF\n"
 } -start
 
 varnish v1 -vcl+backend {
@@ -51,11 +47,15 @@ varnish v1 -vcl+backend {
 } -start
 
 client c1 {
-	txreq -url "/article?lang=fr&utm_source=git&&utm_campaign=filter&utm_medium=varnishtest"
+	txreq -url "/"
 	rxresp
 	expect resp.status == 200
-
-	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest&page=2&&"
+	
+	txreq -url "/?"
+	rxresp
+	expect resp.status == 200
+	
+	txreq -url "/?utm_source=git&utm_campaign=filter&utm_medium=varnishtest"
 	rxresp
 	expect resp.status == 200
 }

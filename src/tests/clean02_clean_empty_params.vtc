@@ -30,36 +30,47 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-varnishtest "Test regfilter empty parameters"
+varnishtest "Test clean empty parameters"
 
 server s1 {
 	rxreq
-	expect req.url == "/article?lang=fr"
+	expect req.url == "/?query"
 	txresp -body "ABC\n"
-
-	rxreq
-	expect req.url == "/article?lang=fr&page=2"
-	txresp -body "DEF\n"
 } -start
 
 varnish v1 -vcl+backend {
 	import querystring from "${vmod_topbuild}/src/.libs/libvmod_querystring.so";
 
 	sub vcl_hash {
-		set req.url = querystring.regfilter(req.url, "utm_.*");
+		set req.url = querystring.clean(req.url);
 	}
 } -start
 
+varnish v1 -expect n_object == 0
+varnish v1 -expect cache_miss == 0
+varnish v1 -expect cache_hit == 0
+
 client c1 {
-	txreq -url "/article?lang=fr&utm_source=git&&utm_campaign=filter&utm_medium=varnishtest"
+	txreq -url "/?query"
 	rxresp
 	expect resp.status == 200
 
-	txreq -url "/article?lang=fr&utm_source=git&utm_campaign=filter&utm_medium=varnishtest&page=2&&"
+	txreq -url "/?&query"
 	rxresp
 	expect resp.status == 200
-}
 
-client c1 -run
-server s1 -wait
+	txreq -url "/?query&"
+	rxresp
+	expect resp.status == 200
+
+	txreq -url "/?&query&"
+	rxresp
+	expect resp.status == 200
+} -run
+
+delay .1
+
+varnish v1 -expect n_object == 1
+varnish v1 -expect cache_miss == 1
+varnish v1 -expect cache_hit == 3
 
