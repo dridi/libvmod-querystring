@@ -400,6 +400,7 @@ vmod_clean(struct sess *sp, const char *uri)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\"", uri);
 
 	context.type = clean;
 	context.ws = sp->ws;
@@ -408,6 +409,7 @@ vmod_clean(struct sess *sp, const char *uri)
 
 	filtered_uri = filter_querystring(&context);
 
+	QS_LOG_RETURN(sp, filtered_uri);
 	return filtered_uri;
 }
 
@@ -417,9 +419,11 @@ vmod_remove(struct sess *sp, const char *uri)
 	const char *cleaned_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\"", uri);
 
 	cleaned_uri = remove_querystring(sp->ws, uri);
 
+	QS_LOG_RETURN(sp, cleaned_uri);
 	return cleaned_uri;
 }
 
@@ -429,9 +433,11 @@ vmod_sort(struct sess *sp, const char *uri)
 	const char *sorted_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\"", uri);
 
 	sorted_uri = sort_querystring(sp->ws, uri);
 
+	QS_LOG_RETURN(sp, sorted_uri);
 	return sorted_uri;
 }
 
@@ -442,6 +448,7 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\", \"%s\", ...", uri, params);
 
 	context.type = filter;
 	context.ws = sp->ws;
@@ -453,6 +460,7 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 	filtered_uri = filter_querystring(&context);
 	va_end(context.params.filter.ap);
 
+	QS_LOG_RETURN(sp, filtered_uri);
 	return filtered_uri;
 }
 
@@ -470,6 +478,7 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\", \"%s\"", uri, regex);
 
 	context.type = regfilter;
 	context.ws = sp->ws;
@@ -480,6 +489,7 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 
 	filtered_uri = filter_querystring(&context);
 
+	QS_LOG_RETURN(sp, filtered_uri);
 	return filtered_uri;
 }
 
@@ -496,6 +506,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
 	context.type = clean;
 	context.ws = ctx->ws;
@@ -504,6 +515,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 
 	filtered_uri = filter_querystring(&context);
 
+	QS_LOG_RETURN(ctx, filtered_uri);
 	return filtered_uri;
 }
 
@@ -513,9 +525,11 @@ vmod_remove(const struct vrt_ctx *ctx, const char *uri)
 	const char *cleaned_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
 	cleaned_uri = remove_querystring(ctx->ws, uri);
 
+	QS_LOG_RETURN(ctx, cleaned_uri);
 	return cleaned_uri;
 }
 
@@ -525,9 +539,11 @@ vmod_sort(const struct vrt_ctx *ctx, const char *uri)
 	const char *sorted_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
 	sorted_uri = sort_querystring(ctx->ws, uri);
 
+	QS_LOG_RETURN(ctx, sorted_uri);
 	return sorted_uri;
 }
 
@@ -538,6 +554,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", uri, params);
 
 	context.type = filter;
 	context.ws = ctx->ws;
@@ -549,6 +566,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	filtered_uri = filter_querystring(&context);
 	va_end(context.params.filter.ap);
 
+	QS_LOG_RETURN(ctx, filtered_uri);
 	return filtered_uri;
 }
 
@@ -566,6 +584,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 	const char *filtered_uri;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", uri, regex);
 
 	context.type = regfilter;
 	context.ws = ctx->ws;
@@ -576,6 +595,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 
 	filtered_uri = filter_querystring(&context);
 
+	QS_LOG_RETURN(ctx, filtered_uri);
 	return filtered_uri;
 }
 

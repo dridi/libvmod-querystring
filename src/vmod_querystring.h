@@ -49,6 +49,11 @@
 #define QS_NEED_RE_CTX
 #endif
 
+#define QS_LOG_CALL(sp, pattern, ...) \
+	WSP(sp, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
+
+#define QS_LOG_RETURN(sp, value) WSP(sp, SLT_VCL_return, "\"%s\"", value);
+
 typedef struct sess re_ctx;
 
 #endif // VARNISH_MAJOR == 3
@@ -60,6 +65,12 @@ typedef struct sess re_ctx;
 #include "cache/cache.h"
 
 #define QS_NEED_RE_CTX
+
+#define QS_LOG_CALL(ctx, pattern, ...) \
+	VSLb(ctx->vsl, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
+
+#define QS_LOG_RETURN(ctx, value) VSLb(ctx->vsl, SLT_VCL_return, "\"%s\"", value);
+
 typedef const struct vrt_ctx re_ctx;
 
 #endif // VARNISH_MAJOR == 4
