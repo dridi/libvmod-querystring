@@ -54,9 +54,6 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
-AC_PROG_SED
-AC_PROG_EGREP
-
 # Check for rst utilities
 AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], "no")
 if test "x$RST2MAN" = "xno"; then
@@ -76,6 +73,21 @@ AC_CHECK_FUNCS([mempcpy])
 
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
+
+# Conditional logging
+AC_ARG_ENABLE(
+	[logging],
+	[AS_HELP_STRING(
+		[--disable-logging],
+		[Disable VCL calls and return values logging. @<:@enabled by default@:>@]
+	)],
+	[],
+	[enable_logging=yes]
+)
+
+if test "x$enable_logging" != "xno"; then
+	AC_SUBST([DEFINE_LOGGING], [-DQS_ENABLE_LOGGING])
+fi
 
 # Varnish source tree
 AC_ARG_VAR([VARNISHSRC], [path to Varnish source tree (mandatory)])
@@ -117,10 +129,6 @@ AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 		AC_MSG_NOTICE([Could not find "$VARNISHSRC/include/vmod_abi.h". Assuming varnish 3.0.0 ABI version])
 	]
 )
-
-[VMOD_ABI_Version_MAJOR=`echo $VMOD_ABI_Version | $EGREP -o '^[[:digit:]]+'`]
-[VMOD_ABI_Version_MINOR=`echo $VMOD_ABI_Version | $EGREP -o '\.[[:digit:]]+\.' | $SED 's/\.//g'`]
-[VMOD_ABI_Version_PATCH=`echo $VMOD_ABI_Version | $EGREP -o '[[:digit:]]+$'`]
 
 AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
 	[*trunk*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],

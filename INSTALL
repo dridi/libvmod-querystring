@@ -27,7 +27,7 @@ Once you have a Varnish build, the libvmod-querystring module can then be built:
 
 cd /path/to/git/repository
 ./autogen.sh
-./configure VARNISHSRC=/usr/src/varnish-3.0.x/ [VMODDIR=`DIR`]
+./configure VARNISHSRC=/usr/src/varnish-3.0.x/ [VMODDIR=`DIR`] [--disable-logging]
 make
 sudo make install
 
@@ -38,6 +38,13 @@ will be added to the include search paths for your module.
 Optionally you can also set the vmod install directory by adding
 `VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
 Varnish installation).
+
+It is also possible to disable logging for the module, this is enabled by
+default. The module logs function calls (with arguments) and return values.
+Those logs are very valuable when following the code path of a request in the
+VCL, you could even spot unexpected result (a wrong regex for regfilter ?).
+This might be sensible for production environments since each request would
+add to overall logging load. When in doubt, you can disable it at build time.
 
 Make targets:
 

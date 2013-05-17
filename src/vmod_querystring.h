@@ -77,6 +77,18 @@ typedef const struct vrt_ctx re_ctx;
 
 /* ------------------------------------------------------------------- */
 
+#ifndef QS_ENABLE_LOGGING
+
+#undef QS_LOG_CALL
+#undef QS_LOG_RETURN
+
+#define QS_LOG_CALL
+#define QS_LOG_RETURN
+
+#endif
+
+/* ------------------------------------------------------------------- */
+
 struct query_param {
 	const char *value;
 	short length;

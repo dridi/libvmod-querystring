@@ -52,7 +52,7 @@ DESCRIPTION
 Varnish multipurpose vmod for URI query-string manipulation. Can be used to
 normalize for instance request URLs or Location response headers in various
 ways. It is recommended to at least clean incoming request URLs (removing empty
-query-strings), all other functions do the cleaning.
+parameters or query-strings), all other functions do the cleaning.
 
 FUNCTIONS
 =========
@@ -65,7 +65,8 @@ Prototype
 Return value
    STRING
 Description
-   Returns the given URI with its query-string removed if empty
+   Returns the given URI without empty parameters. The query-string is removed
+   if empty (either before or after the removal of empty parameters).
 Example
    .. sourcecode::
 
@@ -155,8 +156,8 @@ In your VCL you could then use this vmod along the following lines::
 ACKNOWLEDGMENT
 ==============
 
-The sort algorithm is an adaptation of Jason Mooberry's Swkurly for the Varnish
-workspace memory model of the worker threads.
+The sort algorithm is a mix of Jason Mooberry's Skwurly and my own QuerySort
+with regards for the Varnish workspace memory model of the worker threads.
 
 COPYRIGHT
 =========
