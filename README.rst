@@ -141,8 +141,8 @@ Example
 
       set req.url = querystring.regfilter(req.url, "utm\_.*");
 
-EXAMPLE
-=======
+EXAMPLES
+========
 
 In your VCL you could then use this vmod along the following lines::
 
@@ -152,6 +152,11 @@ In your VCL you could then use this vmod along the following lines::
       # sort the URL before the request hashing
       set req.url = querystring.sort(req.url);
    }
+
+You can use regfilter to specify a list of arguments that must not be removed
+(everything else will be) with a negative look-ahead expression::
+
+   set req.url = querystring.regfilter(req.url, "^(?!param1|param2)");
 
 ACKNOWLEDGMENT
 ==============
