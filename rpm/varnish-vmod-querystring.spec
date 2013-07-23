@@ -1,5 +1,5 @@
 %define VMODNAME   libvmod-querystring
-%define VMODSRC    %{_builddir}/%{VMODNAME}-v%{version}
+%define VMODSRC    %{_builddir}/%{VMODNAME}-%{version}
 %define VARNISHSRC %{_builddir}/varnish-%{VARNISHVER}
 
 
