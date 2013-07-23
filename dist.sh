@@ -6,7 +6,7 @@ then
 	exit 1
 fi
 
-label=libvmod-querystring-v$1
+label=libvmod-querystring-$1
 
 if [ `git tag -l v$1 | wc -l` = 1 ]
 then

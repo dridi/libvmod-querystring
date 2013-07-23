@@ -33,7 +33,7 @@ query-strings), all other functions do the cleaning.
 
 
 %prep
-%setup -q -b 0 -n %{VMODNAME}-v%{version}
+%setup -q -b 0 -n %{VMODNAME}-%{version}
 %setup -q -b 1 -n varnish-%{VARNISHVER}
 
 cd %{VARNISHSRC}
