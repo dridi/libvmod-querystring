@@ -100,13 +100,13 @@ Varnish_Version_MAJOR=
 
 # Is it a Varnish 3 or 4 source tree ?
 AC_CHECK_FILE([$VARNISHSRC/lib/libvmod_std/vmod.py], [Varnish_Version_MAJOR=3])
-AC_CHECK_FILE([$VARNISHSRC/lib/libvcl/vmodtool.py],  [Varnish_Version_MAJOR=4])
+AC_CHECK_FILE([$VARNISHSRC/lib/libvcc/vmodtool.py],  [Varnish_Version_MAJOR=4])
 
 AC_SUBST([DEFINE_MAJOR], [-DVARNISH_MAJOR=$Varnish_Version_MAJOR])
 
 # Can we build a VMOD with VARNISHSRC ?
 AS_CASE(["$Varnish_Version_MAJOR"],
-	[4], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcl/vmodtool.py'])],
+	[4], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcc/vmodtool.py'])],
 	[3], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvmod_std/vmod.py'])],
 	     [AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
 )
