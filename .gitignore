@@ -28,4 +28,4 @@ Makefile.in
 
 /src/vcc_if.c
 /src/vcc_if.h
-
+/src/*.rst

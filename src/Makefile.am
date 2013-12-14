@@ -42,8 +42,9 @@ libvmod_querystring_la_SOURCES = \
 	vmod_querystring.c \
 	vmod_querystring.h
 
-vcc_if.c vcc_if.h: vmod_querystring.vcc
-	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring.vcc
+vcc_if.c vcc_if.h vmod_querystring.man.rst: *.vcc ../README.rst
+	cp ../README.rst vmod_querystring.man.rst
+	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring@VARNISH_MAJOR@.vcc
 
 VMOD_TESTS = tests/*.vtc
 .PHONY: $(VMOD_TESTS)

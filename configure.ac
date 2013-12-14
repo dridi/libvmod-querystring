@@ -32,7 +32,7 @@ AC_PREREQ(2.59)
 AC_COPYRIGHT([Copyright (c) 2012 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
 AC_INIT([libvmod-querystring], [0.2], [https://github.com/dridi/libvmod-querystring/issues])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR(src/vmod_querystring.vcc)
+AC_CONFIG_SRCDIR(src/vmod_querystring.c)
 AM_CONFIG_HEADER(config.h)
 
 AC_CANONICAL_SYSTEM
@@ -100,6 +100,7 @@ Varnish_Version_MAJOR=
 AC_CHECK_FILE([$VARNISHSRC/lib/libvmod_std/vmod.py], [Varnish_Version_MAJOR=3])
 AC_CHECK_FILE([$VARNISHSRC/lib/libvcc/vmodtool.py],  [Varnish_Version_MAJOR=4])
 
+AC_SUBST([VARNISH_MAJOR], [$Varnish_Version_MAJOR])
 AC_SUBST([DEFINE_MAJOR], [-DVARNISH_MAJOR=$Varnish_Version_MAJOR])
 
 # Can we build a VMOD with VARNISHSRC ?
@@ -129,7 +130,7 @@ AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 )
 
 AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
-	[*trunk*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
+	[*4.0.0*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
 	[*3.0.5*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_5])],
 	[*3.0.4*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_4])],
 	[*3.0.3*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])],

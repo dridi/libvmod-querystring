@@ -38,7 +38,7 @@ dist_doc_DATA = LICENSE CONTRIBUTORS CHANGELOG
 dist_man_MANS = vmod_querystring.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)
 
-vmod_querystring.3: README.rst
+vmod_querystring.3: src/vmod_querystring.man.rst
 
 %.1 %.2 %.3 %.4 %.5 %.6 %.7 %.8 %.9:
 if HAVE_RST2MAN
@@ -52,4 +52,3 @@ endif
 
 src-dist:
 	@git archive -o $(PACKAGE)-$(VERSION)-src.tar.gz --prefix=$(PACKAGE)-$(VERSION)/ HEAD
-
