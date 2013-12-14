@@ -132,6 +132,7 @@ AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 
 AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
 	[*trunk*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
+	[*3.0.5*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_5])],
 	[*3.0.4*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_4])],
 	[*3.0.3*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])],
 	[*3.0.2*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_2])],
