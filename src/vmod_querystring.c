@@ -298,7 +298,6 @@ compile_regex(const char *regex)
 static const char*
 apply_filter(struct filter_context *context)
 {
-	const char *params = context->params.filter.params;
 	unsigned available = WS_Reserve(context->ws, 0);
 	char *begin = context->ws->f;
 	char *end = &begin[available];
