@@ -1,8 +1,13 @@
 Module querystring
+
 Function STRING clean(STRING)
 Function STRING remove(STRING)
-Function STRING sort(STRING)
-Function STRING filter(STRING, STRING_LIST)
-Function STRING filtersep()
-Function STRING regfilter(STRING, STRING)
 
+Function STRING sort(STRING)
+
+Function STRING filtersep()
+Function STRING filter(STRING, STRING_LIST)
+Function STRING filter_except(STRING, STRING_LIST)
+
+Function STRING regfilter(STRING, STRING)
+Function STRING regfilter_except(STRING, STRING)

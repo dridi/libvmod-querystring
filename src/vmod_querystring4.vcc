@@ -70,6 +70,12 @@ Example
       set req.url = querystring.sort(req.url);
 
 
+$Function STRING filtersep()
+
+Description
+   Returns the separator needed by the filter and filter_except functions
+
+
 $Function STRING filter(STRING, STRING_LIST)
 
 Description
@@ -83,11 +89,15 @@ Example
         "utm_campaign");
 
 
-$Function STRING filtersep()
+$Function STRING filter_except(STRING, STRING_LIST)
 
 Description
-   Returns the separator needed by the filter function
+   Returns the given URI but only keeps the listed parameters
+Example
+   .. sourcecode::
 
+      set req.url = querystring.filter(req.url,
+                                       "q" + querystring.filtersep() + "p");
 
 $Function STRING regfilter(STRING, STRING)
 
@@ -97,6 +107,17 @@ Example
    .. sourcecode::
 
       set req.url = querystring.regfilter(req.url, "utm\_.*");
+
+
+$Function STRING regfilter_except(STRING, STRING)
+
+Description
+   Returns the given URI but only keeps the parameters matching a regular
+   expression
+Example
+   .. sourcecode::
+
+      set req.url = querystring.regfilter_except(req.url, "^(q|p)$");
 
 
 EXAMPLES

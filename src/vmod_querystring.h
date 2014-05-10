@@ -118,5 +118,6 @@ struct filter_context {
 		struct regfilter_params regfilter;
 	} params;
 	bool (*is_filtered) (const char*, int, struct filter_context*);
+	bool   is_kept;
 };
 

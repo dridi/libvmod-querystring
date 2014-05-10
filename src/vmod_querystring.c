@@ -255,13 +255,13 @@ is_param_filtered(const char *param, int length, struct filter_context *context)
 	va_copy(aq, context->params.filter.ap);
 	while (p != vrt_magic_string_end) {
 		if (p != NULL && strlen(p) == length && strncmp(param, p, length) == 0) {
-			return true;
+			return true ^ context->is_kept;
 		}
 		p = va_arg(aq, const char*);
 	}
 	va_end(aq);
 
-	return false;
+	return false ^ context->is_kept;
 }
 
 static bool
@@ -274,14 +274,16 @@ is_param_regfiltered(const char *param, int length, struct filter_context *conte
 	char p[length + 1];
 
 	memcpy(p, param, length);
-	p[length + 1] = '\0';
+	p[length] = '\0';
 
+	bool match;
 #ifdef QS_NEED_RE_CTX
-	return (bool) VRT_re_match(context->params.regfilter.re_ctx, p,
-	                           context->params.regfilter.re);
+	match = (bool) VRT_re_match(context->params.regfilter.re_ctx, p,
+	                            context->params.regfilter.re);
 #else
-	return (bool) VRT_re_match(p, context->params.regfilter.re);
+	match = (bool) VRT_re_match(p, context->params.regfilter.re);
 #endif
+	return match ^ context->is_kept;
 }
 
 static void *
@@ -405,6 +407,7 @@ vmod_clean(struct sess *sp, const char *uri)
 	context.ws = sp->ws;
 	context.uri = uri;
 	context.is_filtered = &is_param_cleaned;
+	context.is_kept = false;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -441,6 +444,13 @@ vmod_sort(struct sess *sp, const char *uri)
 }
 
 const char *
+vmod_filtersep(struct sess *sp)
+{
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	return NULL;
+}
+
+const char *
 vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 {
 	struct filter_context context;
@@ -454,6 +464,7 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 	context.uri = uri;
 	context.params.filter.params = params;
 	context.is_filtered = &is_param_filtered;
+	context.is_kept = false;
 
 	va_start(context.params.filter.ap, params);
 	filtered_uri = filter_querystring(&context);
@@ -464,10 +475,27 @@ vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
 }
 
 const char *
-vmod_filtersep(struct sess *sp)
+vmod_filter_except(struct sess *sp, const char *uri, const char *params, ...)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	return NULL;
+	QS_LOG_CALL(sp, "\"%s\", \"%s\", ...", uri, params);
+
+	context.type = filter;
+	context.ws = sp->ws;
+	context.uri = uri;
+	context.params.filter.params = params;
+	context.is_filtered = &is_param_filtered;
+	context.is_kept = true;
+
+	va_start(context.params.filter.ap, params);
+	filtered_uri = filter_querystring(&context);
+	va_end(context.params.filter.ap);
+
+	QS_LOG_RETURN(sp, filtered_uri);
+	return filtered_uri;
 }
 
 const char *
@@ -485,6 +513,30 @@ vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = sp;
 	context.is_filtered = &is_param_regfiltered;
+	context.is_kept = false;
+
+	filtered_uri = filter_querystring(&context);
+
+	QS_LOG_RETURN(sp, filtered_uri);
+	return filtered_uri;
+}
+
+const char *
+vmod_regfilter_except(struct sess *sp, const char *uri, const char *regex)
+{
+	struct filter_context context;
+	const char *filtered_uri;
+
+	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+	QS_LOG_CALL(sp, "\"%s\", \"%s\"", uri, regex);
+
+	context.type = regfilter;
+	context.ws = sp->ws;
+	context.uri = uri;
+	context.params.regfilter.regex = regex;
+	context.params.regfilter.re_ctx = sp;
+	context.is_filtered = &is_param_regfiltered;
+	context.is_kept = true;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -511,6 +563,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.is_filtered = &is_param_cleaned;
+	context.is_kept = false;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -547,6 +600,13 @@ vmod_sort(const struct vrt_ctx *ctx, const char *uri)
 }
 
 const char *
+vmod_filtersep(const struct vrt_ctx *ctx)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return NULL;
+}
+
+const char *
 vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 {
 	struct filter_context context;
@@ -560,6 +620,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	context.uri = uri;
 	context.params.filter.params = params;
 	context.is_filtered = &is_param_filtered;
+	context.is_kept = false;
 
 	va_start(context.params.filter.ap, params);
 	filtered_uri = filter_querystring(&context);
@@ -570,10 +631,27 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 }
 
 const char *
-vmod_filtersep(const struct vrt_ctx *ctx)
+vmod_filter_except(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 {
+	struct filter_context context;
+	const char *filtered_uri;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return NULL;
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", uri, params);
+
+	context.type = filter;
+	context.ws = ctx->ws;
+	context.uri = uri;
+	context.params.filter.params = params;
+	context.is_filtered = &is_param_filtered;
+	context.is_kept = true;
+
+	va_start(context.params.filter.ap, params);
+	filtered_uri = filter_querystring(&context);
+	va_end(context.params.filter.ap);
+
+	QS_LOG_RETURN(ctx, filtered_uri);
+	return filtered_uri;
 }
 
 const char *
@@ -591,6 +669,30 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
 	context.is_filtered = &is_param_regfiltered;
+	context.is_kept = false;
+
+	filtered_uri = filter_querystring(&context);
+
+	QS_LOG_RETURN(ctx, filtered_uri);
+	return filtered_uri;
+}
+
+const char *
+vmod_regfilter_except(const struct vrt_ctx *ctx, const char *uri, const char *regex)
+{
+	struct filter_context context;
+	const char *filtered_uri;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", uri, regex);
+
+	context.type = regfilter;
+	context.ws = ctx->ws;
+	context.uri = uri;
+	context.params.regfilter.regex = regex;
+	context.params.regfilter.re_ctx = ctx;
+	context.is_filtered = &is_param_regfiltered;
+	context.is_kept = true;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -599,4 +701,3 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 }
 
 #endif
-

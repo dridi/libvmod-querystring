@@ -102,6 +102,16 @@ Example
 
       set req.url = querystring.sort(req.url);
 
+filtersep
+---------
+
+Prototype
+   filtersep()
+Return value
+   STRING
+Description
+   Returns the separator needed by the filter and filter_except functions
+
 filter
 ------
 
@@ -119,15 +129,20 @@ Example
         "utm_medium" + querystring.filtersep() +
         "utm_campaign");
 
-filtersep
----------
+filter_except
+-------------
 
 Prototype
-   filtersep()
+   filter_except(STRING url, STRING_LIST parameter_names)
 Return value
    STRING
 Description
-   Returns the separator needed by the filter function
+   Returns the given URI but only keeps the listed parameters
+Example
+   .. sourcecode::
+
+      set req.url = querystring.filter(req.url,
+                                       "q" + querystring.filtersep() + "p");
 
 regfilter
 ---------
@@ -143,6 +158,21 @@ Example
 
       set req.url = querystring.regfilter(req.url, "utm\_.*");
 
+regfilter_except
+----------------
+
+Prototype
+   regfilter_except(STRING url, STRING parameter_names_regex)
+Return value
+   STRING
+Description
+   Returns the given URI but only keeps the parameters matching a regular
+   expression
+Example
+   .. sourcecode::
+
+      set req.url = querystring.regfilter_except(req.url, "^(q|p)$");
+
 EXAMPLES
 ========
 
@@ -154,11 +184,6 @@ In your VCL you could then use this vmod along the following lines::
       # sort the URL before the request hashing
       set req.url = querystring.sort(req.url);
    }
-
-You can use regfilter to specify a list of arguments that must not be removed
-(everything else will be) with a negative look-ahead expression::
-
-   set req.url = querystring.regfilter(req.url, "^(?!param1|param2)");
 
 ACKNOWLEDGMENT
 ==============
@@ -173,4 +198,3 @@ This document is licensed under the same license as the
 libvmod-querystring project. See LICENSE for details.
 
 * Copyright (c) 2014 Dridi Boukelmoune
-
