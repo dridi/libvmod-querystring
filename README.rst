@@ -63,9 +63,7 @@ clean
 ------
 
 Prototype
-   clean(STRING url)
-Return value
-   STRING
+   STRING clean(STRING url)
 Description
    Returns the given URI without empty parameters. The query-string is removed
    if empty (either before or after the removal of empty parameters).
@@ -78,9 +76,7 @@ remove
 ------
 
 Prototype
-   remove(STRING url)
-Return value
-   STRING
+   STRING remove(STRING url)
 Description
    Returns the given URI with its query-string removed
 Example
@@ -92,9 +88,7 @@ sort
 ----
 
 Prototype
-   sort(STRING url)
-Return value
-   STRING
+   STRING sort(STRING url)
 Description
    Returns the given URI with its query-string sorted
 Example
@@ -106,9 +100,7 @@ filtersep
 ---------
 
 Prototype
-   filtersep()
-Return value
-   STRING
+   STRING filtersep()
 Description
    Returns the separator needed by the filter and filter_except functions
 
@@ -116,9 +108,7 @@ filter
 ------
 
 Prototype
-   filter(STRING url, STRING_LIST parameter_names)
-Return value
-   STRING
+   STRING filter(STRING url, STRING_LIST parameter_names)
 Description
    Returns the given URI without the listed parameters
 Example
@@ -133,9 +123,7 @@ filter_except
 -------------
 
 Prototype
-   filter_except(STRING url, STRING_LIST parameter_names)
-Return value
-   STRING
+   STRING filter_except(STRING url, STRING_LIST parameter_names)
 Description
    Returns the given URI but only keeps the listed parameters
 Example
@@ -148,9 +136,7 @@ regfilter
 ---------
 
 Prototype
-   regfilter(STRING url, STRING parameter_names_regex)
-Return value
-   STRING
+   STRING regfilter(STRING url, STRING parameter_names_regex)
 Description
    Returns the given URI without the parameters matching a regular expression
 Example
@@ -162,9 +148,7 @@ regfilter_except
 ----------------
 
 Prototype
-   regfilter_except(STRING url, STRING parameter_names_regex)
-Return value
-   STRING
+   STRING regfilter_except(STRING url, STRING parameter_names_regex)
 Description
    Returns the given URI but only keeps the parameters matching a regular
    expression
