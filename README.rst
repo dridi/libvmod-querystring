@@ -181,4 +181,4 @@ COPYRIGHT
 This document is licensed under the same license as the
 libvmod-querystring project. See LICENSE for details.
 
-* Copyright (c) 2014 Dridi Boukelmoune
+* Copyright (c) 2012-2014 Dridi Boukelmoune

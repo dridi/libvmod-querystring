@@ -1,6 +1,6 @@
 # libvmod-querystring - querystring manipulation module for Varnish
 # 
-# Copyright (C) 2012-2013, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+# Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (c) 2012 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
+AC_COPYRIGHT([Copyright (c) 2012-2014 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
 AC_INIT([libvmod-querystring], [0.2], [https://github.com/dridi/libvmod-querystring/issues])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_querystring.c)

@@ -1,7 +1,7 @@
 /*
  * libvmod-querystring - querystring manipulation module for Varnish
  * 
- * Copyright (C) 2012-2013, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+ * Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
