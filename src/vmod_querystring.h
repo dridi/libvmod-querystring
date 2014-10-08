@@ -46,7 +46,7 @@
 #include "cache.h"
 
 #if defined HAVE_VARNISH_3_0_3 || defined HAVE_VARNISH_3_0_4 \
- || defined HAVE_VARNISH_3_0_5
+ || defined HAVE_VARNISH_3_0_5 || defined HAVE_VARNISH_3_0_6
 #define QS_NEED_RE_CTX
 #endif
 
