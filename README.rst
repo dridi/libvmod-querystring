@@ -129,7 +129,7 @@ Description
 Example
    .. sourcecode::
 
-      set req.url = querystring.filter(req.url,
+      set req.url = querystring.filter_except(req.url,
                                        "q" + querystring.filtersep() + "p");
 
 regfilter
