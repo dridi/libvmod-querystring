@@ -68,7 +68,7 @@ truncate_querystring(struct ws *ws, const char *uri, const char *query_string)
 	char *truncated_uri;
 
 	query_string_position = query_string - uri;
-	truncated_uri = WS_Alloc(ws, query_string_position);
+	truncated_uri = WS_Alloc(ws, query_string_position + 1);
 
 	if (truncated_uri == NULL) {
 		return uri;
