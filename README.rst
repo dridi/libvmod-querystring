@@ -40,7 +40,7 @@ Varnish QueryString Module
 
 :Author: Dridi Boukelmoune
 :Date: 2012-06-18
-:Version: 0.2
+:Version: 0.3
 :Manual section: 3
 
 SYNOPSIS

@@ -30,7 +30,7 @@
 
 AC_PREREQ(2.59)
 AC_COPYRIGHT([Copyright (c) 2012-2014 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
-AC_INIT([libvmod-querystring], [0.2], [https://github.com/dridi/libvmod-querystring/issues])
+AC_INIT([libvmod-querystring], [0.3], [https://github.com/dridi/libvmod-querystring/issues])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_querystring.c)
 AM_CONFIG_HEADER(config.h)
@@ -130,7 +130,7 @@ AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
 )
 
 AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
-	[*4.0.0*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
+	[*4.0.*],  [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
 	[*3.0.7*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_7])],
 	[*3.0.6*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_6])],
 	[*3.0.5*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_5])],

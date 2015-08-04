@@ -1,6 +1,12 @@
 libvmod-querystring changelog
 =============================
 
+Changes in version 0.3 (2015-08-04)
+-----------------------------------
+
+* Varnish Support up to 3.0.7 and 4.0.3
+* Various fixes
+
 Changes in version 0.2 (2013-07-23)
 -----------------------------------
 

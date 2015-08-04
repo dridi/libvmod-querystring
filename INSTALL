@@ -9,13 +9,13 @@ have the necessary bits in place to do functional unit tests using the
 varnishtest tool.
 
 You need to download Varnish source code and build it locally. It is needed for
-varnishtest invocation. Download the appropriate Varnish 3 source tarball
+varnishtest invocation. Download the appropriate Varnish source tarball
 (http://repo.varnish-cache.org/source/) and extract it somewhere on your disk
 (eg. /usr/src/).
 
 Build Varnish:
 
-cd /usr/src/varnish-3.0.x/
+cd /usr/src/varnish-x.y.z/
 ./autogen.sh
 ./configure
 make
@@ -27,7 +27,7 @@ Once you have a Varnish build, the libvmod-querystring module can then be built:
 
 cd /path/to/git/repository
 ./autogen.sh
-./configure VARNISHSRC=/usr/src/varnish-3.0.x/ [VMODDIR=`DIR`] [--disable-logging]
+./configure VARNISHSRC=/usr/src/varnish-x.y.z/ [VMODDIR=`DIR`] [--disable-logging]
 make
 sudo make install
 
@@ -62,8 +62,8 @@ put it with the libvmod-querystring tarball in the `SOURCES` directory. Since
 the 0.2 release, it is possible to make the tarball from the git repository:
 
 cd /path/to/git/repository
-./dist.sh 0.2
-mv v0.2.tar.gz /path/to/rpmbuild/SOURCES/
+./dist.sh 0.3
+mv v0.3.tar.gz /path/to/rpmbuild/SOURCES/
 cp rpm/*.patch /path/to/rpmbuild/SOURCES/
-rpmbuild -bb --define 'VARNISHVER 3.0.x' rpm/varnish-vmod-querystring.spec
+rpmbuild -bb --define 'VARNISHVER x.y.z' rpm/varnish-vmod-querystring.spec
 
