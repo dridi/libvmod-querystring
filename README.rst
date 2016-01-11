@@ -66,7 +66,9 @@ Prototype
    STRING clean(STRING url)
 Description
    Returns the given URI without empty parameters. The query-string is removed
-   if empty (either before or after the removal of empty parameters).
+   if empty (either before or after the removal of empty parameters). Note that
+   a parameter with an empty value does not constitute an empty parameter, so
+   a query string "?something" would not be cleaned.
 Example
    .. sourcecode::
 
