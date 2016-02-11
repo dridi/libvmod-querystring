@@ -1,12 +1,12 @@
 # libvmod-querystring - querystring manipulation module for Varnish
-# 
-# Copyright (C) 2012-2013, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # 1. Redistributions of source code must retain the above
 #    copyright notice, this list of conditions and the following
 #    disclaimer.
@@ -14,7 +14,7 @@
 #    copyright notice, this list of conditions and the following
 #    disclaimer in the documentation and/or other materials
 #    provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,7 +37,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import querystring from "${vmod_topbuild}/src/.libs/libvmod_querystring.so";
+	import ${vmod_querystring};
 
 	sub vcl_hash {
 		set req.url = querystring.clean(req.url);
@@ -67,4 +67,3 @@ delay .1
 varnish v1 -expect n_object == 1
 varnish v1 -expect cache_miss == 1
 varnish v1 -expect cache_hit == 2
-
