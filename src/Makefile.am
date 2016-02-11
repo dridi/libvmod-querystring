@@ -79,8 +79,8 @@ endif
 # Test suite
 
 VTC_LOG_COMPILER = \
-	@VARNISHTEST@ -v \
-	-Dvarnishd=@VARNISHD@ \
+	env PATH="@TEST_PATH@" \
+	varnishtest -v \
 	-Dvmod_topbuild=$(abs_top_builddir)
 
 TEST_EXTENSIONS = .vtc
