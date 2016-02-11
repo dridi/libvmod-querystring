@@ -239,6 +239,8 @@ append_string(char **begin, const char *end, const char *string, int length)
 static bool
 is_param_cleaned(const char *param, int length, struct filter_context *context)
 {
+	(void)param;
+	(void)context;
 	return length == 0;
 }
 
@@ -250,11 +252,13 @@ is_param_filtered(const char *param, int length, struct filter_context *context)
 		return true;
 	}
 
+	/* XXX: turn length into a size_t */
+
 	const char *p = context->params.filter.params;
 
 	va_copy(aq, context->params.filter.ap);
 	while (p != vrt_magic_string_end) {
-		if (p != NULL && strlen(p) == length && strncmp(param, p, length) == 0) {
+		if (p != NULL && strlen(p) == (size_t)length && strncmp(param, p, length) == 0) {
 			return true ^ context->is_kept;
 		}
 		p = va_arg(aq, const char*);
