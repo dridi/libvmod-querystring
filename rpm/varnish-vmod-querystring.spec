@@ -5,7 +5,7 @@
 
 Summary: QueryString VMOD for Varnish
 Name:    varnish-vmod-querystring
-Version: 0.3
+Version: 0.4
 Release: 1.varnish%{VARNISHVER}%{?dist}
 Group:   System Environment/Libraries
 URL:     https://www.varnish-cache.org/vmod/querystring
@@ -83,6 +83,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Thu Feb 11 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.4-1
+- Bump version
+
 * Tue Aug 04 2015 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.3-1
 - Bump version
 

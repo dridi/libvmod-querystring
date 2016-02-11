@@ -1,12 +1,12 @@
 # libvmod-querystring - querystring manipulation module for Varnish
-# 
-# Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # 1. Redistributions of source code must retain the above
 #    copyright notice, this list of conditions and the following
 #    disclaimer.
@@ -14,7 +14,7 @@
 #    copyright notice, this list of conditions and the following
 #    disclaimer in the documentation and/or other materials
 #    provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AM_CFLAGS = @DEFINE_MAJOR@ @DEFINE_ABI@ @DEFINE_LOGGING@
+AM_CFLAGS = @DEFINE_LOGGING@
 INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)/bin/varnishd -I$(VARNISHSRC)
 
 vmoddir = $(VMODDIR)
@@ -44,7 +44,7 @@ libvmod_querystring_la_SOURCES = \
 
 vcc_if.c vcc_if.h vmod_querystring.man.rst: *.vcc ../README.rst
 	cp ../README.rst vmod_querystring.man.rst
-	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring@VARNISH_MAJOR@.vcc
+	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_querystring.vcc
 
 VMOD_TESTS = tests/*.vtc
 .PHONY: $(VMOD_TESTS)
@@ -59,4 +59,3 @@ EXTRA_DIST = \
 	$(VMOD_TESTS)
 
 CLEANFILES = $(builddir)/vcc_if.c $(builddir)/vcc_if.h
-

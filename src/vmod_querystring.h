@@ -1,7 +1,7 @@
 /*
  * libvmod-querystring - querystring manipulation module for Varnish
  * 
- * Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+ * Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -28,45 +28,9 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
- * This file manages API changes in order to cross-compile against
- * different versions of Varnish:
- *
- * * Varnish 4.0.0
- * - cache.h has been moved
- * - provides vrt_ctx instead of sess
- *
- * * Varnish 3.0.3
- * - VRT_re_match needs a sess pointer
  */
 
-#if VARNISH_MAJOR == 3
-
-#include "cache.h"
-
-#if defined HAVE_VARNISH_3_0_3 || defined HAVE_VARNISH_3_0_4 \
- || defined HAVE_VARNISH_3_0_5 || defined HAVE_VARNISH_3_0_6 \
- || defined HAVE_VARNISH_3_0_7
-#define QS_NEED_RE_CTX
-#endif
-
-#define QS_LOG_CALL(sp, pattern, ...) \
-	WSP(sp, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
-
-#define QS_LOG_RETURN(sp, value) WSP(sp, SLT_VCL_return, "\"%s\"", value);
-
-typedef struct sess re_ctx;
-
-#endif // VARNISH_MAJOR == 3
-
-/* ------------------------------------------------------------------- */
-
-#if VARNISH_MAJOR == 4
-
 #include "cache/cache.h"
-
-#define QS_NEED_RE_CTX
 
 #define QS_LOG_CALL(ctx, pattern, ...) \
 	VSLb(ctx->vsl, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
@@ -74,8 +38,6 @@ typedef struct sess re_ctx;
 #define QS_LOG_RETURN(ctx, value) VSLb(ctx->vsl, SLT_VCL_return, "\"%s\"", value);
 
 typedef const struct vrt_ctx re_ctx;
-
-#endif // VARNISH_MAJOR == 4
 
 /* ------------------------------------------------------------------- */
 

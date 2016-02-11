@@ -1,12 +1,12 @@
 # libvmod-querystring - querystring manipulation module for Varnish
-# 
-# Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # 1. Redistributions of source code must retain the above
 #    copyright notice, this list of conditions and the following
 #    disclaimer.
@@ -14,7 +14,7 @@
 #    copyright notice, this list of conditions and the following
 #    disclaimer in the documentation and/or other materials
 #    provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -29,8 +29,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (c) 2012-2014 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
-AC_INIT([libvmod-querystring], [0.3], [https://github.com/dridi/libvmod-querystring/issues])
+AC_COPYRIGHT([Copyright (c) 2012-2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
+AC_INIT([libvmod-querystring], [0.4], [https://github.com/dridi/libvmod-querystring/issues])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_querystring.c)
 AM_CONFIG_HEADER(config.h)
@@ -94,51 +94,12 @@ if test "x$VARNISHSRC" = x; then
 fi
 
 VARNISHSRC=`cd $VARNISHSRC && pwd`
-Varnish_Version_MAJOR=
-
-# Is it a Varnish 3 or 4 source tree ?
-AC_CHECK_FILE([$VARNISHSRC/lib/libvmod_std/vmod.py], [Varnish_Version_MAJOR=3])
-AC_CHECK_FILE([$VARNISHSRC/lib/libvcc/vmodtool.py],  [Varnish_Version_MAJOR=4])
-
-AC_SUBST([VARNISH_MAJOR], [$Varnish_Version_MAJOR])
-AC_SUBST([DEFINE_MAJOR], [-DVARNISH_MAJOR=$Varnish_Version_MAJOR])
-
-# Can we build a VMOD with VARNISHSRC ?
-AS_CASE(["$Varnish_Version_MAJOR"],
-	[4], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcc/vmodtool.py'])],
-	[3], [AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvmod_std/vmod.py'])],
-	     [AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
-)
+AC_SUBST([VMODTOOL], ['$(VARNISHSRC)/lib/libvcc/vmodtool.py'])
 
 # Check that varnishtest is built in the varnish source directory
 AC_CHECK_FILE([$VARNISHSRC/bin/varnishtest/varnishtest],
 	[],
 	[AC_MSG_FAILURE([Could not find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
-)
-
-# Check vanish ABI version
-AC_CHECK_FILE([$VARNISHSRC/include/vmod_abi.h],
-	[
-		AC_MSG_CHECKING([varnish ABI version])
-		[VMOD_ABI_Version=`cut -d ' ' -f 4 "$VARNISHSRC/include/vmod_abi.h"`]
-		AC_MSG_RESULT([$VMOD_ABI_Version])
-	],
-	[
-		[VMOD_ABI_Version=3.0.0]
-		AC_MSG_NOTICE([Could not find "$VARNISHSRC/include/vmod_abi.h". Assuming varnish 3.0.0 ABI version])
-	]
-)
-
-AS_CASE([`cat $VARNISHSRC/include/vmod_abi.h 2>/dev/null`],
-	[*4.0.*],  [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_4_0_0])],
-	[*3.0.7*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_7])],
-	[*3.0.6*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_6])],
-	[*3.0.5*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_5])],
-	[*3.0.4*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_4])],
-	[*3.0.3*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_3])],
-	[*3.0.2*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_2])],
-	[*3.0.1*], [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_1])],
-	           [AC_SUBST([DEFINE_ABI], [-DHAVE_VARNISH_3_0_0])]
 )
 
 # vmod installation dir
@@ -156,4 +117,3 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
-

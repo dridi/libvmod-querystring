@@ -1,7 +1,7 @@
 /*
  * libvmod-querystring - querystring manipulation module for Varnish
  * 
- * Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+ * Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -277,12 +277,8 @@ is_param_regfiltered(const char *param, int length, struct filter_context *conte
 	p[length] = '\0';
 
 	bool match;
-#ifdef QS_NEED_RE_CTX
 	match = (bool) VRT_re_match(context->params.regfilter.re_ctx, p,
 	                            context->params.regfilter.re);
-#else
-	match = (bool) VRT_re_match(p, context->params.regfilter.re);
-#endif
 	return match ^ context->is_kept;
 }
 
@@ -391,164 +387,6 @@ filter_querystring(struct filter_context *context)
 /***********************************************************************
  * Below are the functions that will actually be linked by Varnish.
  */
-
-#if VARNISH_MAJOR == 3
-
-const char *
-vmod_clean(struct sess *sp, const char *uri)
-{
-	struct filter_context context;
-	const char *filtered_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\"", uri);
-
-	context.type = clean;
-	context.ws = sp->ws;
-	context.uri = uri;
-	context.is_filtered = &is_param_cleaned;
-	context.is_kept = false;
-
-	filtered_uri = filter_querystring(&context);
-
-	QS_LOG_RETURN(sp, filtered_uri);
-	return filtered_uri;
-}
-
-const char *
-vmod_remove(struct sess *sp, const char *uri)
-{
-	const char *cleaned_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\"", uri);
-
-	cleaned_uri = remove_querystring(sp->ws, uri);
-
-	QS_LOG_RETURN(sp, cleaned_uri);
-	return cleaned_uri;
-}
-
-const char *
-vmod_sort(struct sess *sp, const char *uri)
-{
-	const char *sorted_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\"", uri);
-
-	sorted_uri = sort_querystring(sp->ws, uri);
-
-	QS_LOG_RETURN(sp, sorted_uri);
-	return sorted_uri;
-}
-
-const char *
-vmod_filtersep(struct sess *sp)
-{
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	return NULL;
-}
-
-const char *
-vmod_filter(struct sess *sp, const char *uri, const char *params, ...)
-{
-	struct filter_context context;
-	const char *filtered_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\", \"%s\", ...", uri, params);
-
-	context.type = filter;
-	context.ws = sp->ws;
-	context.uri = uri;
-	context.params.filter.params = params;
-	context.is_filtered = &is_param_filtered;
-	context.is_kept = false;
-
-	va_start(context.params.filter.ap, params);
-	filtered_uri = filter_querystring(&context);
-	va_end(context.params.filter.ap);
-
-	QS_LOG_RETURN(sp, filtered_uri);
-	return filtered_uri;
-}
-
-const char *
-vmod_filter_except(struct sess *sp, const char *uri, const char *params, ...)
-{
-	struct filter_context context;
-	const char *filtered_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\", \"%s\", ...", uri, params);
-
-	context.type = filter;
-	context.ws = sp->ws;
-	context.uri = uri;
-	context.params.filter.params = params;
-	context.is_filtered = &is_param_filtered;
-	context.is_kept = true;
-
-	va_start(context.params.filter.ap, params);
-	filtered_uri = filter_querystring(&context);
-	va_end(context.params.filter.ap);
-
-	QS_LOG_RETURN(sp, filtered_uri);
-	return filtered_uri;
-}
-
-const char *
-vmod_regfilter(struct sess *sp, const char *uri, const char *regex)
-{
-	struct filter_context context;
-	const char *filtered_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\", \"%s\"", uri, regex);
-
-	context.type = regfilter;
-	context.ws = sp->ws;
-	context.uri = uri;
-	context.params.regfilter.regex = regex;
-	context.params.regfilter.re_ctx = sp;
-	context.is_filtered = &is_param_regfiltered;
-	context.is_kept = false;
-
-	filtered_uri = filter_querystring(&context);
-
-	QS_LOG_RETURN(sp, filtered_uri);
-	return filtered_uri;
-}
-
-const char *
-vmod_regfilter_except(struct sess *sp, const char *uri, const char *regex)
-{
-	struct filter_context context;
-	const char *filtered_uri;
-
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	QS_LOG_CALL(sp, "\"%s\", \"%s\"", uri, regex);
-
-	context.type = regfilter;
-	context.ws = sp->ws;
-	context.uri = uri;
-	context.params.regfilter.regex = regex;
-	context.params.regfilter.re_ctx = sp;
-	context.is_filtered = &is_param_regfiltered;
-	context.is_kept = true;
-
-	filtered_uri = filter_querystring(&context);
-
-	QS_LOG_RETURN(sp, filtered_uri);
-	return filtered_uri;
-}
-
-#endif
-
-/***********************************************************************/
-
-#if VARNISH_MAJOR == 4
 
 const char *
 vmod_clean(const struct vrt_ctx *ctx, const char *uri)
@@ -699,5 +537,3 @@ vmod_regfilter_except(const struct vrt_ctx *ctx, const char *uri, const char *re
 	QS_LOG_RETURN(ctx, filtered_uri);
 	return filtered_uri;
 }
-
-#endif
