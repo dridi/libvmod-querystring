@@ -1,6 +1,6 @@
 # libvmod-querystring - querystring manipulation module for Varnish
 #
-# Copyright (C) 2012-2013, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,27 +28,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
-ACLOCAL_AMFLAGS = -I m4
-
 SUBDIRS = src
 
-EXTRA_DIST = README.rst
+ACLOCAL_AMFLAGS = -I m4 -I ${LIBVARNISHAPI_DATAROOTDIR}/aclocal
+DISTCHECK_CONFIGURE_FLAGS = VMOD_DIR='$${libdir}/varnish/vmods'
+EXTRA_DIST = README.rst LICENSE vmod-querystring.spec
 
 dist_doc_DATA = LICENSE CONTRIBUTORS CHANGELOG
-dist_man_MANS = vmod_querystring.3
-MAINTAINERCLEANFILES = $(dist_man_MANS)
-
-vmod_querystring.3: src/vmod_querystring.man.rst
-
-%.1 %.2 %.3 %.4 %.5 %.6 %.7 %.8 %.9:
-if HAVE_RST2MAN
-	${RST2MAN} $< $@
-else
-	@echo "========================================"
-	@echo "You need rst2man installed to make dist"
-	@echo "========================================"
-	@false
-endif
-
-src-dist:
-	@git archive -o $(PACKAGE)-$(VERSION)-src.tar.gz --prefix=$(PACKAGE)-$(VERSION)/ HEAD

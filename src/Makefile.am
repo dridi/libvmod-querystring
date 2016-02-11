@@ -28,34 +28,72 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AM_CFLAGS = @DEFINE_LOGGING@
-INCLUDES = -I$(VARNISHSRC)/include -I$(VARNISHSRC)/bin/varnishd -I$(VARNISHSRC)
+AM_CPPFLAGS = @DEFINE_LOGGING@ @VMOD_INCLUDES@
 
-vmoddir = $(VMODDIR)
+# VMOD library
+
+vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_querystring.la
 
-libvmod_querystring_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
+VCC_FILES = \
+	vcc_if.c \
+	vcc_if.h
+
+DOC_FILES = \
+	vmod_querystring.rst \
+	vmod_querystring.man.rst
+
+libvmod_querystring_la_LDFLAGS = \
+	-module \
+	-export-dynamic \
+	-avoid-version \
+	-shared
 
 libvmod_querystring_la_SOURCES = \
-	vcc_if.c \
-	vcc_if.h \
 	vmod_querystring.c \
 	vmod_querystring.h
 
-vcc_if.c vcc_if.h vmod_querystring.man.rst: *.vcc ../README.rst
-	cp ../README.rst vmod_querystring.man.rst
-	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod.vcc
+nodist_libvmod_querystring_la_SOURCES = \
+	$(VCC_FILES)
 
-VMOD_TESTS = tests/*.vtc
-.PHONY: $(VMOD_TESTS)
+$(srcdir)/vmod_querystring.c: $(VCC_FILES)
 
-tests/*.vtc:
-	$(VARNISHSRC)/bin/varnishtest/varnishtest -Dvarnishd=$(VARNISHSRC)/bin/varnishd/varnishd -Dvmod_topbuild=$(abs_top_builddir) $@
+$(VCC_FILES) $(DOC_FILES): vmod.vcc
+	@echo vmodtool: @VMODTOOL@ $<
+	@@VMODTOOL@ $<
 
-check: $(VMOD_TESTS)
+# Documentation
+
+dist_man_MANS = vmod_querystring.3
+
+%.3: %.man.rst
+if HAVE_RST2MAN
+	${RST2MAN} $< $@
+else
+	@echo "========================================"
+	@echo "You need rst2man installed to make dist"
+	@echo "========================================"
+	@false
+endif
+
+# Test suite
+
+VTC_LOG_COMPILER = \
+	@VARNISHTEST@ -v \
+	-Dvarnishd=@VARNISHD@ \
+	-Dvmod_topbuild=$(abs_top_builddir)
+
+TEST_EXTENSIONS = .vtc
+
+TESTS = @VTC_TESTS@
+
+# misc
 
 EXTRA_DIST = \
-	vmod_querystring.vcc \
-	$(VMOD_TESTS)
+	vmod.vcc \
+	@VTC_TESTS@
 
-CLEANFILES = $(builddir)/vcc_if.c $(builddir)/vcc_if.h
+CLEANFILES = \
+	$(VCC_FILES) \
+	$(DOC_FILES) \
+	$(dist_man_MANS)
