@@ -1,13 +1,13 @@
 /*
  * libvmod-querystring - querystring manipulation module for Varnish
- * 
+ *
  * Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above
  *    copyright notice, this list of conditions and the following
  *    disclaimer.
@@ -15,7 +15,7 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "cache/cache.h"
 
 #define QS_LOG_CALL(ctx, pattern, ...) \
 	VSLb(ctx->vsl, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
@@ -80,7 +78,6 @@ struct filter_context {
 		struct filter_params    filter;
 		struct regfilter_params regfilter;
 	} params;
-	bool (*is_filtered) (const char*, int, struct filter_context*);
-	bool   is_kept;
+	int (*is_filtered) (const char*, int, struct filter_context*);
+	int   is_kept;
 };
-

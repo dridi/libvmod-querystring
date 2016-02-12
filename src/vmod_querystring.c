@@ -1,13 +1,13 @@
 /*
  * libvmod-querystring - querystring manipulation module for Varnish
- * 
+ *
  * Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above
  *    copyright notice, this list of conditions and the following
  *    disclaimer.
@@ -15,7 +15,7 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -33,13 +33,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdbool.h>
 
-#include "vrt.h"
-#include "vre.h"
-#include "vmod_querystring.h"
+#include <vrt.h>
+#include <vre.h>
+#include <cache/cache.h>
 
 #include "vcc_if.h"
+#include "vmod_querystring.h"
 
 /* End Of Query Parameter */
 #define EOQP(c) (*c == '\0' || *c == '&')
@@ -156,7 +156,7 @@ sort_querystring(struct ws *ws, const char *uri)
 	int last_param = head;
 
 	/* search and sort params */
-	bool sorted = true;
+	int sorted = 1;
 	char *c = query_string + 1;
 	params[head].value = c;
 
@@ -169,7 +169,7 @@ sort_querystring(struct ws *ws, const char *uri)
 		params[last_param].length = c - params[last_param].value;
 
 		if (head > 0 && compare_params(params[head].value, current_param) > -1) {
-			sorted = false;
+			sorted = 0;
 			params[--head].value = current_param;
 			last_param = head;
 			continue;
@@ -181,7 +181,7 @@ sort_querystring(struct ws *ws, const char *uri)
 			continue;
 		}
 
-		sorted = false;
+		sorted = 0;
 
 		int i = tail++;
 		params[tail] = params[i];
@@ -195,7 +195,7 @@ sort_querystring(struct ws *ws, const char *uri)
 		last_param = i;
 	}
 
-	if (sorted == true || &params[tail+1] >= end || tail - head < 1) {
+	if (sorted || &params[tail+1] >= end || tail - head < 1) {
 		WS_Release(ws, 0);
 		WS_Reset(ws, snapshot);
 		return uri;
@@ -236,7 +236,7 @@ append_string(char **begin, const char *end, const char *string, int length)
 	*begin += length;
 }
 
-static bool
+static int
 is_param_cleaned(const char *param, int length, struct filter_context *context)
 {
 	(void)param;
@@ -244,12 +244,12 @@ is_param_cleaned(const char *param, int length, struct filter_context *context)
 	return length == 0;
 }
 
-static bool
+static int
 is_param_filtered(const char *param, int length, struct filter_context *context)
 {
 	va_list aq;
 	if (length == 0) {
-		return true;
+		return 1;
 	}
 
 	/* XXX: turn length into a size_t */
@@ -259,20 +259,20 @@ is_param_filtered(const char *param, int length, struct filter_context *context)
 	va_copy(aq, context->params.filter.ap);
 	while (p != vrt_magic_string_end) {
 		if (p != NULL && strlen(p) == (size_t)length && strncmp(param, p, length) == 0) {
-			return true ^ context->is_kept;
+			return !context->is_kept;
 		}
 		p = va_arg(aq, const char*);
 	}
 	va_end(aq);
 
-	return false ^ context->is_kept;
+	return context->is_kept;
 }
 
-static bool
+static int
 is_param_regfiltered(const char *param, int length, struct filter_context *context)
 {
 	if (length == 0) {
-		return true;
+		return 1;
 	}
 
 	char p[length + 1];
@@ -280,9 +280,9 @@ is_param_regfiltered(const char *param, int length, struct filter_context *conte
 	memcpy(p, param, length);
 	p[length] = '\0';
 
-	bool match;
-	match = (bool) VRT_re_match(context->params.regfilter.re_ctx, p,
-	                            context->params.regfilter.re);
+	int match;
+	match = VRT_re_match(context->params.regfilter.re_ctx, p,
+	    context->params.regfilter.re);
 	return match ^ context->is_kept;
 }
 
@@ -405,7 +405,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.is_filtered = &is_param_cleaned;
-	context.is_kept = false;
+	context.is_kept = 0;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -462,7 +462,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	context.uri = uri;
 	context.params.filter.params = params;
 	context.is_filtered = &is_param_filtered;
-	context.is_kept = false;
+	context.is_kept = 0;
 
 	va_start(context.params.filter.ap, params);
 	filtered_uri = filter_querystring(&context);
@@ -486,7 +486,7 @@ vmod_filter_except(const struct vrt_ctx *ctx, const char *uri, const char *param
 	context.uri = uri;
 	context.params.filter.params = params;
 	context.is_filtered = &is_param_filtered;
-	context.is_kept = true;
+	context.is_kept = 1;
 
 	va_start(context.params.filter.ap, params);
 	filtered_uri = filter_querystring(&context);
@@ -511,7 +511,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
 	context.is_filtered = &is_param_regfiltered;
-	context.is_kept = false;
+	context.is_kept = 0;
 
 	filtered_uri = filter_querystring(&context);
 
@@ -534,7 +534,7 @@ vmod_regfilter_except(const struct vrt_ctx *ctx, const char *uri, const char *re
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
 	context.is_filtered = &is_param_regfiltered;
-	context.is_kept = true;
+	context.is_kept = 1;
 
 	filtered_uri = filter_querystring(&context);
 
