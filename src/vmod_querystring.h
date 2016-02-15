@@ -72,6 +72,10 @@ struct regfilter_params {
 	re_ctx     *re_ctx;
 };
 
+struct filter_context;
+
+typedef int qs_match(const char *, size_t, struct filter_context *);
+
 struct filter_context {
 	enum filter_type type;
 	struct ws        *ws;
@@ -81,6 +85,6 @@ struct filter_context {
 		struct filter_params    filter;
 		struct regfilter_params regfilter;
 	} params;
-	int (*match) (const char*, size_t, struct filter_context*);
+	qs_match *match;
 	int keep;
 };

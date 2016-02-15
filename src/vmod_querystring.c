@@ -242,7 +242,7 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 	*begin += len;
 }
 
-static int
+static int __match_proto__(qs_match)
 qs_match_stringlist(const char *param, size_t len, struct filter_context *context)
 {
 	const char *p;
@@ -262,7 +262,7 @@ qs_match_stringlist(const char *param, size_t len, struct filter_context *contex
 	return (context->keep);
 }
 
-static int
+static int __match_proto__(qs_match)
 qs_match_regex(const char *param, size_t len, struct filter_context *context)
 {
 	int match;
