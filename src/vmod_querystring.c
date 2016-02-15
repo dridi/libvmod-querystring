@@ -400,7 +400,7 @@ qs_filter(struct filter_context *context)
  */
 
 const char *
-vmod_clean(const struct vrt_ctx *ctx, const char *url)
+vmod_clean(VRT_CTX, const char *url)
 {
 	struct filter_context context;
 	const char *filtered_url;
@@ -421,7 +421,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *url)
 }
 
 const char *
-vmod_remove(const struct vrt_ctx *ctx, const char *url)
+vmod_remove(VRT_CTX, const char *url)
 {
 	const char *cleaned_url;
 
@@ -435,7 +435,7 @@ vmod_remove(const struct vrt_ctx *ctx, const char *url)
 }
 
 const char *
-vmod_sort(const struct vrt_ctx *ctx, const char *url)
+vmod_sort(VRT_CTX, const char *url)
 {
 	const char *sorted_url;
 
@@ -449,7 +449,7 @@ vmod_sort(const struct vrt_ctx *ctx, const char *url)
 }
 
 const char *
-vmod_filtersep(const struct vrt_ctx *ctx)
+vmod_filtersep(VRT_CTX)
 {
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -457,7 +457,7 @@ vmod_filtersep(const struct vrt_ctx *ctx)
 }
 
 const char *
-vmod_filter(const struct vrt_ctx *ctx, const char *url, const char *params, ...)
+vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct filter_context context;
 	const char *filtered_url;
@@ -481,7 +481,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *url, const char *params, ...)
 }
 
 const char *
-vmod_filter_except(const struct vrt_ctx *ctx, const char *url, const char *params, ...)
+vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct filter_context context;
 	const char *filtered_url;
@@ -505,7 +505,7 @@ vmod_filter_except(const struct vrt_ctx *ctx, const char *url, const char *param
 }
 
 const char *
-vmod_regfilter(const struct vrt_ctx *ctx, const char *url, const char *regex)
+vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 {
 	struct filter_context context;
 	const char *filtered_url;
@@ -528,7 +528,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *url, const char *regex)
 }
 
 const char *
-vmod_regfilter_except(const struct vrt_ctx *ctx, const char *url, const char *regex)
+vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 {
 	struct filter_context context;
 	const char *filtered_url;
