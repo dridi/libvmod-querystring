@@ -1,186 +1,140 @@
-.. libvmod-querystring - querystring manipulation module for Varnish
-
-   libvmod-querystring - querystring manipulation module for Varnish
-   
-   Copyright (C) 2012-2014, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
-   All rights reserved.
-   
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions
-   are met:
-   
-   1. Redistributions of source code must retain the above
-      copyright notice, this list of conditions and the following
-      disclaimer.
-   2. Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials
-      provided with the distribution.
-   
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-   COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-   OF THE POSSIBILITY OF SUCH DAMAGE.
-
 ================
-vmod_querystring
+vmod-querystring
 ================
 
---------------------------
-Varnish QueryString Module
---------------------------
-
-:Author: Dridi Boukelmoune
-:Date: 2012-06-18
-:Version: 0.3
-:Manual section: 3
-
-SYNOPSIS
-========
-
-import querystring;
-
-DESCRIPTION
+Description
 ===========
 
-Varnish multipurpose vmod for URI query-string manipulation. Can be used to
-normalize for instance request URLs or Location response headers in various
-ways. It is recommended to at least clean incoming request URLs (removing empty
-parameters or query-strings), all other functions do the cleaning.
+The purpose of this module is to give you a fine-grained control over a URL's
+query-string in Varnish Cache. It's possible to remove the query-string, clean
+it, sort its parameters or filter it to only keep a subset of them.
 
-FUNCTIONS
-=========
+This can greatly improve your hit ratio and efficiency with Varnish, because
+by default two URLs with the same path but different query-strings are also
+different. This is what the RFCs mandate but probably not what you usually
+want for your web site or application.
 
-clean
-------
+A query-string is just a character string starting after a question mark in a
+URL. But in a web context, it is usually a structured key/values store encoded
+with the MIME type ``application/x-www-form-urlencoded``. This module deals
+with this kind of query-strings.
 
-Prototype
-   STRING clean(STRING url)
-Description
-   Returns the given URI without empty parameters. The query-string is removed
-   if empty (either before or after the removal of empty parameters). Note that
-   a parameter with an empty value does not constitute an empty parameter, so
-   a query string "?something" would not be cleaned.
-Example
-   .. sourcecode::
-
-      set req.url = querystring.clean(req.url);
-
-remove
-------
-
-Prototype
-   STRING remove(STRING url)
-Description
-   Returns the given URI with its query-string removed
-Example
-   .. sourcecode::
-
-      set req.url = querystring.remove(req.url);
-
-sort
-----
-
-Prototype
-   STRING sort(STRING url)
-Description
-   Returns the given URI with its query-string sorted
-Example
-   .. sourcecode::
-
-      set req.url = querystring.sort(req.url);
-
-filtersep
----------
-
-Prototype
-   STRING filtersep()
-Description
-   Returns the separator needed by the filter and filter_except functions
-
-filter
-------
-
-Prototype
-   STRING filter(STRING url, STRING_LIST parameter_names)
-Description
-   Returns the given URI without the listed parameters
-Example
-   .. sourcecode::
-
-      set req.url = querystring.filter(req.url,
-        "utm_source" + querystring.filtersep() +
-        "utm_medium" + querystring.filtersep() +
-        "utm_campaign");
-
-filter_except
--------------
-
-Prototype
-   STRING filter_except(STRING url, STRING_LIST parameter_names)
-Description
-   Returns the given URI but only keeps the listed parameters
-Example
-   .. sourcecode::
-
-      set req.url = querystring.filter_except(req.url,
-                                       "q" + querystring.filtersep() + "p");
-
-regfilter
----------
-
-Prototype
-   STRING regfilter(STRING url, STRING parameter_names_regex)
-Description
-   Returns the given URI without the parameters matching a regular expression
-Example
-   .. sourcecode::
-
-      set req.url = querystring.regfilter(req.url, "utm\_.*");
-
-regfilter_except
-----------------
-
-Prototype
-   STRING regfilter_except(STRING url, STRING parameter_names_regex)
-Description
-   Returns the given URI but only keeps the parameters matching a regular
-   expression
-Example
-   .. sourcecode::
-
-      set req.url = querystring.regfilter_except(req.url, "^(q|p)$");
-
-EXAMPLES
+Examples
 ========
 
-In your VCL you could then use this vmod along the following lines::
+Consider the default hashing in Varnish::
 
-   import querystring;
+    sub vcl_hash {
+        hash_data(req.url);
+        if (req.http.host) {
+            hash_data(req.http.host);
+        } else {
+            hash_data(server.ip);
+        }
+        return (lookup);
+    }
 
-   sub vcl_hash {
-      # sort the URL before the request hashing
-      set req.url = querystring.sort(req.url);
-   }
+Clients requesting ``/index.html`` and ``index.html?`` will most likely get
+the exact same response with most web servers / frameworks / stacks / wossname
+but Varnish will see two different URLs and end up with two duplicate objects
+in the cache.
 
-ACKNOWLEDGMENT
-==============
+This is a problem hard to solve with Varnish alone because it requires some
+knowledge of the back-end application but it can usually be mitigated with
+a couple assumptions:
 
-The sort algorithm is a mix of Jason Mooberry's Skwurly and my own QuerySort
-with regards for the Varnish workspace memory model of the worker threads.
+- the application doesn't need query-strings
+- except for POST forms that are not cached
+- and for analytics/tracking purposes
 
-COPYRIGHT
-=========
+In this case it can be solved like this::
 
-This document is licensed under the same license as the
-libvmod-querystring project. See LICENSE for details.
+    import querystring;
 
-* Copyright (c) 2012-2014 Dridi Boukelmoune
+    sub vcl_hash {
+        if (req.method == "GET" || req.method == "HEAD") {
+            hash_data(querystring.remove(req.url));
+        }
+        else {
+            hash_data(req.url);
+        }
+        hash_data(req.http.host);
+        return (lookup);
+    }
+
+This way Varnish will see get the same unique hash for both ``/index.html``
+and ``index.html?`` but the back-end application will receive the original
+client request. Depending on your requirements/goals, you may also take a
+different approach.
+
+Surely enough this module can do more than what a simple regular expression
+substitution (``regsub``) could do, right? First, readability is improved. It
+should be obvious what the previous snippet does with no regex to decipher.
+
+Second, it makes more complex operations easier to implement. For instance,
+you may want to remove Google Analytics parameters from requests because:
+
+- they could create cache duplicates for every campaigns
+- the application does not need them, only marketing folks
+- they can be delivered to business people via ``varnishncsa``
+
+It can be solved like this::
+
+    import querystring;
+
+    sub vcl_recv {
+        set req.url = querystring.regfilter(req.url, "utm_.*");
+    }
+
+This is enough to remove all Analytics parameters you may use (``utm_source``,
+``utm_medium``, ``utm_campaign`` etc) and keep the rest of the query-string
+unless there are no other parameters in which case it's simply removed.
+
+All functions are documented in the manual page ``vmod_querystring(3)``.
+
+Installation
+============
+
+The module requires the GNU Build System, you may follow these steps::
+
+    ./autogen.sh
+    ./configure
+    make check
+
+You can then proceed with the installation::
+
+    sudo make install
+
+Instead of directly installing the package you can build an RPM instead::
+
+    make dist
+    rpmbuild -tb *.tar.gz
+
+If you need to build an RPM for a different platform you may use ``mock(1)``::
+
+    make dist
+    rpmbuild -ts *.tar.gz
+    mock --buildsrpm  --resultdir . --sources . --spec vmod-querystring.spec
+    mock --rebuild    --resultdir . *.src.rpm
+
+If your Varnish installation did not use the default ``/usr`` prefix, you need
+this in your environment before running ``./autogen.sh``::
+
+    export PKG_CONFIG_PATH=/path/to/lib
+
+See also
+========
+
+To learn more about query-strings and HTTP caching, you can have a look at the
+relevant RFCs:
+
+- `RFC 1866 Section 8.2.1`__: The form-urlencoded Media Type
+- `RFC 1866 Section 3`__: Syntax Components
+- `RFC 7234 Section 2`__: Overview of Cache Operation
+
+__ https://tools.ietf.org/html/rfc1866#section-8.2.1
+__ https://tools.ietf.org/html/rfc3986#section-3
+__ https://tools.ietf.org/html/rfc7234#section-2
+
+The test suite also shows the differences in cache hits and misses with and
+without the use of this module.

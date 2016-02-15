@@ -108,7 +108,7 @@ Description
 Example
    .. sourcecode::
 
-      set req.url = querystring.regfilter(req.url, "utm\_.*");
+      set req.url = querystring.regfilter(req.url, "utm_.*");
 
 
 $Function STRING regfilter_except(STRING, STRING)
