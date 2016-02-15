@@ -377,7 +377,7 @@ qs_filter(struct filter_context *context)
 	if (qs[1] == '\0')
 		return (qs_truncate(context->ws, uri, qs));
 
-	if (context->type == regfilter) {
+	if (context->type == QS_REGFILTER) {
 		re = compile_regex(context->params.regfilter.regex);
 		if (re == NULL)
 			return (uri);
@@ -387,7 +387,7 @@ qs_filter(struct filter_context *context)
 	context->qs = qs;
 	filtered_uri = qs_apply(context);
 
-	if (context->type == regfilter)
+	if (context->type == QS_REGFILTER)
 		VRT_re_fini(context->params.regfilter.re);
 
 	return (filtered_uri);
@@ -406,7 +406,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
-	context.type = clean;
+	context.type = QS_CLEAN;
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.is_filtered = &is_param_cleaned;
@@ -463,7 +463,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", uri, params);
 
-	context.type = filter;
+	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.params.filter.params = params;
@@ -487,7 +487,7 @@ vmod_filter_except(const struct vrt_ctx *ctx, const char *uri, const char *param
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", uri, params);
 
-	context.type = filter;
+	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.params.filter.params = params;
@@ -511,7 +511,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", uri, regex);
 
-	context.type = regfilter;
+	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.params.regfilter.regex = regex;
@@ -534,7 +534,7 @@ vmod_regfilter_except(const struct vrt_ctx *ctx, const char *uri, const char *re
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", uri, regex);
 
-	context.type = regfilter;
+	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.uri = uri;
 	context.params.regfilter.regex = regex;

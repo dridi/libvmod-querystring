@@ -56,7 +56,11 @@ struct query_param {
 	short length;
 };
 
-enum filter_type {clean, filter, regfilter};
+enum filter_type {
+	QS_CLEAN,
+	QS_FILTER,
+	QS_REGFILTER,
+};
 
 struct filter_params {
 	const char *params;
