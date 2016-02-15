@@ -254,12 +254,12 @@ qs_match_stringlist(const char *param, size_t len, struct filter_context *contex
 	while (p != vrt_magic_string_end) {
 		if (p != NULL && strlen(p) == len &&
 		    strncmp(param, p, len) == 0)
-			return (!context->is_kept);
+			return (!context->keep);
 		p = va_arg(aq, const char*);
 	}
 	va_end(aq);
 
-	return (context->is_kept);
+	return (context->keep);
 }
 
 static int
@@ -275,7 +275,7 @@ qs_match_regex(const char *param, size_t len, struct filter_context *context)
 
 	match = VRT_re_match(context->params.regfilter.re_ctx, p,
 	    context->params.regfilter.re);
-	return (match ^ context->is_kept);
+	return (match ^ context->keep);
 }
 
 static void *
@@ -399,7 +399,7 @@ vmod_clean(VRT_CTX, const char *url)
 	context.ws = ctx->ws;
 	context.url = url;
 	context.match = NULL;
-	context.is_kept = 0;
+	context.keep = 0;
 
 	filtered_url = qs_filter(&context);
 
@@ -457,7 +457,7 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	context.url = url;
 	context.params.filter.params = params;
 	context.match = &qs_match_stringlist;
-	context.is_kept = 0;
+	context.keep = 0;
 
 	va_start(context.params.filter.ap, params);
 	filtered_url = qs_filter(&context);
@@ -481,7 +481,7 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	context.url = url;
 	context.params.filter.params = params;
 	context.match = &qs_match_stringlist;
-	context.is_kept = 1;
+	context.keep = 1;
 
 	va_start(context.params.filter.ap, params);
 	filtered_url = qs_filter(&context);
@@ -506,7 +506,7 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
 	context.match = &qs_match_regex;
-	context.is_kept = 0;
+	context.keep = 0;
 
 	filtered_url = qs_filter(&context);
 
@@ -529,7 +529,7 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
 	context.match = &qs_match_regex;
-	context.is_kept = 1;
+	context.keep = 1;
 
 	filtered_url = qs_filter(&context);
 
