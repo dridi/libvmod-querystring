@@ -64,40 +64,40 @@ mempcpy(void *dst, const void *src, size_t len)
  */
 
 static const char *
-truncate_querystring(struct ws *ws, const char *uri, const char *query_string)
+qs_truncate(struct ws *ws, const char *uri, const char *qs)
 {
-	int query_string_position;
-	char *truncated_uri;
+	int qs_pos;
+	char *trunc;
 
-	query_string_position = query_string - uri;
-	truncated_uri = WS_Alloc(ws, query_string_position + 1);
+	qs_pos = qs - uri;
+	trunc = WS_Alloc(ws, qs_pos + 1);
 
-	if (truncated_uri == NULL)
+	if (trunc == NULL)
 		return (uri);
 
-	memcpy(truncated_uri, uri, query_string_position);
-	truncated_uri[query_string_position] = '\0';
+	memcpy(trunc, uri, qs_pos);
+	trunc[qs_pos] = '\0';
 
-	return (truncated_uri);
+	return (trunc);
 }
 
 static const char *
-remove_querystring(struct ws *ws, const char *uri)
+qs_remove(struct ws *ws, const char *uri)
 {
-	char *query_string;
+	char *qs;
 
 	if (uri == NULL)
 		return (NULL);
 
-	query_string = strchr(uri, '?');
-	if (query_string == NULL)
+	qs = strchr(uri, '?');
+	if (qs == NULL)
 		return (uri);
 
-	return (truncate_querystring(ws, uri, query_string));
+	return (qs_truncate(ws, uri, qs));
 }
 
 static int
-compare_params(const char *a, const char *b)
+qs_cmp(const char *a, const char *b)
 {
 
 	while (*a == *b) {
@@ -110,23 +110,23 @@ compare_params(const char *a, const char *b)
 }
 
 static const char *
-sort_querystring(struct ws *ws, const char *uri)
+qs_sort(struct ws *ws, const char *uri)
 {
 	struct query_param *end, *params;
 	int count, head, i, last_param, previous, sorted, tail;
-	char *c, *position, *query_string, *snapshot, *sorted_uri;
+	char *c, *position, *qs, *snapshot, *sorted_uri;
 	const char *current_param;
 	unsigned available;
 
 	if (uri == NULL)
 		return (NULL);
 
-	query_string = strchr(uri, '?');
-	if (query_string == NULL)
+	qs = strchr(uri, '?');
+	if (qs == NULL)
 		return (uri);
 
-	if (query_string[1] == '\0')
-		return (truncate_querystring(ws, uri, query_string));
+	if (qs[1] == '\0')
+		return (qs_truncate(ws, uri, qs));
 
 	/* reserve some memory */
 	snapshot = WS_Snapshot(ws);
@@ -160,7 +160,7 @@ sort_querystring(struct ws *ws, const char *uri)
 
 	/* search and sort params */
 	sorted = 1;
-	c = query_string + 1;
+	c = qs + 1;
 	params[head].value = c;
 
 	for (; *c != '\0' && &params[tail+1] < end; c++) {
@@ -171,14 +171,14 @@ sort_querystring(struct ws *ws, const char *uri)
 		params[last_param].length = c - params[last_param].value;
 
 		if (head > 0 &&
-		    compare_params(params[head].value, current_param) > -1) {
+		    qs_cmp(params[head].value, current_param) > -1) {
 			sorted = 0;
 			params[--head].value = current_param;
 			last_param = head;
 			continue;
 		}
 
-		if (compare_params(params[tail].value, current_param) < 1) {
+		if (qs_cmp(params[tail].value, current_param) < 1) {
 			params[++tail].value = current_param;
 			last_param = tail;
 			continue;
@@ -190,7 +190,7 @@ sort_querystring(struct ws *ws, const char *uri)
 		params[tail] = params[i];
 
 		previous = i-1;
-		while (i > head && compare_params(params[previous].value,
+		while (i > head && qs_cmp(params[previous].value,
 		    current_param) > -1)
 			params[i--] = params[previous--];
 
@@ -207,7 +207,7 @@ sort_querystring(struct ws *ws, const char *uri)
 	params[last_param].length = c - params[last_param].value;
 
 	/* copy the url parts */
-	position = mempcpy(sorted_uri, uri, query_string - uri + 1);
+	position = mempcpy(sorted_uri, uri, qs - uri + 1);
 	count = tail-head;
 
 	for (;count > 0; count--, ++head)
@@ -303,7 +303,7 @@ compile_regex(const char *regex)
 }
 
 static const char*
-apply_filter(struct filter_context *context)
+qs_apply(struct filter_context *context)
 {
 	const char *cursor, *param_position, *equal_position;
 	char *begin, *end;
@@ -313,7 +313,7 @@ apply_filter(struct filter_context *context)
 	available = WS_Reserve(context->ws, 0);
 	begin = context->ws->f;
 	end = &begin[available];
-	cursor = context->query_string;
+	cursor = context->qs;
 
 	append_string(&begin, end, context->uri, cursor - context->uri + 1);
 
@@ -359,9 +359,9 @@ apply_filter(struct filter_context *context)
 }
 
 static const char *
-filter_querystring(struct filter_context *context)
+qs_filter(struct filter_context *context)
 {
-	const char *uri, *query_string, *filtered_uri;
+	const char *uri, *qs, *filtered_uri;
 	void *re;
 
 	uri = context->uri;
@@ -369,13 +369,13 @@ filter_querystring(struct filter_context *context)
 	if (uri == NULL)
 		return (NULL);
 
-	query_string = strchr(uri, '?');
+	qs = strchr(uri, '?');
 
-	if (query_string == NULL)
+	if (qs == NULL)
 		return (uri);
 
-	if (query_string[1] == '\0')
-		return (truncate_querystring(context->ws, uri, query_string));
+	if (qs[1] == '\0')
+		return (qs_truncate(context->ws, uri, qs));
 
 	if (context->type == regfilter) {
 		re = compile_regex(context->params.regfilter.regex);
@@ -384,8 +384,8 @@ filter_querystring(struct filter_context *context)
 		context->params.regfilter.re = re;
 	}
 
-	context->query_string = query_string;
-	filtered_uri = apply_filter(context);
+	context->qs = qs;
+	filtered_uri = qs_apply(context);
 
 	if (context->type == regfilter)
 		VRT_re_fini(context->params.regfilter.re);
@@ -412,7 +412,7 @@ vmod_clean(const struct vrt_ctx *ctx, const char *uri)
 	context.is_filtered = &is_param_cleaned;
 	context.is_kept = 0;
 
-	filtered_uri = filter_querystring(&context);
+	filtered_uri = qs_filter(&context);
 
 	QS_LOG_RETURN(ctx, filtered_uri);
 	return (filtered_uri);
@@ -426,7 +426,7 @@ vmod_remove(const struct vrt_ctx *ctx, const char *uri)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
-	cleaned_uri = remove_querystring(ctx->ws, uri);
+	cleaned_uri = qs_remove(ctx->ws, uri);
 
 	QS_LOG_RETURN(ctx, cleaned_uri);
 	return (cleaned_uri);
@@ -440,7 +440,7 @@ vmod_sort(const struct vrt_ctx *ctx, const char *uri)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", uri);
 
-	sorted_uri = sort_querystring(ctx->ws, uri);
+	sorted_uri = qs_sort(ctx->ws, uri);
 
 	QS_LOG_RETURN(ctx, sorted_uri);
 	return (sorted_uri);
@@ -471,7 +471,7 @@ vmod_filter(const struct vrt_ctx *ctx, const char *uri, const char *params, ...)
 	context.is_kept = 0;
 
 	va_start(context.params.filter.ap, params);
-	filtered_uri = filter_querystring(&context);
+	filtered_uri = qs_filter(&context);
 	va_end(context.params.filter.ap);
 
 	QS_LOG_RETURN(ctx, filtered_uri);
@@ -495,7 +495,7 @@ vmod_filter_except(const struct vrt_ctx *ctx, const char *uri, const char *param
 	context.is_kept = 1;
 
 	va_start(context.params.filter.ap, params);
-	filtered_uri = filter_querystring(&context);
+	filtered_uri = qs_filter(&context);
 	va_end(context.params.filter.ap);
 
 	QS_LOG_RETURN(ctx, filtered_uri);
@@ -519,7 +519,7 @@ vmod_regfilter(const struct vrt_ctx *ctx, const char *uri, const char *regex)
 	context.is_filtered = &is_param_regfiltered;
 	context.is_kept = 0;
 
-	filtered_uri = filter_querystring(&context);
+	filtered_uri = qs_filter(&context);
 
 	QS_LOG_RETURN(ctx, filtered_uri);
 	return (filtered_uri);
@@ -542,7 +542,7 @@ vmod_regfilter_except(const struct vrt_ctx *ctx, const char *uri, const char *re
 	context.is_filtered = &is_param_regfiltered;
 	context.is_kept = 1;
 
-	filtered_uri = filter_querystring(&context);
+	filtered_uri = qs_filter(&context);
 
 	QS_LOG_RETURN(ctx, filtered_uri);
 	return (filtered_uri);

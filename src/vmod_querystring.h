@@ -73,7 +73,7 @@ struct filter_context {
 	enum filter_type type;
 	struct ws        *ws;
 	const char       *uri;
-	const char       *query_string;
+	const char       *qs;
 	union {
 		struct filter_params    filter;
 		struct regfilter_params regfilter;
