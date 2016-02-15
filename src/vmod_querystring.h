@@ -82,6 +82,6 @@ struct filter_context {
 		struct filter_params    filter;
 		struct regfilter_params regfilter;
 	} params;
-	int (*is_filtered) (const char*, size_t, struct filter_context*);
+	int (*match) (const char*, size_t, struct filter_context*);
 	int   is_kept;
 };

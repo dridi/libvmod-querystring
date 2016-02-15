@@ -243,22 +243,10 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 }
 
 static int
-qs_match_empty(const char *param, size_t len, struct filter_context *context)
-{
-
-	(void)param;
-	(void)context;
-	return (len == 0);
-}
-
-static int
 qs_match_stringlist(const char *param, size_t len, struct filter_context *context)
 {
 	const char *p;
 	va_list aq;
-
-	if (len == 0)
-		return (1);
 
 	p = context->params.filter.params;
 
@@ -278,9 +266,6 @@ static int
 qs_match_regex(const char *param, size_t len, struct filter_context *context)
 {
 	int match;
-
-	if (len == 0)
-		return (1);
 
 	/* XXX: allocate from workspace? */
 	char p[len + 1];
@@ -307,10 +292,10 @@ qs_re_init(const char *regex)
 static const char*
 qs_apply(struct filter_context *context)
 {
-	const char *cursor, *param_position, *equal_position;
+	const char *cursor, *param_pos, *equal_pos;
 	char *begin, *end;
 	unsigned available;
-	int param_name_length;
+	int name_len, match;
 
 	available = WS_Reserve(context->ws, 0);
 	begin = context->ws->f;
@@ -320,20 +305,22 @@ qs_apply(struct filter_context *context)
 	qs_append(&begin, end, context->url, cursor - context->url + 1);
 
 	while (*cursor != '\0' && begin < end) {
-		param_position = ++cursor;
-		equal_position = NULL;
+		param_pos = ++cursor;
+		equal_pos = NULL;
 
 		while (*cursor != '\0' && *cursor != '&') {
-			if (equal_position == NULL && *cursor == '=')
-				equal_position = cursor;
+			if (equal_pos == NULL && *cursor == '=')
+				equal_pos = cursor;
 			cursor++;
 		}
 
-		param_name_length =
-			(equal_position ? equal_position : cursor) - param_position;
+		name_len = (equal_pos ? equal_pos : cursor) - param_pos;
+		match = name_len == 0;
+		if (!match && context->match != NULL)
+			match = context->match(param_pos, name_len, context);
 
-		if ( ! context->is_filtered(param_position, param_name_length, context) ) {
-			qs_append(&begin, end, param_position, cursor - param_position);
+		if (!match) {
+			qs_append(&begin, end, param_pos, cursor - param_pos);
 			if (*cursor == '&') {
 				*begin = '&';
 				begin++;
@@ -411,7 +398,7 @@ vmod_clean(VRT_CTX, const char *url)
 	context.type = QS_CLEAN;
 	context.ws = ctx->ws;
 	context.url = url;
-	context.is_filtered = &qs_match_empty;
+	context.match = NULL;
 	context.is_kept = 0;
 
 	filtered_url = qs_filter(&context);
@@ -469,7 +456,7 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	context.ws = ctx->ws;
 	context.url = url;
 	context.params.filter.params = params;
-	context.is_filtered = &qs_match_stringlist;
+	context.match = &qs_match_stringlist;
 	context.is_kept = 0;
 
 	va_start(context.params.filter.ap, params);
@@ -493,7 +480,7 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	context.ws = ctx->ws;
 	context.url = url;
 	context.params.filter.params = params;
-	context.is_filtered = &qs_match_stringlist;
+	context.match = &qs_match_stringlist;
 	context.is_kept = 1;
 
 	va_start(context.params.filter.ap, params);
@@ -518,7 +505,7 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
-	context.is_filtered = &qs_match_regex;
+	context.match = &qs_match_regex;
 	context.is_kept = 0;
 
 	filtered_url = qs_filter(&context);
@@ -541,7 +528,7 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.params.regfilter.regex = regex;
 	context.params.regfilter.re_ctx = ctx;
-	context.is_filtered = &qs_match_regex;
+	context.match = &qs_match_regex;
 	context.is_kept = 1;
 
 	filtered_url = qs_filter(&context);
