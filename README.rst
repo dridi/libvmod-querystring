@@ -113,14 +113,13 @@ Instead of directly installing the package you can build an RPM instead::
 If you need to build an RPM for a different platform you may use ``mock(1)``::
 
     make dist
-    rpmbuild -ts *.tar.gz
-    mock --buildsrpm  --resultdir . --sources . --spec vmod-querystring.spec
-    mock --rebuild    --resultdir . *.src.rpm
+    mock --buildsrpm --resultdir . --sources . --spec vmod-querystring.spec
+    mock --rebuild   --resultdir . *.src.rpm
 
 If your Varnish installation did not use the default ``/usr`` prefix, you need
 this in your environment before running ``./autogen.sh``::
 
-    export PKG_CONFIG_PATH=/path/to/lib
+    export PKG_CONFIG_PATH=/path/to/lib/pkgconfig
 
 See also
 ========
@@ -129,7 +128,7 @@ To learn more about query-strings and HTTP caching, you can have a look at the
 relevant RFCs:
 
 - `RFC 1866 Section 8.2.1`__: The form-urlencoded Media Type
-- `RFC 1866 Section 3`__: Syntax Components
+- `RFC 3986 Section 3`__: Syntax Components
 - `RFC 7234 Section 2`__: Overview of Cache Operation
 
 __ https://tools.ietf.org/html/rfc1866#section-8.2.1
