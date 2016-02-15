@@ -19,7 +19,7 @@ Requires:       varnish >= 4
 
 
 %description
-Varnish multipurpose module for URI query-string manipulation. Can be used to
+Varnish multipurpose module for URL query-string manipulation. Can be used to
 normalize for instance request URLs or Location response headers in various
 ways. It is recommended to at least clean incoming request URLs (removing empty
 query-strings), all other functions do the cleaning.

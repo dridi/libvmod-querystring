@@ -33,7 +33,7 @@ $Module querystring Varnish QueryString Module
 DESCRIPTION
 ===========
 
-Varnish multipurpose vmod for URI query-string manipulation. Can be used to
+Varnish multipurpose vmod for URL query-string manipulation. Can be used to
 normalize for instance request URLs or Location response headers in various
 ways. It is recommended to at least clean incoming request URLs (removing empty
 parameters or query-strings), all other functions do the cleaning.
@@ -42,7 +42,7 @@ parameters or query-strings), all other functions do the cleaning.
 $Function STRING clean(STRING)
 
 Description
-   Returns the given URI without empty parameters. The query-string is removed
+   Returns the given URL without empty parameters. The query-string is removed
    if empty (either before or after the removal of empty parameters). Note that
    a parameter with an empty value does not constitute an empty parameter, so
    a query string "?something" would not be cleaned.
@@ -55,7 +55,7 @@ Example
 $Function STRING remove(STRING)
 
 Description
-   Returns the given URI with its query-string removed
+   Returns the given URL with its query-string removed
 Example
    .. sourcecode::
 
@@ -65,7 +65,7 @@ Example
 $Function STRING sort(STRING)
 
 Description
-   Returns the given URI with its query-string sorted
+   Returns the given URL with its query-string sorted
 Example
    .. sourcecode::
 
@@ -81,7 +81,7 @@ Description
 $Function STRING filter(STRING, STRING_LIST)
 
 Description
-   Returns the given URI without the listed parameters
+   Returns the given URL without the listed parameters
 Example
    .. sourcecode::
 
@@ -94,7 +94,7 @@ Example
 $Function STRING filter_except(STRING, STRING_LIST)
 
 Description
-   Returns the given URI but only keeps the listed parameters
+   Returns the given URL but only keeps the listed parameters
 Example
    .. sourcecode::
 
@@ -104,7 +104,7 @@ Example
 $Function STRING regfilter(STRING, STRING)
 
 Description
-   Returns the given URI without the parameters matching a regular expression
+   Returns the given URL without the parameters matching a regular expression
 Example
    .. sourcecode::
 
@@ -114,7 +114,7 @@ Example
 $Function STRING regfilter_except(STRING, STRING)
 
 Description
-   Returns the given URI but only keeps the parameters matching a regular
+   Returns the given URL but only keeps the parameters matching a regular
    expression
 Example
    .. sourcecode::
