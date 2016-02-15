@@ -68,7 +68,6 @@ struct filter_params {
 };
 
 struct regfilter_params {
-	const char *regex;
 	void       *re;
 	re_ctx     *re_ctx;
 };

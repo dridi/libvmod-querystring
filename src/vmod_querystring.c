@@ -351,7 +351,6 @@ static const char *
 qs_filter(struct filter_context *context)
 {
 	const char *url, *qs, *filtered_url;
-	void *re;
 
 	url = context->url;
 
@@ -366,18 +365,8 @@ qs_filter(struct filter_context *context)
 	if (qs[1] == '\0')
 		return (qs_truncate(context->ws, url, qs));
 
-	if (context->type == QS_REGFILTER) {
-		re = qs_re_init(context->params.regfilter.regex);
-		if (re == NULL)
-			return (url);
-		context->params.regfilter.re = re;
-	}
-
 	context->qs = qs;
 	filtered_url = qs_apply(context);
-
-	if (context->type == QS_REGFILTER)
-		VRT_re_fini(context->params.regfilter.re);
 
 	return (filtered_url);
 }
@@ -503,13 +492,17 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
-	context.params.regfilter.regex = regex;
-	context.params.regfilter.re_ctx = ctx;
-	context.match = &qs_match_regex;
 	context.keep = 0;
+	context.match = &qs_match_regex;
+	context.params.regfilter.re_ctx = ctx;
+	context.params.regfilter.re = qs_re_init(regex);
+
+	if (context.params.regfilter.re == NULL)
+		return (url);
 
 	filtered_url = qs_filter(&context);
 
+	VRT_re_fini(context.params.regfilter.re);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }
@@ -526,13 +519,17 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
-	context.params.regfilter.regex = regex;
-	context.params.regfilter.re_ctx = ctx;
-	context.match = &qs_match_regex;
 	context.keep = 1;
+	context.match = &qs_match_regex;
+	context.params.regfilter.re_ctx = ctx;
+	context.params.regfilter.re = qs_re_init(regex);
+
+	if (context.params.regfilter.re == NULL)
+		return (url);
 
 	filtered_url = qs_filter(&context);
 
+	VRT_re_fini(context.params.regfilter.re);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }
