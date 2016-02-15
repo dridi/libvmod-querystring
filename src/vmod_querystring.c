@@ -66,8 +66,12 @@ mempcpy(void *dst, const void *src, size_t len)
 static const char *
 qs_truncate(struct ws *ws, const char *uri, const char *qs)
 {
-	int qs_pos;
+	size_t qs_pos;
 	char *trunc;
+
+	AN(qs);
+	AN(uri);
+	assert(qs > uri);
 
 	qs_pos = qs - uri;
 	trunc = WS_Alloc(ws, qs_pos + 1);
@@ -168,7 +172,7 @@ qs_sort(struct ws *ws, const char *uri)
 			continue;
 
 		current_param = c+1;
-		params[last_param].length = c - params[last_param].value;
+		params[last_param].len = c - params[last_param].value;
 
 		if (head > 0 &&
 		    qs_cmp(params[head].value, current_param) > -1) {
@@ -204,22 +208,22 @@ qs_sort(struct ws *ws, const char *uri)
 		return (uri);
 	}
 
-	params[last_param].length = c - params[last_param].value;
+	params[last_param].len = c - params[last_param].value;
 
 	/* copy the url parts */
 	position = mempcpy(sorted_uri, uri, qs - uri + 1);
 	count = tail-head;
 
 	for (;count > 0; count--, ++head)
-		if (params[head].length > 0) {
+		if (params[head].len > 0) {
 			position = mempcpy(position, params[head].value,
-			    params[head].length);
+			    params[head].len);
 			*position++ = '&';
 		}
 
-	if (params[head].length > 0)
+	if (params[head].len > 0)
 		position = mempcpy(position, params[head].value,
-		    params[head].length);
+		    params[head].len);
 	else
 		position--;
 
@@ -230,40 +234,38 @@ qs_sort(struct ws *ws, const char *uri)
 }
 
 static void
-append_string(char **begin, const char *end, const char *string, int length)
+append_string(char **begin, const char *end, const char *string, size_t len)
 {
 
-	if (*begin + length < end)
-		memcpy(*begin, string, length);
-	*begin += length;
+	if (*begin + len < end)
+		memcpy(*begin, string, len);
+	*begin += len;
 }
 
 static int
-is_param_cleaned(const char *param, int length, struct filter_context *context)
+is_param_cleaned(const char *param, size_t len, struct filter_context *context)
 {
 
 	(void)param;
 	(void)context;
-	return (length == 0);
+	return (len == 0);
 }
 
 static int
-is_param_filtered(const char *param, int length, struct filter_context *context)
+is_param_filtered(const char *param, size_t len, struct filter_context *context)
 {
 	const char *p;
 	va_list aq;
 
-	if (length == 0)
+	if (len == 0)
 		return (1);
-
-	/* XXX: turn length into a size_t */
 
 	p = context->params.filter.params;
 
 	va_copy(aq, context->params.filter.ap);
 	while (p != vrt_magic_string_end) {
-		if (p != NULL && strlen(p) == (size_t)length &&
-		    strncmp(param, p, length) == 0)
+		if (p != NULL && strlen(p) == len &&
+		    strncmp(param, p, len) == 0)
 			return (!context->is_kept);
 		p = va_arg(aq, const char*);
 	}
@@ -273,18 +275,18 @@ is_param_filtered(const char *param, int length, struct filter_context *context)
 }
 
 static int
-is_param_regfiltered(const char *param, int length, struct filter_context *context)
+is_param_regfiltered(const char *param, size_t len, struct filter_context *context)
 {
 	int match;
 
-	if (length == 0)
+	if (len == 0)
 		return (1);
 
 	/* XXX: allocate from workspace? */
-	char p[length + 1];
+	char p[len + 1];
 
-	memcpy(p, param, length);
-	p[length] = '\0';
+	memcpy(p, param, len);
+	p[len] = '\0';
 
 	match = VRT_re_match(context->params.regfilter.re_ctx, p,
 	    context->params.regfilter.re);
