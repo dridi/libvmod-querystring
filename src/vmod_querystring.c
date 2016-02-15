@@ -384,6 +384,7 @@ vmod_clean(VRT_CTX, const char *url)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", url);
 
+	memset(&context, 0, sizeof context);
 	context.type = QS_CLEAN;
 	context.ws = ctx->ws;
 	context.url = url;
@@ -441,6 +442,7 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
+	memset(&context, 0, sizeof context);
 	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
@@ -465,6 +467,7 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
+	memset(&context, 0, sizeof context);
 	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
@@ -489,6 +492,7 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
+	memset(&context, 0, sizeof context);
 	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
@@ -516,6 +520,7 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
+	memset(&context, 0, sizeof context);
 	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
