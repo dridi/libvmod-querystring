@@ -249,7 +249,7 @@ qs_match_list(const char *param, size_t len, struct filter_context *context)
 	struct qs_list *names;
 	struct qs_name *n;
 
-	names = &context->params.names;
+	names = &context->names;
 	AZ(VSTAILQ_EMPTY(names));
 
 	VSTAILQ_FOREACH(n, names, list)
@@ -270,8 +270,8 @@ qs_match_regex(const char *param, size_t len, struct filter_context *context)
 	memcpy(p, param, len);
 	p[len] = '\0';
 
-	match = VRT_re_match(context->params.regfilter.re_ctx, p,
-	    context->params.regfilter.re);
+	match = VRT_re_match(context->regfilter.re_ctx, p,
+	    context->regfilter.re);
 	return (match ^ context->keep);
 }
 
@@ -480,13 +480,13 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	context.match = &qs_match_list;
 	context.keep = 0;
 
-	VSTAILQ_INIT(&context.params.names);
+	VSTAILQ_INIT(&context.names);
 
 	snap = WS_Snapshot(ctx->ws);
 	AN(snap);
 
 	va_start(ap, params);
-	retval = qs_build_list(ctx->ws, &context.params.names, params, ap);
+	retval = qs_build_list(ctx->ws, &context.names, params, ap);
 	va_end(ap);
 
 	if (retval == 0)
@@ -519,13 +519,13 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	context.match = &qs_match_list;
 	context.keep = 1;
 
-	VSTAILQ_INIT(&context.params.names);
+	VSTAILQ_INIT(&context.names);
 
 	snap = WS_Snapshot(ctx->ws);
 	AN(snap);
 
 	va_start(ap, params);
-	retval = qs_build_list(ctx->ws, &context.params.names, params, ap);
+	retval = qs_build_list(ctx->ws, &context.names, params, ap);
 	va_end(ap);
 
 	if (retval == 0)
@@ -554,15 +554,15 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.keep = 0;
 	context.match = &qs_match_regex;
-	context.params.regfilter.re_ctx = ctx;
-	context.params.regfilter.re = qs_re_init(regex);
+	context.regfilter.re_ctx = ctx;
+	context.regfilter.re = qs_re_init(regex);
 
-	if (context.params.regfilter.re == NULL)
+	if (context.regfilter.re == NULL)
 		return (url);
 
 	filtered_url = qs_filter(&context);
 
-	VRT_re_fini(context.params.regfilter.re);
+	VRT_re_fini(context.regfilter.re);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }
@@ -582,15 +582,15 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.keep = 1;
 	context.match = &qs_match_regex;
-	context.params.regfilter.re_ctx = ctx;
-	context.params.regfilter.re = qs_re_init(regex);
+	context.regfilter.re_ctx = ctx;
+	context.regfilter.re = qs_re_init(regex);
 
-	if (context.params.regfilter.re == NULL)
+	if (context.regfilter.re == NULL)
 		return (url);
 
 	filtered_url = qs_filter(&context);
 
-	VRT_re_fini(context.params.regfilter.re);
+	VRT_re_fini(context.regfilter.re);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }

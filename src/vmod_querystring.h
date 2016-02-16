@@ -86,7 +86,7 @@ struct filter_context {
 	union {
 		struct qs_list          names;
 		struct regfilter_params regfilter;
-	} params;
+	};
 	qs_match *match;
 	int keep;
 };
