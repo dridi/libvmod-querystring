@@ -277,13 +277,17 @@ qs_match_regex(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
 }
 
 static void *
-qs_re_init(const char *regex)
+qs_re_init(VRT_CTX, const char *regex)
 {
 	void *re;
 	const char *error;
 	int error_offset;
 
+	AN(ctx->vsl);
+
 	re = VRE_compile(regex, 0, &error, &error_offset);
+	VSLb(ctx->vsl, SLT_Error, "Regex error (%s): '%s' pos %d", error,
+	    regex, error_offset);
 	return (re);
 }
 

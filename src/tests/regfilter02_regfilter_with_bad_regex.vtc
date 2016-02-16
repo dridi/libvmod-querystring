@@ -56,6 +56,13 @@ varnish v1 -vcl+backend {
 	}
 } -start
 
+logexpect l1 -v v1 {
+	expect * * Error 'utm\(_\.\*'
+	expect * * Error 'utm\(_\.\*'
+	expect * * Error 'utm\(_\.\*'
+	expect * * Error 'utm\(_\.\*'
+} -start
+
 client c1 {
 	txreq -url "/article?lang=fr"
 	rxresp
@@ -93,3 +100,5 @@ delay .1
 varnish v1 -expect n_object == 4
 varnish v1 -expect cache_miss == 4
 varnish v1 -expect cache_hit == 0
+
+logexpect l1 -wait
