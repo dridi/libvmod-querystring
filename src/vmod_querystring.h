@@ -73,7 +73,6 @@ struct filter_context;
 typedef int qs_match(const char *, size_t, struct filter_context *);
 
 struct filter_context {
-	struct ws        *ws;
 	const char       *url;
 	const char       *qs;
 	union {
