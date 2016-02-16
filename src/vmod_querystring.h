@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define QS_LOG_CALL(ctx, pattern, ...) \
-	VSLb(ctx->vsl, SLT_VCL_call, "%s(" pattern ")", __func__, __VA_ARGS__);
+#define QS_LOG_CALL(ctx, fmt, ...) \
+	VSLb(ctx->vsl, SLT_VCL_call, "%s(" fmt ")", __func__, __VA_ARGS__);
 
-#define QS_LOG_RETURN(ctx, value) VSLb(ctx->vsl, SLT_VCL_return, "\"%s\"", value);
+#define QS_LOG_RETURN(ctx, val) VSLb(ctx->vsl, SLT_VCL_return, "\"%s\"", val);
 
 typedef const struct vrt_ctx re_ctx;
 

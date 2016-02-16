@@ -244,8 +244,7 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 }
 
 static int __match_proto__(qs_match)
-qs_match_list(VRT_CTX, const char *param, size_t len,
-    const struct qs_filter *qsf)
+qs_match_list(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
 {
 	const struct qs_list *names;
 	struct qs_name *n;
@@ -256,22 +255,21 @@ qs_match_list(VRT_CTX, const char *param, size_t len,
 	AZ(VSTAILQ_EMPTY(names));
 
 	VSTAILQ_FOREACH(n, names, list)
-		if (strlen(n->name) == len && !strncmp(param, n->name, len))
+		if (strlen(n->name) == len && !strncmp(s, n->name, len))
 			return (!qsf->keep);
 
 	return (qsf->keep);
 }
 
 static int __match_proto__(qs_match)
-qs_match_regex(VRT_CTX, const char *param, size_t len,
-    const struct qs_filter *qsf)
+qs_match_regex(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
 {
 	int match;
 
 	/* XXX: allocate from workspace? */
 	char p[len + 1];
 
-	memcpy(p, param, len);
+	memcpy(p, s, len);
 	p[len] = '\0';
 
 	match = VRT_re_match(ctx, p, qsf->regex);
@@ -290,8 +288,7 @@ qs_re_init(const char *regex)
 }
 
 static const char*
-qs_apply(VRT_CTX, const char *url, const char *qs,
-    const struct qs_filter *qsf)
+qs_apply(VRT_CTX, const char *url, const char *qs, const struct qs_filter *qsf)
 {
 	const char *cursor, *param_pos, *equal_pos;
 	char *begin, *end;
@@ -351,7 +348,7 @@ qs_apply(VRT_CTX, const char *url, const char *qs,
 static const char *
 qs_filter(VRT_CTX, const char *url, const struct qs_filter *qsf)
 {
-	const char *qs, *filtered_url;
+	const char *qs, *res;
 
 	if (url == NULL)
 		return (NULL);
@@ -364,9 +361,9 @@ qs_filter(VRT_CTX, const char *url, const struct qs_filter *qsf)
 	if (qs[1] == '\0')
 		return (qs_truncate(ctx->ws, url, qs));
 
-	filtered_url = qs_apply(ctx, url, qs, qsf);
+	res = qs_apply(ctx, url, qs, qsf);
 
-	return (filtered_url);
+	return (res);
 }
 
 static int
@@ -408,7 +405,7 @@ const char *
 vmod_clean(VRT_CTX, const char *url)
 {
 	struct qs_filter qsf;
-	const char *filtered_url;
+	const char *res;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", url);
@@ -417,10 +414,10 @@ vmod_clean(VRT_CTX, const char *url)
 	qsf.match = NULL;
 	qsf.keep = 0;
 
-	filtered_url = qs_filter(ctx, url, &qsf);
+	res = qs_filter(ctx, url, &qsf);
 
-	QS_LOG_RETURN(ctx, filtered_url);
-	return (filtered_url);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
 
 const char *
@@ -463,7 +460,7 @@ const char *
 vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct qs_filter qsf;
-	const char *filtered_url;
+	const char *res;
 	char *snap;
 	va_list ap;
 	int retval;
@@ -485,21 +482,21 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	va_end(ap);
 
 	if (retval == 0)
-		filtered_url = qs_filter(ctx, url, &qsf);
+		res = qs_filter(ctx, url, &qsf);
 	else
-		filtered_url = url;
+		res = url;
 
 	WS_Reset(ctx->ws, snap);
 
-	QS_LOG_RETURN(ctx, filtered_url);
-	return (filtered_url);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
 
 const char *
 vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct qs_filter qsf;
-	const char *filtered_url;
+	const char *res;
 	char *snap;
 	va_list ap;
 	int retval;
@@ -521,21 +518,21 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	va_end(ap);
 
 	if (retval == 0)
-		filtered_url = qs_filter(ctx, url, &qsf);
+		res = qs_filter(ctx, url, &qsf);
 	else
-		filtered_url = url;
+		res = url;
 
 	WS_Reset(ctx->ws, snap);
 
-	QS_LOG_RETURN(ctx, filtered_url);
-	return (filtered_url);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
 
 const char *
 vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 {
 	struct qs_filter qsf;
-	const char *filtered_url;
+	const char *res;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
@@ -543,23 +540,23 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	memset(&qsf, 0, sizeof qsf);
 	qsf.keep = 0;
 	qsf.match = &qs_match_regex;
-	qsf.regex = qs_re_init(regex);
+	qsf.regex = qs_re_init(ctx, regex);
 
 	if (qsf.regex == NULL)
 		return (url);
 
-	filtered_url = qs_filter(ctx, url, &qsf);
+	res = qs_filter(ctx, url, &qsf);
 
 	VRT_re_fini(qsf.regex);
-	QS_LOG_RETURN(ctx, filtered_url);
-	return (filtered_url);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
 
 const char *
 vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 {
 	struct qs_filter qsf;
-	const char *filtered_url;
+	const char *res;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
@@ -567,14 +564,14 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	memset(&qsf, 0, sizeof qsf);
 	qsf.keep = 1;
 	qsf.match = &qs_match_regex;
-	qsf.regex = qs_re_init(regex);
+	qsf.regex = qs_re_init(ctx, regex);
 
 	if (qsf.regex == NULL)
 		return (url);
 
-	filtered_url = qs_filter(ctx, url, &qsf);
+	res = qs_filter(ctx, url, &qsf);
 
 	VRT_re_fini(qsf.regex);
-	QS_LOG_RETURN(ctx, filtered_url);
-	return (filtered_url);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
