@@ -245,9 +245,9 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 
 static int __match_proto__(qs_match)
 qs_match_list(VRT_CTX, const char *param, size_t len,
-    struct qs_filter *qsf)
+    const struct qs_filter *qsf)
 {
-	struct qs_list *names;
+	const struct qs_list *names;
 	struct qs_name *n;
 
 	(void)ctx;
@@ -264,7 +264,7 @@ qs_match_list(VRT_CTX, const char *param, size_t len,
 
 static int __match_proto__(qs_match)
 qs_match_regex(VRT_CTX, const char *param, size_t len,
-    struct qs_filter *qsf)
+    const struct qs_filter *qsf)
 {
 	int match;
 
@@ -291,7 +291,7 @@ qs_re_init(const char *regex)
 
 static const char*
 qs_apply(VRT_CTX, const char *url, const char *qs,
-    struct qs_filter *qsf)
+    const struct qs_filter *qsf)
 {
 	const char *cursor, *param_pos, *equal_pos;
 	char *begin, *end;
@@ -349,7 +349,7 @@ qs_apply(VRT_CTX, const char *url, const char *qs,
 }
 
 static const char *
-qs_filter(VRT_CTX, const char *url, struct qs_filter *qsf)
+qs_filter(VRT_CTX, const char *url, const struct qs_filter *qsf)
 {
 	const char *qs, *filtered_url;
 

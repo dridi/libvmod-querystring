@@ -65,7 +65,7 @@ struct qs_name {
 
 struct qs_filter;
 
-typedef int qs_match(VRT_CTX, const char *, size_t, struct qs_filter *);
+typedef int qs_match(VRT_CTX, const char *, size_t, const struct qs_filter *);
 
 struct qs_filter {
 	union {
