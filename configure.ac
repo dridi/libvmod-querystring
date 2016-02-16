@@ -61,10 +61,15 @@ AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
 # Check for rst utilities
-AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], "no")
-AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
-if test "x$RST2MAN" = "xno"; then
-	AC_MSG_WARN([rst2man not found - not building man pages])
+AC_ARG_WITH([rst2man],
+AS_HELP_STRING(
+	[--with-rst2man=PATH],
+	[Location of rst2man (auto)]),
+	[RST2MAN="$withval"],
+	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], [no]))
+if test "$RST2MAN" = "no"; then
+	AC_MSG_ERROR(
+		[rst2man is needed to build the manual. To proceed without, specify --with-rst2man=true.])
 fi
 
 # Test suite

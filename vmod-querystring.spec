@@ -11,7 +11,7 @@ License:        BSD
 
 Source:         lib%{name}-%{version}.tar.gz
 
-BuildRequires:  python-docutils
+BuildRequires:  python
 BuildRequires:  varnish >= 4
 BuildRequires:  varnish-libs-devel >= 4
 
@@ -30,7 +30,7 @@ query-strings), all other functions do the cleaning.
 
 
 %build
-%configure
+%configure --with-rst2man=true
 make %{?_smp_mflags}
 
 

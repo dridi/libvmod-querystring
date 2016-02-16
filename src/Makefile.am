@@ -67,14 +67,7 @@ $(VCC_FILES) $(DOC_FILES): vmod.vcc
 dist_man_MANS = vmod_querystring.3
 
 %.3: %.man.rst
-if HAVE_RST2MAN
 	${RST2MAN} $< $@
-else
-	@echo "========================================"
-	@echo "You need rst2man installed to make dist"
-	@echo "========================================"
-	@false
-endif
 
 # Test suite
 
