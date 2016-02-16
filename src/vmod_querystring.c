@@ -244,10 +244,13 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 }
 
 static int __match_proto__(qs_match)
-qs_match_list(const char *param, size_t len, struct filter_context *context)
+qs_match_list(VRT_CTX, const char *param, size_t len,
+    struct filter_context *context)
 {
 	struct qs_list *names;
 	struct qs_name *n;
+
+	(void)ctx;
 
 	names = &context->names;
 	AZ(VSTAILQ_EMPTY(names));
@@ -260,7 +263,8 @@ qs_match_list(const char *param, size_t len, struct filter_context *context)
 }
 
 static int __match_proto__(qs_match)
-qs_match_regex(const char *param, size_t len, struct filter_context *context)
+qs_match_regex(VRT_CTX, const char *param, size_t len,
+    struct filter_context *context)
 {
 	int match;
 
@@ -270,8 +274,7 @@ qs_match_regex(const char *param, size_t len, struct filter_context *context)
 	memcpy(p, param, len);
 	p[len] = '\0';
 
-	match = VRT_re_match(context->regfilter.re_ctx, p,
-	    context->regfilter.re);
+	match = VRT_re_match(ctx, p, context->regex);
 	return (match ^ context->keep);
 }
 
@@ -314,7 +317,8 @@ qs_apply(VRT_CTX, struct filter_context *context)
 		name_len = (equal_pos ? equal_pos : cursor) - param_pos;
 		match = name_len == 0;
 		if (!match && context->match != NULL)
-			match = context->match(param_pos, name_len, context);
+			match = context->match(ctx, param_pos, name_len,
+			    context);
 
 		if (!match) {
 			qs_append(&begin, end, param_pos, cursor - param_pos);
@@ -546,15 +550,14 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.keep = 0;
 	context.match = &qs_match_regex;
-	context.regfilter.re_ctx = ctx;
-	context.regfilter.re = qs_re_init(regex);
+	context.regex = qs_re_init(regex);
 
-	if (context.regfilter.re == NULL)
+	if (context.regex == NULL)
 		return (url);
 
 	filtered_url = qs_filter(ctx, &context);
 
-	VRT_re_fini(context.regfilter.re);
+	VRT_re_fini(context.regex);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }
@@ -572,15 +575,14 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	context.url = url;
 	context.keep = 1;
 	context.match = &qs_match_regex;
-	context.regfilter.re_ctx = ctx;
-	context.regfilter.re = qs_re_init(regex);
+	context.regex = qs_re_init(regex);
 
-	if (context.regfilter.re == NULL)
+	if (context.regex == NULL)
 		return (url);
 
 	filtered_url = qs_filter(ctx, &context);
 
-	VRT_re_fini(context.regfilter.re);
+	VRT_re_fini(context.regex);
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
 }

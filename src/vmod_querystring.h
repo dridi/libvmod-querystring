@@ -56,11 +56,6 @@ struct query_param {
 	size_t len;
 };
 
-struct regfilter_params {
-	void       *re;
-	re_ctx     *re_ctx;
-};
-
 VSTAILQ_HEAD(qs_list, qs_name);
 
 struct qs_name {
@@ -70,14 +65,14 @@ struct qs_name {
 
 struct filter_context;
 
-typedef int qs_match(const char *, size_t, struct filter_context *);
+typedef int qs_match(VRT_CTX, const char *, size_t, struct filter_context *);
 
 struct filter_context {
 	const char       *url;
 	const char       *qs;
 	union {
 		struct qs_list          names;
-		struct regfilter_params regfilter;
+		void		*regex;
 	};
 	qs_match *match;
 	int keep;
