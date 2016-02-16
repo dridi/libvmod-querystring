@@ -306,11 +306,9 @@ qs_apply(VRT_CTX, const char *url, const char *qs, const struct qs_filter *qsf)
 		param_pos = ++cursor;
 		equal_pos = NULL;
 
-		while (*cursor != '\0' && *cursor != '&') {
+		for (; !EOQP(*cursor); cursor++)
 			if (equal_pos == NULL && *cursor == '=')
 				equal_pos = cursor;
-			cursor++;
-		}
 
 		name_len = (equal_pos ? equal_pos : cursor) - param_pos;
 		match = name_len == 0;
