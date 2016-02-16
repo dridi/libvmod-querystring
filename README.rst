@@ -34,7 +34,7 @@ Consider the default hashing in Varnish::
         return (lookup);
     }
 
-Clients requesting ``/index.html`` and ``index.html?`` will most likely get
+Clients requesting ``/index.html`` and ``/index.html?`` will most likely get
 the exact same response with most web servers / frameworks / stacks / wossname
 but Varnish will see two different URLs and end up with two duplicate objects
 in the cache.
@@ -63,7 +63,7 @@ In this case it can be solved like this::
     }
 
 This way Varnish will see get the same unique hash for both ``/index.html``
-and ``index.html?`` but the back-end application will receive the original
+and ``/index.html?`` but the back-end application will receive the original
 client request. Depending on your requirements/goals, you may also take a
 different approach.
 
