@@ -52,8 +52,8 @@ typedef const struct vrt_ctx re_ctx;
 /* ------------------------------------------------------------------- */
 
 struct query_param {
-	const char *value;
-	size_t len;
+	const char	*value;
+	size_t		len;
 };
 
 VSTAILQ_HEAD(qs_list, qs_name);
@@ -68,12 +68,12 @@ struct filter_context;
 typedef int qs_match(VRT_CTX, const char *, size_t, struct filter_context *);
 
 struct filter_context {
-	const char       *url;
-	const char       *qs;
+	const char		*url;
+	const char		*qs;
 	union {
-		struct qs_list          names;
+		struct qs_list	names;
 		void		*regex;
 	};
-	qs_match *match;
-	int keep;
+	qs_match		*match;
+	int			keep;
 };
