@@ -20,6 +20,7 @@ Makefile.in
 /configure
 /depcomp
 /install-sh
+/ar-lib
 /libtool
 /ltmain.sh
 /missing
