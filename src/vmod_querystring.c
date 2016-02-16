@@ -36,6 +36,7 @@
 
 #include <vrt.h>
 #include <vre.h>
+#include <vqueue.h>
 #include <cache/cache.h>
 
 #include "vcc_if.h"
@@ -243,21 +244,17 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 }
 
 static int __match_proto__(qs_match)
-qs_match_stringlist(const char *param, size_t len, struct filter_context *context)
+qs_match_list(const char *param, size_t len, struct filter_context *context)
 {
-	const char *p;
-	va_list aq;
+	struct qs_list *names;
+	struct qs_name *n;
 
-	p = context->params.filter.params;
+	names = &context->params.names;
+	AZ(VSTAILQ_EMPTY(names));
 
-	va_copy(aq, context->params.filter.ap);
-	while (p != vrt_magic_string_end) {
-		if (p != NULL && strlen(p) == len &&
-		    strncmp(param, p, len) == 0)
+	VSTAILQ_FOREACH(n, names, list)
+		if (strlen(n->name) == len && !strncmp(param, n->name, len))
 			return (!context->keep);
-		p = va_arg(aq, const char*);
-	}
-	va_end(aq);
 
 	return (context->keep);
 }
@@ -371,6 +368,37 @@ qs_filter(struct filter_context *context)
 	return (filtered_url);
 }
 
+static int
+qs_build_list(struct ws *ws, struct qs_list *names, const char *p, va_list ap)
+{
+	struct qs_name *n;
+	const char *q;
+
+	AN(ws);
+	AN(names);
+	AN(p);
+	AN(VSTAILQ_EMPTY(names));
+
+	while (p != vrt_magic_string_end) {
+		q = p;
+		p = va_arg(ap, const char*);
+
+		if (q == NULL || *q == '\0')
+			continue;
+
+		n = WS_Alloc(ws, sizeof *n);
+		if (n == NULL)
+			return (-1);
+		n->name = TRUST_ME(q);
+		VSTAILQ_INSERT_TAIL(names, n, list);
+	}
+
+	if (VSTAILQ_EMPTY(names))
+		return (-1);
+
+	return (0);
+}
+
 /***********************************************************************
  * Below are the functions that will actually be linked by Varnish.
  */
@@ -438,6 +466,9 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct filter_context context;
 	const char *filtered_url;
+	char *snap;
+	va_list ap;
+	int retval;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
@@ -446,13 +477,24 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
-	context.params.filter.params = params;
-	context.match = &qs_match_stringlist;
+	context.match = &qs_match_list;
 	context.keep = 0;
 
-	va_start(context.params.filter.ap, params);
-	filtered_url = qs_filter(&context);
-	va_end(context.params.filter.ap);
+	VSTAILQ_INIT(&context.params.names);
+
+	snap = WS_Snapshot(ctx->ws);
+	AN(snap);
+
+	va_start(ap, params);
+	retval = qs_build_list(ctx->ws, &context.params.names, params, ap);
+	va_end(ap);
+
+	if (retval == 0)
+		filtered_url = qs_filter(&context);
+	else
+		filtered_url = url;
+
+	WS_Reset(ctx->ws, snap);
 
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
@@ -463,6 +505,9 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 {
 	struct filter_context context;
 	const char *filtered_url;
+	char *snap;
+	va_list ap;
+	int retval;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
@@ -471,13 +516,24 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
-	context.params.filter.params = params;
-	context.match = &qs_match_stringlist;
+	context.match = &qs_match_list;
 	context.keep = 1;
 
-	va_start(context.params.filter.ap, params);
-	filtered_url = qs_filter(&context);
-	va_end(context.params.filter.ap);
+	VSTAILQ_INIT(&context.params.names);
+
+	snap = WS_Snapshot(ctx->ws);
+	AN(snap);
+
+	va_start(ap, params);
+	retval = qs_build_list(ctx->ws, &context.params.names, params, ap);
+	va_end(ap);
+
+	if (retval == 0)
+		filtered_url = qs_filter(&context);
+	else
+		filtered_url = url;
+
+	WS_Reset(ctx->ws, snap);
 
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);

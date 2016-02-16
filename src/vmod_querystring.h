@@ -62,14 +62,16 @@ enum filter_type {
 	QS_REGFILTER,
 };
 
-struct filter_params {
-	const char *params;
-	va_list    ap;
-};
-
 struct regfilter_params {
 	void       *re;
 	re_ctx     *re_ctx;
+};
+
+VSTAILQ_HEAD(qs_list, qs_name);
+
+struct qs_name {
+	VSTAILQ_ENTRY(qs_name)	list;
+	char			*name;
 };
 
 struct filter_context;
@@ -82,7 +84,7 @@ struct filter_context {
 	const char       *url;
 	const char       *qs;
 	union {
-		struct filter_params    filter;
+		struct qs_list          names;
 		struct regfilter_params regfilter;
 	} params;
 	qs_match *match;
