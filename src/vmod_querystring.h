@@ -56,12 +56,6 @@ struct query_param {
 	size_t len;
 };
 
-enum filter_type {
-	QS_CLEAN,
-	QS_FILTER,
-	QS_REGFILTER,
-};
-
 struct regfilter_params {
 	void       *re;
 	re_ctx     *re_ctx;
@@ -79,7 +73,6 @@ struct filter_context;
 typedef int qs_match(const char *, size_t, struct filter_context *);
 
 struct filter_context {
-	enum filter_type type;
 	struct ws        *ws;
 	const char       *url;
 	const char       *qs;

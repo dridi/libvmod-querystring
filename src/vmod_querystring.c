@@ -413,7 +413,6 @@ vmod_clean(VRT_CTX, const char *url)
 	QS_LOG_CALL(ctx, "\"%s\"", url);
 
 	memset(&context, 0, sizeof context);
-	context.type = QS_CLEAN;
 	context.ws = ctx->ws;
 	context.url = url;
 	context.match = NULL;
@@ -474,7 +473,6 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
 	memset(&context, 0, sizeof context);
-	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
 	context.match = &qs_match_list;
@@ -513,7 +511,6 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
 	memset(&context, 0, sizeof context);
-	context.type = QS_FILTER;
 	context.ws = ctx->ws;
 	context.url = url;
 	context.match = &qs_match_list;
@@ -549,7 +546,6 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
 	memset(&context, 0, sizeof context);
-	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
 	context.keep = 0;
@@ -577,7 +573,6 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
 	memset(&context, 0, sizeof context);
-	context.type = QS_REGFILTER;
 	context.ws = ctx->ws;
 	context.url = url;
 	context.keep = 1;
