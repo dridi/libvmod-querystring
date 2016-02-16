@@ -481,11 +481,7 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	retval = qs_build_list(ctx->ws, &qsf.names, params, ap);
 	va_end(ap);
 
-	if (retval == 0)
-		res = qs_filter(ctx, url, &qsf);
-	else
-		res = url;
-
+	res = retval == 0 ? qs_filter(ctx, url, &qsf) : url;
 	WS_Reset(ctx->ws, snap);
 
 	QS_LOG_RETURN(ctx, res);
@@ -517,11 +513,7 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	retval = qs_build_list(ctx->ws, &qsf.names, params, ap);
 	va_end(ap);
 
-	if (retval == 0)
-		res = qs_filter(ctx, url, &qsf);
-	else
-		res = url;
-
+	res = retval == 0 ? qs_filter(ctx, url, &qsf) : url;
 	WS_Reset(ctx->ws, snap);
 
 	QS_LOG_RETURN(ctx, res);
