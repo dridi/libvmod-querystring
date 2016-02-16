@@ -63,11 +63,11 @@ struct qs_name {
 	char			*name;
 };
 
-struct filter_context;
+struct qs_filter;
 
-typedef int qs_match(VRT_CTX, const char *, size_t, struct filter_context *);
+typedef int qs_match(VRT_CTX, const char *, size_t, struct qs_filter *);
 
-struct filter_context {
+struct qs_filter {
 	union {
 		struct qs_list	names;
 		void		*regex;
