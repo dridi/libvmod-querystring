@@ -68,8 +68,6 @@ struct filter_context;
 typedef int qs_match(VRT_CTX, const char *, size_t, struct filter_context *);
 
 struct filter_context {
-	const char		*url;
-	const char		*qs;
 	union {
 		struct qs_list	names;
 		void		*regex;

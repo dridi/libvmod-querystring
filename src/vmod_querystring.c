@@ -290,7 +290,8 @@ qs_re_init(const char *regex)
 }
 
 static const char*
-qs_apply(VRT_CTX, struct filter_context *context)
+qs_apply(VRT_CTX, const char *url, const char *qs,
+    struct filter_context *context)
 {
 	const char *cursor, *param_pos, *equal_pos;
 	char *begin, *end;
@@ -300,9 +301,9 @@ qs_apply(VRT_CTX, struct filter_context *context)
 	available = WS_Reserve(ctx->ws, 0);
 	begin = ctx->ws->f;
 	end = &begin[available];
-	cursor = context->qs;
+	cursor = qs;
 
-	qs_append(&begin, end, context->url, cursor - context->url + 1);
+	qs_append(&begin, end, url, cursor - url + 1);
 
 	while (*cursor != '\0' && begin < end) {
 		param_pos = ++cursor;
@@ -339,7 +340,7 @@ qs_apply(VRT_CTX, struct filter_context *context)
 
 	if (begin > end) {
 		WS_Release(ctx->ws, 0);
-		return (context->url);
+		return (url);
 	}
 
 	end = begin;
@@ -349,11 +350,9 @@ qs_apply(VRT_CTX, struct filter_context *context)
 }
 
 static const char *
-qs_filter(VRT_CTX, struct filter_context *context)
+qs_filter(VRT_CTX, const char *url, struct filter_context *context)
 {
-	const char *url, *qs, *filtered_url;
-
-	url = context->url;
+	const char *qs, *filtered_url;
 
 	if (url == NULL)
 		return (NULL);
@@ -366,8 +365,7 @@ qs_filter(VRT_CTX, struct filter_context *context)
 	if (qs[1] == '\0')
 		return (qs_truncate(ctx->ws, url, qs));
 
-	context->qs = qs;
-	filtered_url = qs_apply(ctx, context);
+	filtered_url = qs_apply(ctx, url, qs, context);
 
 	return (filtered_url);
 }
@@ -417,11 +415,10 @@ vmod_clean(VRT_CTX, const char *url)
 	QS_LOG_CALL(ctx, "\"%s\"", url);
 
 	memset(&context, 0, sizeof context);
-	context.url = url;
 	context.match = NULL;
 	context.keep = 0;
 
-	filtered_url = qs_filter(ctx, &context);
+	filtered_url = qs_filter(ctx, url, &context);
 
 	QS_LOG_RETURN(ctx, filtered_url);
 	return (filtered_url);
@@ -476,7 +473,6 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
 	memset(&context, 0, sizeof context);
-	context.url = url;
 	context.match = &qs_match_list;
 	context.keep = 0;
 
@@ -490,7 +486,7 @@ vmod_filter(VRT_CTX, const char *url, const char *params, ...)
 	va_end(ap);
 
 	if (retval == 0)
-		filtered_url = qs_filter(ctx, &context);
+		filtered_url = qs_filter(ctx, url, &context);
 	else
 		filtered_url = url;
 
@@ -513,7 +509,6 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
 
 	memset(&context, 0, sizeof context);
-	context.url = url;
 	context.match = &qs_match_list;
 	context.keep = 1;
 
@@ -527,7 +522,7 @@ vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
 	va_end(ap);
 
 	if (retval == 0)
-		filtered_url = qs_filter(ctx, &context);
+		filtered_url = qs_filter(ctx, url, &context);
 	else
 		filtered_url = url;
 
@@ -547,7 +542,6 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
 	memset(&context, 0, sizeof context);
-	context.url = url;
 	context.keep = 0;
 	context.match = &qs_match_regex;
 	context.regex = qs_re_init(regex);
@@ -555,7 +549,7 @@ vmod_regfilter(VRT_CTX, const char *url, const char *regex)
 	if (context.regex == NULL)
 		return (url);
 
-	filtered_url = qs_filter(ctx, &context);
+	filtered_url = qs_filter(ctx, url, &context);
 
 	VRT_re_fini(context.regex);
 	QS_LOG_RETURN(ctx, filtered_url);
@@ -572,7 +566,6 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
 
 	memset(&context, 0, sizeof context);
-	context.url = url;
 	context.keep = 1;
 	context.match = &qs_match_regex;
 	context.regex = qs_re_init(regex);
@@ -580,7 +573,7 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	if (context.regex == NULL)
 		return (url);
 
-	filtered_url = qs_filter(ctx, &context);
+	filtered_url = qs_filter(ctx, url, &context);
 
 	VRT_re_fini(context.regex);
 	QS_LOG_RETURN(ctx, filtered_url);
