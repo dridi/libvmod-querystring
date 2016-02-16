@@ -28,6 +28,7 @@ Makefile.in
 /test-driver
 /m4/
 
+/src/.vcc
 /src/vcc_if.c
 /src/vcc_if.h
 /src/*.rst

@@ -58,9 +58,12 @@ nodist_libvmod_querystring_la_SOURCES = \
 
 $(srcdir)/vmod_querystring.c: $(VCC_FILES)
 
-$(VCC_FILES) $(DOC_FILES): vmod.vcc
+$(VCC_FILES) $(DOC_FILES): .vcc
+
+.vcc: vmod.vcc
 	@echo vmodtool: @VMODTOOL@ $<
 	@@VMODTOOL@ $<
+	@touch $@
 
 # Documentation
 
