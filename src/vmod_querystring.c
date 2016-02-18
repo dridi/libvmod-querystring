@@ -70,6 +70,7 @@ qs_truncate(struct ws *ws, const char *url, const char *qs)
 	size_t qs_pos;
 	char *trunc;
 
+	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(url);
 	AN(qs);
 	assert(url <= qs);
@@ -117,6 +118,8 @@ qs_remove(struct ws *ws, const char *url)
 {
 	const char *res, *qs;
 
+	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
+
 	res = NULL;
 	if (qs_empty(ws, url, &res))
 		return (res);
@@ -147,6 +150,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	const char *c, *current_param;
 	unsigned available;
 
+	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(url);
 	AN(qs);
 	assert(url <= qs);
@@ -388,6 +392,7 @@ qs_build_list(struct ws *ws, struct qs_list *names, const char *p, va_list ap)
 	struct qs_name *n;
 	const char *q;
 
+	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(ws);
 	AN(names);
 	AN(p);
