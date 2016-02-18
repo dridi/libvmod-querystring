@@ -70,9 +70,9 @@ qs_truncate(struct ws *ws, const char *url, const char *qs)
 	size_t qs_pos;
 	char *trunc;
 
-	AN(qs);
 	AN(url);
-	assert(qs > url);
+	AN(qs);
+	assert(url <= qs);
 
 	qs_pos = qs - url;
 	trunc = WS_Alloc(ws, qs_pos + 1);
@@ -86,18 +86,42 @@ qs_truncate(struct ws *ws, const char *url, const char *qs)
 	return (trunc);
 }
 
-static const char *
-qs_remove(struct ws *ws, const char *url)
+static int
+qs_empty(struct ws *ws, const char *url, const char **res)
 {
-	char *qs;
+	const char *qs;
+
+	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
+	AN(res);
+
+	*res = url;
 
 	if (url == NULL)
-		return (NULL);
+		return (1);
 
 	qs = strchr(url, '?');
 	if (qs == NULL)
-		return (url);
+		return (1);
 
+	if (qs[1] == '\0') {
+		*res = qs_truncate(ws, url, qs);
+		return (1);
+	}
+
+	*res = qs;
+	return (0);
+}
+
+static const char *
+qs_remove(struct ws *ws, const char *url)
+{
+	const char *res, *qs;
+
+	res = NULL;
+	if (qs_empty(ws, url, &res))
+		return (res);
+
+	qs = res;
 	return (qs_truncate(ws, url, qs));
 }
 
@@ -115,23 +139,17 @@ qs_cmp(const char *a, const char *b)
 }
 
 static const char *
-qs_sort(struct ws *ws, const char *url)
+qs_sort(struct ws *ws, const char *url, const char *qs)
 {
 	struct query_param *end, *params;
 	int count, head, i, last_param, previous, sorted, tail;
-	char *c, *position, *qs, *snapshot, *sorted_url;
-	const char *current_param;
+	char *position, *snapshot, *sorted_url;
+	const char *c, *current_param;
 	unsigned available;
 
-	if (url == NULL)
-		return (NULL);
-
-	qs = strchr(url, '?');
-	if (qs == NULL)
-		return (url);
-
-	if (qs[1] == '\0')
-		return (qs_truncate(ws, url, qs));
+	AN(url);
+	AN(qs);
+	assert(url <= qs);
 
 	/* reserve some memory */
 	snapshot = WS_Snapshot(ws);
@@ -299,6 +317,10 @@ qs_apply(VRT_CTX, const char *url, const char *qs, const struct qs_filter *qsf)
 	unsigned available;
 	int name_len, match;
 
+	AN(url);
+	AN(qs);
+	assert(url <= qs);
+
 	available = WS_Reserve(ctx->ws, 0);
 	begin = ctx->ws->f;
 	end = &begin[available];
@@ -352,20 +374,12 @@ qs_filter(VRT_CTX, const char *url, const struct qs_filter *qsf)
 {
 	const char *qs, *res;
 
-	if (url == NULL)
-		return (NULL);
+	res = NULL;
+	if (qs_empty(ctx->ws, url, &res))
+		return (res);
 
-	qs = strchr(url, '?');
-
-	if (qs == NULL)
-		return (url);
-
-	if (qs[1] == '\0')
-		return (qs_truncate(ctx->ws, url, qs));
-
-	res = qs_apply(ctx, url, qs, qsf);
-
-	return (res);
+	qs = res;
+	return (qs_apply(ctx, url, qs, qsf));
 }
 
 static int
@@ -439,15 +453,20 @@ vmod_remove(VRT_CTX, const char *url)
 const char *
 vmod_sort(VRT_CTX, const char *url)
 {
-	const char *sorted_url;
+	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	QS_LOG_CALL(ctx, "\"%s\"", url);
 
-	sorted_url = qs_sort(ctx->ws, url);
+	res = NULL;
+	if (qs_empty(ctx->ws, url, &res))
+		return (res);
 
-	QS_LOG_RETURN(ctx, sorted_url);
-	return (sorted_url);
+	qs = res;
+	res = qs_sort(ctx->ws, url, qs);
+
+	QS_LOG_RETURN(ctx, res);
+	return (res);
 }
 
 const char *
