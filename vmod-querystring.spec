@@ -35,7 +35,7 @@ make %{?_smp_mflags}
 
 
 %install
-%make_install DESTDIR=%{buildroot}
+%make_install
 rm %{buildroot}%{vmoddir}/libvmod_%{vmod}.la
 
 
