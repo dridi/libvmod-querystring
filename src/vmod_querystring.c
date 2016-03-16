@@ -405,7 +405,7 @@ qs_build_list(struct ws *ws, struct qs_list *names, const char *p, va_list ap)
 		if (q == NULL || *q == '\0')
 			continue;
 
-		n = WS_Alloc(ws, sizeof *n);
+		n = (struct qs_name *)WS_Alloc(ws, sizeof *n);
 		if (n == NULL)
 			return (-1);
 		n->name = TRUST_ME(q);
