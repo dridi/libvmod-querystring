@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <vdef.h>
 #include <vrt.h>
 #include <vre.h>
 #include <vqueue.h>
@@ -169,7 +170,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	len = strlen(res);
 	available -= len + 1;
 
-	params = (struct query_param *)(res + len + 1);
+	params = (void *)PRNDUP(res + len + 1);
 	end = params + (available / sizeof *params);
 
 	/* initialize the params array */
