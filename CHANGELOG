@@ -1,17 +1,25 @@
-libvmod-querystring changelog
-=============================
+vmod-querystring changelog
+==========================
+
+Changes in version 0.4 (2016-03-17)
+-----------------------------------
+
+* New globfilter and globfilter_except functions (#20)
+* Varnish 4.x support only
+* Spring cleaning after Varnish 3 got retired
+* Various fixes (including a security fix)
 
 Changes in version 0.3 (2015-08-04)
 -----------------------------------
 
-* Varnish Support up to 3.0.7 and 4.0.3
+* Varnish support up to 3.0.7 and 4.0.3
 * Various fixes
 
 Changes in version 0.2 (2013-07-23)
 -----------------------------------
 
 * Improved documentation
-* Builds in FreeBSD thanks to Wesley Overdijk (#4)
+* Builds on FreeBSD thanks to Wesley Overdijk (#4)
 * Varnish 3.0.4 support
 * Varnish 4 "trunk" support
 * Conditional logging of functions calls and returns
