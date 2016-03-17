@@ -287,14 +287,26 @@ static int __match_proto__(qs_match)
 qs_match_regex(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
 {
 	int match;
+	char *p;
 
-	/* XXX: allocate from workspace? */
-	char p[len + 1];
-
-	memcpy(p, s, len);
-	p[len] = '\0';
+	/* NB: It is not possible to allocate from the workspace because it
+	 * will be reserved. Allocating from the stack is not recommended
+	 * because of the way Varnish uses the stack, and because we can't
+	 * predict the size of a URL. The stack is also a concern because of
+	 * the regex match right after the allocation.
+	 *
+	 * According to PHK in this case we're probably better off using plain
+	 * malloc but it may not be a good idea to crash the child process if
+	 * the allocation failed so instead we make the assumption that we
+	 * couldn't allocate a parameter's LARGE name and deem it malicious,
+	 * so we make sure not to keep it.
+	 */
+	p = strndup(s, len);
+	if (p == NULL)
+		return (!qsf->keep);
 
 	match = VRT_re_match(ctx, p, qsf->regex);
+	free(p);
 	return (match ^ qsf->keep);
 }
 
