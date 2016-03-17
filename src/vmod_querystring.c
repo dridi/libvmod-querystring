@@ -148,7 +148,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	struct query_param *end, *params;
 	int count, head, i, last, prev, sorted, tail;
 	char *pos, *res;
-	const char *c, *current_param;
+	const char *c, *cur;
 	unsigned available;
 	size_t len;
 
@@ -195,19 +195,18 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		if (*c != '&')
 			continue;
 
-		current_param = c+1;
+		cur = c + 1;
 		params[last].len = c - params[last].value;
 
-		if (head > 0 &&
-		    qs_cmp(params[head].value, current_param) > -1) {
+		if (head > 0 && qs_cmp(params[head].value, cur) > -1) {
 			sorted = 0;
-			params[--head].value = current_param;
+			params[--head].value = cur;
 			last = head;
 			continue;
 		}
 
-		if (qs_cmp(params[tail].value, current_param) < 1) {
-			params[++tail].value = current_param;
+		if (qs_cmp(params[tail].value, cur) < 1) {
+			params[++tail].value = cur;
 			last = tail;
 			continue;
 		}
@@ -218,15 +217,14 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		params[tail] = params[i];
 
 		prev = i - 1;
-		while (i > head && qs_cmp(params[prev].value,
-		    current_param) > -1)
+		while (i > head && qs_cmp(params[prev].value, cur) > -1)
 			params[i--] = params[prev--];
 
-		params[i].value = current_param;
+		params[i].value = cur;
 		last = i;
 	}
 
-	if (sorted || &params[tail+1] >= end || tail - head < 1) {
+	if (sorted || &params[tail + 1] >= end || tail - head < 1) {
 		WS_Release(ws, 0);
 		return (url);
 	}
@@ -245,8 +243,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		}
 
 	if (params[head].len > 0)
-		pos = mempcpy(pos, params[head].value,
-		    params[head].len);
+		pos = mempcpy(pos, params[head].value, params[head].len);
 	else
 		pos--; /* override the trailing '&' */
 
