@@ -52,7 +52,7 @@ typedef const struct vrt_ctx re_ctx;
 /* ------------------------------------------------------------------- */
 
 struct query_param {
-	const char	*value;
+	const char	*val;
 	size_t		len;
 };
 

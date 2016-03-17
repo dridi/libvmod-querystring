@@ -177,24 +177,24 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	/* search and sort params */
 	sorted = 1;
 	c = qs + 1;
-	params[head].value = c;
+	params[head].val = c;
 
 	for (; *c != '\0' && &params[tail+1] < end; c++) {
 		if (*c != '&')
 			continue;
 
 		cur = c + 1;
-		params[last].len = c - params[last].value;
+		params[last].len = c - params[last].val;
 
-		if (head > 0 && qs_cmp(params[head].value, cur) > -1) {
+		if (head > 0 && qs_cmp(params[head].val, cur) > -1) {
 			sorted = 0;
-			params[--head].value = cur;
+			params[--head].val = cur;
 			last = head;
 			continue;
 		}
 
-		if (qs_cmp(params[tail].value, cur) < 1) {
-			params[++tail].value = cur;
+		if (qs_cmp(params[tail].val, cur) < 1) {
+			params[++tail].val = cur;
 			last = tail;
 			continue;
 		}
@@ -205,10 +205,10 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		params[tail] = params[i];
 
 		prev = i - 1;
-		while (i > head && qs_cmp(params[prev].value, cur) > -1)
+		while (i > head && qs_cmp(params[prev].val, cur) > -1)
 			params[i--] = params[prev--];
 
-		params[i].value = cur;
+		params[i].val = cur;
 		last = i;
 	}
 
@@ -217,24 +217,24 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		return (url);
 	}
 
-	params[last].len = c - params[last].value;
+	params[last].len = c - params[last].val;
 
 	/* copy the url parts */
 	len = qs - url + 1;
 	(void)memcpy(res, url, len);
 	pos = res + len;
-	count = tail-head;
+	count = tail - head;
 
 	for (;count > 0; count--, ++head)
 		if (params[head].len > 0) {
-			(void)memcpy(pos, params[head].value, params[head].len);
+			(void)memcpy(pos, params[head].val, params[head].len);
 			pos += params[head].len;
 			*pos = '&';
 			pos++;
 		}
 
 	if (params[head].len > 0) {
-		(void)memcpy(pos, params[head].value, params[head].len);
+		(void)memcpy(pos, params[head].val, params[head].len);
 		pos += params[head].len;
 	}
 	else
