@@ -146,7 +146,7 @@ static const char *
 qs_sort(struct ws *ws, const char *url, const char *qs)
 {
 	struct query_param *end, *params;
-	int count, head, i, last_param, previous, sorted, tail;
+	int count, head, i, last_param, prev, sorted, tail;
 	char *pos, *res;
 	const char *c, *current_param;
 	unsigned available;
@@ -217,10 +217,10 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		i = tail++;
 		params[tail] = params[i];
 
-		previous = i-1;
-		while (i > head && qs_cmp(params[previous].value,
+		prev = i - 1;
+		while (i > head && qs_cmp(params[prev].value,
 		    current_param) > -1)
-			params[i--] = params[previous--];
+			params[i--] = params[prev--];
 
 		params[i].value = current_param;
 		last_param = i;
