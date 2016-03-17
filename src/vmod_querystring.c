@@ -146,7 +146,7 @@ static const char *
 qs_sort(struct ws *ws, const char *url, const char *qs)
 {
 	struct query_param *end, *params;
-	int count, head, i, last_param, prev, sorted, tail;
+	int count, head, i, last, prev, sorted, tail;
 	char *pos, *res;
 	const char *c, *current_param;
 	unsigned available;
@@ -184,7 +184,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	}
 
 	tail = head;
-	last_param = head;
+	last = head;
 
 	/* search and sort params */
 	sorted = 1;
@@ -196,19 +196,19 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 			continue;
 
 		current_param = c+1;
-		params[last_param].len = c - params[last_param].value;
+		params[last].len = c - params[last].value;
 
 		if (head > 0 &&
 		    qs_cmp(params[head].value, current_param) > -1) {
 			sorted = 0;
 			params[--head].value = current_param;
-			last_param = head;
+			last = head;
 			continue;
 		}
 
 		if (qs_cmp(params[tail].value, current_param) < 1) {
 			params[++tail].value = current_param;
-			last_param = tail;
+			last = tail;
 			continue;
 		}
 
@@ -223,7 +223,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 			params[i--] = params[prev--];
 
 		params[i].value = current_param;
-		last_param = i;
+		last = i;
 	}
 
 	if (sorted || &params[tail+1] >= end || tail - head < 1) {
@@ -231,7 +231,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 		return (url);
 	}
 
-	params[last_param].len = c - params[last_param].value;
+	params[last].len = c - params[last].value;
 
 	/* copy the url parts */
 	pos = mempcpy(res, url, qs - url + 1);
