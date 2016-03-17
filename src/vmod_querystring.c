@@ -170,15 +170,15 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 
 	available -= len + 1;
 	params = (struct query_param *)(sorted_url + len + 1);
-	end = params + available;
+	end = params + (available / sizeof *params);
 
 	/* initialize the params array */
 	head = 10;
 
-	if (&params[head + 1] > end)
+	if (&params[head + 1] >= end)
 		head = 0;
 
-	if (&params[head + 1] > end) {
+	if (&params[head + 1] >= end) {
 		WS_Release(ws, 0);
 		return (url);
 	}
@@ -403,7 +403,7 @@ qs_apply(VRT_CTX, const char *url, const char *qs, const struct qs_filter *qsf)
 
 	begin++;
 
-	if (begin > end) {
+	if (begin > ctx->ws->e) {
 		WS_Release(ctx->ws, 0);
 		return (url);
 	}
