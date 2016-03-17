@@ -147,9 +147,10 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 {
 	struct query_param *end, *params;
 	int count, head, i, last_param, previous, sorted, tail;
-	char *position, *snapshot, *sorted_url;
+	char *position, *sorted_url;
 	const char *c, *current_param;
 	unsigned available;
+	size_t len;
 
 	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(url);
@@ -157,18 +158,18 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	assert(url <= qs);
 
 	/* reserve some memory */
-	snapshot = WS_Snapshot(ws);
-	sorted_url = WS_Alloc(ws, strlen(url) + 1);
-
-	WS_Assert(ws);
+	sorted_url = WS_Snapshot(ws);
+	available = WS_Reserve(ws, 0);
 
 	if (sorted_url == NULL) {
-		WS_Reset(ws, snapshot);
+		WS_Release(ws, 0);
 		return (url);
 	}
 
-	available = WS_Reserve(ws, 0);
-	params = (struct query_param *) ws->f;
+	len = strlen(sorted_url);
+
+	available -= len + 1;
+	params = (struct query_param *)(sorted_url + len + 1);
 	end = params + available;
 
 	/* initialize the params array */
@@ -179,7 +180,6 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 
 	if (&params[head + 1] > end) {
 		WS_Release(ws, 0);
-		WS_Reset(ws, snapshot);
 		return (url);
 	}
 
@@ -228,7 +228,6 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 
 	if (sorted || &params[tail+1] >= end || tail - head < 1) {
 		WS_Release(ws, 0);
-		WS_Reset(ws, snapshot);
 		return (url);
 	}
 
@@ -253,7 +252,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 
 	*position = '\0';
 
-	WS_Release(ws, 0);
+	WS_ReleaseP(ws, position + 1);
 	return (sorted_url);
 }
 
