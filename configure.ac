@@ -83,9 +83,6 @@ PKG_PROG_PKG_CONFIG
 # Checks for header files
 AC_HEADER_STDC
 
-# Check for functions
-AC_CHECK_FUNCS([mempcpy])
-
 # Check for python
 AC_CHECK_PROGS(PYTHON,
 	[python python3 python2],

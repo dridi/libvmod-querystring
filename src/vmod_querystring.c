@@ -47,19 +47,6 @@
 /* End Of Query Parameter */
 #define EOQP(c) (c == '\0' || c == '&')
 
-/***********************************************************************/
-
-#ifndef HAVE_MEMPCPY
-
-void *
-mempcpy(void *dst, const void *src, size_t len)
-{
-
-	return ((void*)(((char*)memcpy(dst, src, len)) + len));
-}
-
-#endif
-
 /***********************************************************************
  * The static functions below contain the actual implementation of the
  * module with the least possible coupling to Varnish. This helps keep a
@@ -233,18 +220,23 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	params[last].len = c - params[last].value;
 
 	/* copy the url parts */
-	pos = mempcpy(res, url, qs - url + 1);
+	len = qs - url + 1;
+	(void)memcpy(res, url, len);
+	pos = res + len;
 	count = tail-head;
 
 	for (;count > 0; count--, ++head)
 		if (params[head].len > 0) {
-			pos = mempcpy(pos, params[head].value,
-			    params[head].len);
-			*pos++ = '&';
+			(void)memcpy(pos, params[head].value, params[head].len);
+			pos += params[head].len;
+			*pos = '&';
+			pos++;
 		}
 
-	if (params[head].len > 0)
-		pos = mempcpy(pos, params[head].value, params[head].len);
+	if (params[head].len > 0) {
+		(void)memcpy(pos, params[head].value, params[head].len);
+		pos += params[head].len;
+	}
 	else
 		pos--; /* override the trailing '&' */
 
