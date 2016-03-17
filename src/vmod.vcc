@@ -96,6 +96,25 @@ Example
 
       set req.url = querystring.regfilter_except(req.url, "^(q|p)$");
 
+$Function STRING globfilter(STRING, STRING)
+
+Description
+   Returns the given URL without the parameters matching a glob
+Example
+   ::
+
+      set req.url = querystring.globfilter(req.url, "utm_*");
+
+
+$Function STRING globfilter_except(STRING, STRING)
+
+Description
+   Returns the given URL but only keeps the parameters matching a glob
+Example
+   ::
+
+      set req.url = querystring.globfilter_except(req.url, "sess*");
+
 
 EXAMPLES
 ========
@@ -125,4 +144,6 @@ with regards for the Varnish workspace memory model of the worker threads.
 SEE ALSO
 ========
 
-vcl(7) varnishd(1)
+``vcl``\(7),
+``varnishd``\(1),
+``glob``\(7)

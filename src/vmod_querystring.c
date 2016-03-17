@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <fnmatch.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -308,6 +309,35 @@ qs_match_regex(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
 	match = VRT_re_match(ctx, p, qsf->regex);
 	free(p);
 	return (match ^ qsf->keep);
+}
+
+static int __match_proto__(qs_match)
+qs_match_glob(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
+{
+	int match;
+	char *p;
+
+	/* See qs_match_regex for the explanation */
+	p = strndup(s, len);
+	if (p == NULL)
+		return (!qsf->keep);
+
+	match = fnmatch(qsf->glob, p, 0);
+	free(p);
+
+	switch (match) {
+	case FNM_NOMATCH:
+		return (qsf->keep);
+	case 0:
+		return (!qsf->keep);
+	}
+
+	/* NB: If the fnmatch failed because of a wrong pattern, the error is
+	 * logged but the query-string is kept intact.
+	 */
+	VSLb(ctx->vsl, SLT_Error, "querystring.globfilter: wrong pattern `%s'",
+	    qsf->glob);
+	return (qsf->keep);
 }
 
 static void *
@@ -602,6 +632,46 @@ vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
 	res = qs_filter(ctx, url, &qsf);
 
 	VRT_re_fini(qsf.regex);
+	QS_LOG_RETURN(ctx, res);
+	return (res);
+}
+
+const char *
+vmod_globfilter(VRT_CTX, const char *url, const char *glob)
+{
+	struct qs_filter qsf;
+	const char *res;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, glob);
+
+	memset(&qsf, 0, sizeof qsf);
+	qsf.keep = 0;
+	qsf.match = &qs_match_glob;
+	qsf.glob = glob;
+
+	res = qs_filter(ctx, url, &qsf);
+
+	QS_LOG_RETURN(ctx, res);
+	return (res);
+}
+
+const char *
+vmod_globfilter_except(VRT_CTX, const char *url, const char *glob)
+{
+	struct qs_filter qsf;
+	const char *res;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, glob);
+
+	memset(&qsf, 0, sizeof qsf);
+	qsf.keep = 1;
+	qsf.match = &qs_match_glob;
+	qsf.glob = glob;
+
+	res = qs_filter(ctx, url, &qsf);
+
 	QS_LOG_RETURN(ctx, res);
 	return (res);
 }

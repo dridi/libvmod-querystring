@@ -71,6 +71,7 @@ struct qs_filter {
 	union {
 		struct qs_list	names;
 		void		*regex;
+		const char	*glob;
 	};
 	qs_match		*match;
 	int			keep;
