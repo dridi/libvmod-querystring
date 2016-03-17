@@ -147,7 +147,7 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 {
 	struct query_param *end, *params;
 	int count, head, i, last_param, previous, sorted, tail;
-	char *position, *res;
+	char *pos, *res;
 	const char *c, *current_param;
 	unsigned available;
 	size_t len;
@@ -234,25 +234,25 @@ qs_sort(struct ws *ws, const char *url, const char *qs)
 	params[last_param].len = c - params[last_param].value;
 
 	/* copy the url parts */
-	position = mempcpy(res, url, qs - url + 1);
+	pos = mempcpy(res, url, qs - url + 1);
 	count = tail-head;
 
 	for (;count > 0; count--, ++head)
 		if (params[head].len > 0) {
-			position = mempcpy(position, params[head].value,
+			pos = mempcpy(pos, params[head].value,
 			    params[head].len);
-			*position++ = '&';
+			*pos++ = '&';
 		}
 
 	if (params[head].len > 0)
-		position = mempcpy(position, params[head].value,
+		pos = mempcpy(pos, params[head].value,
 		    params[head].len);
 	else
-		position--; /* override the trailing '&' */
+		pos--; /* override the trailing '&' */
 
-	*position = '\0';
+	*pos = '\0';
 
-	WS_ReleaseP(ws, position + 1);
+	WS_ReleaseP(ws, pos + 1);
 	return (res);
 }
 
