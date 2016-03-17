@@ -82,7 +82,7 @@ qs_truncate(struct ws *ws, const char *url, const char *qs)
 	if (trunc == NULL)
 		return (url);
 
-	memcpy(trunc, url, qs_pos);
+	(void)memcpy(trunc, url, qs_pos);
 	trunc[qs_pos] = '\0';
 
 	return (trunc);
@@ -258,7 +258,7 @@ qs_append(char **begin, const char *end, const char *string, size_t len)
 {
 
 	if (*begin + len < end)
-		memcpy(*begin, string, len);
+		(void)memcpy(*begin, string, len);
 	*begin += len;
 }
 
