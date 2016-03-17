@@ -62,10 +62,10 @@ In this case it can be solved like this::
         return (lookup);
     }
 
-This way Varnish will see get the same unique hash for both ``/index.html``
-and ``/index.html?`` but the back-end application will receive the original
-client request. Depending on your requirements/goals, you may also take a
-different approach.
+This way Varnish will get the same unique hash for both ``/index.html`` and
+``/index.html?`` but the back-end application will receive the original client
+request. Depending on your requirements/goals, you may also take a different
+approach.
 
 Surely enough this module can do more than what a simple regular expression
 substitution (``regsub``) could do, right? First, readability is improved. It
@@ -76,7 +76,7 @@ you may want to remove Google Analytics parameters from requests because:
 
 - they could create cache duplicates for every campaigns
 - the application does not need them, only marketing folks
-- they can be delivered to business people via ``varnishncsa``
+- they can be delivered to marketing via ``varnishncsa``
 
 It can be solved like this::
 
