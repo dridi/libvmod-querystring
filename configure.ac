@@ -32,7 +32,7 @@ AC_PREREQ(2.59)
 AC_COPYRIGHT([Copyright (c) 2012-2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com>])
 AC_INIT(
 	[libvmod-querystring],
-	[0.4],
+	[0.5],
 	[https://github.com/dridi/libvmod-querystring/issues])
 
 AC_CONFIG_MACRO_DIR([m4])

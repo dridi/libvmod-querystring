@@ -2,7 +2,7 @@
 %global vmoddir %{_libdir}/varnish/vmods
 
 Name:           vmod-%{vmod}
-Version:        0.4
+Version:        0.5
 Release:        1%{?dist}
 Group:          System Environment/Libraries
 Summary:        QueryString module for Varnish Cache
@@ -50,6 +50,9 @@ make %{?_smp_mflags} check
 
 
 %changelog
+* Tue Mar 29 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.5-1
+- Bump version
+
 * Thu Feb 11 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.4-1
 - Bump version
 - Drop Varnish 3 source code requirement

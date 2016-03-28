@@ -1,6 +1,11 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 0.5 (2016-04-01)
+-----------------------------------
+
+* Fixed a read of uninitialized memory (#22)
+
 Changes in version 0.4 (2016-03-17)
 -----------------------------------
 
