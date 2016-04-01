@@ -57,7 +57,7 @@ libvmod_querystring_la_SOURCES = \
 nodist_libvmod_querystring_la_SOURCES = \
 	$(VCC_FILES)
 
-libvmod_querystring_la_DEPENDENCIES = $(VCC_FILES)
+$(srcdir)/vmod_querystring.c: $(VCC_FILES)
 
 $(VCC_FILES) $(DOC_FILES): .vcc
 
@@ -93,7 +93,6 @@ EXTRA_DIST = \
 	@VTC_TESTS@
 
 CLEANFILES = \
-	.vcc \
 	$(VCC_FILES) \
 	$(DOC_FILES) \
 	$(dist_man_MANS)
