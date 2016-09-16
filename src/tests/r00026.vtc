@@ -1,0 +1,37 @@
+# Copyright (C) 2016  Dridi Boukelmoune
+# All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+varnishtest "Sort long URLs"
+
+server s1 {
+	rxreq
+	expect req.url == "/led-panels/?actionData=%7B%22added_product%22%3A%2216668%22%2C%22added_item%22%3A%222310773%22%2C%22added_parent_item%22%3Anull%2C%22added_product_qty%22%3A3%2C%22content%22%3Afalse%2C%22mobile%22%3Afalse%7D&awacp=1&block%5B%5D=addProductConfirmation&block%5B%5D=cart&block%5B%5D=miniWishlist&block%5B%5D=removeProductConfirmation&block%5B%5D=sidebar&block%5B%5D=topLinks&block%5B%5D=wishlist&no_cache=1"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import ${vmod_querystring};
+
+	sub vcl_recv {
+		set req.url = querystring.sort(req.url);
+	}
+} -start
+
+client c1 {
+	txreq -url "/led-panels/?actionData=%7B%22added_product%22%3A%2216668%22%2C%22added_item%22%3A%222310773%22%2C%22added_parent_item%22%3Anull%2C%22added_product_qty%22%3A3%2C%22content%22%3Afalse%2C%22mobile%22%3Afalse%7D&block%5B%5D=cart&block%5B%5D=sidebar&block%5B%5D=topLinks&block%5B%5D=wishlist&block%5B%5D=miniWishlist&block%5B%5D=addProductConfirmation&block%5B%5D=removeProductConfirmation&awacp=1&no_cache=1"
+	rxresp
+	expect resp.status == 200
+} -run

@@ -1,0 +1,184 @@
+  # Copyright (C) 2012-2016  Dridi Boukelmoune
+  # All rights reserved.
+
+$Module querystring Varnish Query-String Module
+
+DESCRIPTION
+===========
+
+This module is a tool for query-string filtering in Varnish Cache. It works
+with ``application/x-www-form-urlencoded`` strings that are commonly used on
+the web. Such a query-string is interpreted as a key/values store encoded with
+the following syntax::
+
+    key=value&other=value1&other=value2
+
+The query-string parsing is very lenient and will tolerate malformed strings.
+Assuming that a legitimate client might build a malformed query-string that
+would be empty or include a trailing & or spurious &s in the middle, it may be
+a good idea not to fail such requests and instead get rid of the noise that
+might misguide Varnish and hurt your hit rate. Empty parameters are ignored,
+and parameters are considered empty when their names are empty::
+
+    next=empty&&previous=empty&=no-name-means-empty&no-value-is-fine
+
+    Once cleaned:
+    next=empty&previous=empty&no-value-is-fine
+
+And since this module works with query-strings, a filter's input is assumed to
+be a URL. The query-string is then the part of the URL after a question mark
+when there's one. The rest of the URL is always left untouched by the filters.
+Proper encoding of the URL isn't checked and only separators (``?``, ``&`` and
+``=``) are considered.
+
+For example::
+
+    /path?query-string
+
+If it doesn't make any difference to your back-end application, you may also
+sort the parameters inside the query-string. It will make the hashing more
+deterministic for Varnish, possibly improving your hit rate even more.
+
+.. raw:: pdf
+
+   PageBreak
+
+$Object filter(BOOL sort = 0, ENUM {name, param} match = "name")
+
+A filter is first set up in *vcl_init* and then used during transactions. The
+setup includes the creation of the filter to which you add criteria. During
+transactions, you may apply the filter to URLs (like ``req.url`` or a
+``Location`` header) or extract the filtered query-string.
+
+A filter may sort its parameters, but by default it will maintain order. The
+filter constructor takes an optional ``sort`` parameter, you may use its name
+to improve readability.
+
+Example
+    ::
+
+        import querystring;
+
+        sub vcl_init {
+            new qf = querystring.filter(sort = true);
+            qf.add_string("_"); # a timestamp used to bypass caches
+            qf.add_glob("utm_*"); # google analytics parameters
+            qf.add_regex("sess[0-9]+"); # anti-CSRF token
+        }
+
+        sub vcl_hash {
+            hash_data(qf.apply(req.url));
+            hash_data(req.http.host);
+            return (lookup);
+        }
+
+It is also possible for a filter to either match parameters by name, or by
+themselves. By default the criteria are tested against the name only, leaving
+alone the contents starting at the equal sign when there's one. For that the
+constructor takes another optional ``match`` parameter that can take either
+``name`` (default) or ``param``.
+
+Example
+    ::
+
+        sub vcl_init {
+            new fr = querystring.filter(match = param);
+            fr.add_regex("^lang=fr(-..)?$");
+        }
+
+        sub vcl_recv {
+            if (fr.extract(req.url)) {
+                set req.backend_hint = www_fr;
+            }
+        }
+
+$Method VOID .add_string(STRING)
+
+Description
+    Use the string parameter as an exact-match criterion.
+
+$Method VOID .add_glob(STRING)
+
+Description
+    Use the string parameter as a GLOB pattern matching criterion. The
+    underlying ``fnmatch`` function may fail, in which case the query-param
+    is kept to avoid spurious filtering and the error is logged.
+
+$Method VOID .add_regex(STRING)
+
+Description
+    The string parameter is compiled to a regular expression that will be used
+    as the matching criterion. If the regular expression is invalid, it will
+    fail the ``vcl.load`` command and report the error in the ``varnish-cli``
+    output.
+
+$Method STRING .apply(STRING, ENUM {keep, drop} mode = "drop")
+
+Description
+    The URL parameter is filtered against the filter's criteria, resulting in
+    a new URL with a clean (and possibly sorted) query-string. Parameters
+    matching the criteria may be kept or dropped, according to the optional
+    *mode* argument that can be either ``drop`` (default) or ``keep``.
+
+Example
+    ::
+
+        set req.url = myfilter.apply(req.url, mode = drop);
+
+$Method STRING .extract(STRING, ENUM {keep, drop} mode = "drop")
+
+Description
+    This method works exactly like ``.apply`` and discards all URL parts but
+    the query-string.
+
+
+$Function STRING clean(STRING)
+
+Description
+    This is a shorthand function that works like applying a filter with no
+    criteria. It will keep all parameters and shave off the empty ones.
+
+Example
+    ::
+
+        set req.url = querystring.clean(req.url);
+
+
+$Function STRING sort(STRING)
+
+Description
+    This is a shorthand function that works like applying a sorting-enabled
+    filter with no criteria. It will keep all parameters and shave off the
+    empty ones.
+
+Example
+    ::
+
+        set req.url = querystring.sort(req.url);
+
+
+$Function STRING remove(STRING)
+
+Description
+    This is a shorthand function that works like applying a filter with a
+    catch-all criteria. It will return the given URL with its query-string
+    removed. For better efficiency, it is not backed by an actual filter.
+
+Example
+    ::
+
+        set req.url = querystring.remove(req.url);
+
+
+SEE ALSO
+========
+
+``vcl``\(7),
+``varnishd``\(1),
+``varnish-cli``\(7),
+``glob``\(7)
+
+|
+| RFC 1866 Section 8.2.1, The form-urlencoded Media Type
+| RFC 3986 Section 3, Syntax Components
+| RFC 7234 Section 2, Overview of Cache Operation

@@ -1,0 +1,42 @@
+# Copyright (C) 2016  Dridi Boukelmoune
+# All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+varnishtest "Filter and sort long URLs"
+
+server s1 {
+	rxreq
+	expect req.url == "/vivacorretor/wp-admin/admin-ajax.php?_=1458769246888”&action=inc_popup&callback=po_data&do=get_data&orig_request_uri=%2Fvivacorretor%2Fmelhores-horarios-de-postagem-da-sua-pagina-no-facebook%2F&thefrom=%2Fkoobecaf-on-anigap-aus-ad-megatsop-ed-soiraroh-serohlem%2Froterrocaviv%2Frb.moc.laeraviv.www%2F%2F%3Aptth&thereferrer=%2Fmoc.gnib.www%2F%2F%3Asptth"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import ${vmod_querystring};
+
+	sub vcl_init {
+		new qf = querystring.filter(sort = true);
+		qf.add_regex("(utm_.*)|(img.*)|(gclid.*)");
+	}
+
+	sub vcl_recv {
+		set req.url = qf.apply(req.url);
+	}
+} -start
+
+client c1 {
+	txreq -url "/vivacorretor/wp-admin/admin-ajax.php?callback=po_data&orig_request_uri=%2Fvivacorretor%2Fmelhores-horarios-de-postagem-da-sua-pagina-no-facebook%2F&action=inc_popup&do=get_data&thefrom=%2Fkoobecaf-on-anigap-aus-ad-megatsop-ed-soiraroh-serohlem%2Froterrocaviv%2Frb.moc.laeraviv.www%2F%2F%3Aptth&thereferrer=%2Fmoc.gnib.www%2F%2F%3Asptth&_=1458769246888”"
+	rxresp
+	expect resp.status == 200
+} -run

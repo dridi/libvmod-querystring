@@ -40,7 +40,7 @@ m4_ifndef(
 	  [VARNISH_VMOD_INCLUDES],
 	  AC_MSG_ERROR([Need varnish.m4 -- see README.rst]))
 
-AC_CONFIG_SRCDIR(src/vmod.vcc)
+AC_CONFIG_SRCDIR(src/vmod_querystring.vcc)
 AM_CONFIG_HEADER(config.h)
 
 AC_CANONICAL_SYSTEM

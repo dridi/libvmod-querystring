@@ -1,0 +1,60 @@
+# Copyright (C) 2016  Dridi Boukelmoune
+# All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+varnishtest "Filter parameters by glob"
+
+server s1 "" -start
+
+varnish v1 -vcl+backend {
+	import ${vmod_querystring};
+
+	sub vcl_init {
+		new ga = querystring.filter();
+		ga.add_glob("utm_*");
+	}
+
+	sub vcl_recv {
+		return (synth(200));
+	}
+
+	sub vcl_synth {
+		set resp.http.Filtered-URL = ga.apply(req.url);
+		set resp.http.Extracted-QS = ga.extract(req.url, mode = keep);
+	}
+} -start
+
+client c1 {
+	txreq -url "/?utm_source=git&utm_campaign=glob&utm_medium=vtc"
+	rxresp
+	expect resp.http.Filtered-URL == "/"
+	expect resp.http.Extracted-QS == \
+	    "utm_source=git&utm_campaign=glob&utm_medium=vtc"
+
+	txreq -url "/?utm_source=git&wrong=glob&utm_medium=vtc"
+	rxresp
+	expect resp.http.Filtered-URL == "/?wrong=glob"
+	expect resp.http.Extracted-QS == "utm_source=git&utm_medium=vtc"
+
+	txreq -url "/?utm_source=git&wrong=glob&easy=vtc"
+	rxresp
+	expect resp.http.Filtered-URL == "/?wrong=glob&easy=vtc"
+	expect resp.http.Extracted-QS == "utm_source=git"
+
+	txreq -url "/?&&utm_source=git&&broken=fields&&&&easy=vtc&"
+	rxresp
+	expect resp.http.Filtered-URL == "/?broken=fields&easy=vtc"
+	expect resp.http.Extracted-QS == "utm_source=git"
+} -run

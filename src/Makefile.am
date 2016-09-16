@@ -37,8 +37,8 @@ vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_querystring.la
 
 VCC_FILES = \
-	vcc_if.c \
-	vcc_if.h
+	vcc_querystring_if.c \
+	vcc_querystring_if.h
 
 DOC_FILES = \
 	vmod_querystring.rst \
@@ -51,8 +51,7 @@ libvmod_querystring_la_LDFLAGS = \
 	-shared
 
 libvmod_querystring_la_SOURCES = \
-	vmod_querystring.c \
-	vmod_querystring.h
+	vmod_querystring.c
 
 nodist_libvmod_querystring_la_SOURCES = \
 	$(VCC_FILES)
@@ -61,9 +60,9 @@ $(srcdir)/vmod_querystring.c: $(VCC_FILES)
 
 $(VCC_FILES) $(DOC_FILES): .vcc
 
-.vcc: vmod.vcc
+.vcc: vmod_querystring.vcc
 	@echo vmodtool: @VMODTOOL@ $<
-	@@VMODTOOL@ $<
+	@@VMODTOOL@ -o vcc_querystring_if $<
 	@touch $@
 
 # Documentation
@@ -89,10 +88,11 @@ TESTS = @VTC_TESTS@
 # misc
 
 EXTRA_DIST = \
-	vmod.vcc \
+	vmod_querystring.vcc \
 	@VTC_TESTS@
 
 CLEANFILES = \
+	.vcc \
 	$(VCC_FILES) \
 	$(DOC_FILES) \
 	$(dist_man_MANS)

@@ -1,79 +1,120 @@
-/*
- * libvmod-querystring - querystring manipulation module for Varnish
- *
- * Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+/*-
+ * Copyright (C) 2016  Dridi Boukelmoune
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Author: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
  *
- * 1. Redistributions of source code must retain the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer.
- * 2. Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials
- *    provided with the distribution.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <fnmatch.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
-#include <vdef.h>
+#include <vcl.h>
 #include <vrt.h>
-#include <vre.h>
-#include <vqueue.h>
 #include <cache/cache.h>
 
-#include "vcc_if.h"
-#include "vmod_querystring.h"
+#include "vcc_querystring_if.h"
 
 /* End Of Query Parameter */
 #define EOQP(c) (c == '\0' || c == '&')
 
+#define WS_ClearOverflow(ws, tmp)	\
+	do {				\
+		tmp = WS_Snapshot(ws);	\
+		WS_Reset(ws, tmp);	\
+	} while (0)
+
 /***********************************************************************
- * The static functions below contain the actual implementation of the
- * module with the least possible coupling to Varnish. This helps keep a
- * single code base for all Varnish versions.
+ * Type definitions
+ */
+
+struct qs_param {
+	const char	*val;
+	size_t		len;
+};
+
+struct qs_filter;
+
+typedef int qs_match_f(VRT_CTX, const struct qs_filter *, const char *,
+    unsigned);
+
+typedef void qs_free_f(void *);
+
+struct qs_filter {
+	unsigned		magic;
+#define QS_FILTER_MAGIC		0xfc750864
+	union {
+		void		*ptr;
+		const char	*str;
+	};
+	qs_match_f		*match;
+	qs_free_f		*free;
+	VTAILQ_ENTRY(qs_filter)	list;
+};
+
+struct vmod_querystring_filter {
+	unsigned			magic;
+#define VMOD_QUERYSTRING_FILTER_MAGIC	0xbe8ecdb4
+	VTAILQ_HEAD(, qs_filter)	filters;
+	unsigned			sort;
+	unsigned			match_name;
+};
+
+/***********************************************************************
+ * Static data structures
+ */
+
+static struct vmod_querystring_filter qs_clean_filter = {
+	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
+	.sort = 0,
+};
+
+static struct vmod_querystring_filter qs_sort_filter = {
+	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
+	.sort = 1,
+};
+
+/***********************************************************************
+ * VMOD implementation
  */
 
 static const char *
 qs_truncate(struct ws *ws, const char *url, const char *qs)
 {
-	size_t qs_pos;
-	char *trunc;
+	char *res;
+	size_t len;
 
 	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(url);
 	AN(qs);
 	assert(url <= qs);
 
-	qs_pos = qs - url;
-	trunc = WS_Alloc(ws, qs_pos + 1);
+	len = qs - url;
+	if (len == 0)
+		return "";
 
-	if (trunc == NULL)
+	res = WS_Copy(ws, url, len + 1);
+	if (res == NULL) {
+		WS_ClearOverflow(ws, res);
 		return (url);
+	}
 
-	(void)memcpy(trunc, url, qs_pos);
-	trunc[qs_pos] = '\0';
-
-	return (trunc);
+	res[len] = '\0';
+	return (res);
 }
 
 static int
@@ -102,565 +143,429 @@ qs_empty(struct ws *ws, const char *url, const char **res)
 	return (0);
 }
 
-static const char *
-qs_remove(struct ws *ws, const char *url)
-{
-	const char *res, *qs;
-
-	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
-
-	res = NULL;
-	if (qs_empty(ws, url, &res))
-		return (res);
-
-	qs = res;
-	return (qs_truncate(ws, url, qs));
-}
-
-static int
-qs_cmp(const char *a, const char *b)
+static int __match_proto__(qs_match_f)
+qs_match_string(VRT_CTX, const struct qs_filter *qsf, const char *s,
+    unsigned keep)
 {
 
-	while (*a == *b) {
-		if (EOQP(*a) || EOQP(*b))
-			return (0);
-		a++;
-		b++;
-	}
-	return (*a - *b);
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
+
+	(void)keep;
+	return (!strcmp(s, qsf->str));
 }
 
-static const char *
-qs_sort(struct ws *ws, const char *url, const char *qs)
-{
-	struct query_param *end, *params;
-	int count, head, i, last, prev, sorted, tail;
-	char *pos, *res;
-	const char *c, *cur;
-	unsigned available;
-	size_t len;
-
-	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
-	AN(url);
-	AN(qs);
-	assert(url <= qs);
-
-	/* reserve some memory */
-	res = WS_Snapshot(ws);
-	available = WS_Reserve(ws, 0);
-
-	if (res == NULL) {
-		WS_Release(ws, 0);
-		return (url);
-	}
-
-	len = strlen(res);
-	available -= len + 1;
-
-	params = (void *)PRNDUP(res + len + 1);
-	end = params + (available / sizeof *params);
-
-	/* initialize the params array */
-	head = 10;
-
-	if (&params[head + 1] >= end)
-		head = 0;
-
-	if (&params[head + 1] >= end) {
-		WS_Release(ws, 0);
-		return (url);
-	}
-
-	tail = head;
-	last = head;
-
-	/* search and sort params */
-	sorted = 1;
-	c = qs + 1;
-	params[head].val = c;
-
-	for (; *c != '\0' && &params[tail+1] < end; c++) {
-		if (*c != '&')
-			continue;
-
-		cur = c + 1;
-		params[last].len = c - params[last].val;
-
-		if (head > 0 && qs_cmp(params[head].val, cur) > -1) {
-			sorted = 0;
-			params[--head].val = cur;
-			last = head;
-			continue;
-		}
-
-		if (qs_cmp(params[tail].val, cur) < 1) {
-			params[++tail].val = cur;
-			last = tail;
-			continue;
-		}
-
-		sorted = 0;
-
-		i = tail++;
-		params[tail] = params[i];
-
-		prev = i - 1;
-		while (i > head && qs_cmp(params[prev].val, cur) > -1)
-			params[i--] = params[prev--];
-
-		params[i].val = cur;
-		last = i;
-	}
-
-	if (sorted || &params[tail + 1] >= end || tail - head < 1) {
-		WS_Release(ws, 0);
-		return (url);
-	}
-
-	params[last].len = c - params[last].val;
-
-	/* copy the url parts */
-	len = qs - url + 1;
-	(void)memcpy(res, url, len);
-	pos = res + len;
-	count = tail - head;
-
-	for (;count > 0; count--, ++head)
-		if (params[head].len > 0) {
-			(void)memcpy(pos, params[head].val, params[head].len);
-			pos += params[head].len;
-			*pos = '&';
-			pos++;
-		}
-
-	if (params[head].len > 0) {
-		(void)memcpy(pos, params[head].val, params[head].len);
-		pos += params[head].len;
-	}
-	else
-		pos--; /* override the trailing '&' */
-
-	*pos = '\0';
-
-	WS_ReleaseP(ws, pos + 1);
-	return (res);
-}
-
-static void
-qs_append(char **begin, const char *end, const char *string, size_t len)
+static int __match_proto__(qs_match_f)
+qs_match_regex(VRT_CTX, const struct qs_filter *qsf, const char *s,
+    unsigned keep)
 {
 
-	if (*begin + len < end)
-		(void)memcpy(*begin, string, len);
-	*begin += len;
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
+
+	(void)keep;
+	return (VRT_re_match(ctx, s, qsf->ptr));
 }
 
-static int __match_proto__(qs_match)
-qs_match_list(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
-{
-	const struct qs_list *names;
-	struct qs_name *n;
-
-	(void)ctx;
-
-	names = &qsf->names;
-	AZ(VSTAILQ_EMPTY(names));
-
-	VSTAILQ_FOREACH(n, names, list)
-		if (strlen(n->name) == len && !strncmp(s, n->name, len))
-			return (!qsf->keep);
-
-	return (qsf->keep);
-}
-
-static int __match_proto__(qs_match)
-qs_match_regex(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
+static int __match_proto__(qs_match_f)
+qs_match_glob(VRT_CTX, const struct qs_filter *qsf, const char *s,
+    unsigned keep)
 {
 	int match;
-	char *p;
 
-	/* NB: It is not possible to allocate from the workspace because it
-	 * will be reserved. Allocating from the stack is not recommended
-	 * because of the way Varnish uses the stack, and because we can't
-	 * predict the size of a URL. The stack is also a concern because of
-	 * the regex match right after the allocation.
-	 *
-	 * According to PHK in this case we're probably better off using plain
-	 * malloc but it may not be a good idea to crash the child process if
-	 * the allocation failed so instead we make the assumption that we
-	 * couldn't allocate a parameter's LARGE name and deem it malicious,
-	 * so we make sure not to keep it.
-	 */
-	p = strndup(s, len);
-	if (p == NULL)
-		return (!qsf->keep);
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
 
-	match = VRT_re_match(ctx, p, qsf->regex);
-	free(p);
-	return (match ^ qsf->keep);
-}
+	match = fnmatch(qsf->str, s, 0);
 
-static int __match_proto__(qs_match)
-qs_match_glob(VRT_CTX, const char *s, size_t len, const struct qs_filter *qsf)
-{
-	int match;
-	char *p;
+	if (match == 0)
+		return (1);
 
-	/* See qs_match_regex for the explanation */
-	p = strndup(s, len);
-	if (p == NULL)
-		return (!qsf->keep);
-
-	match = fnmatch(qsf->glob, p, 0);
-	free(p);
-
-	switch (match) {
-	case FNM_NOMATCH:
-		return (qsf->keep);
-	case 0:
-		return (!qsf->keep);
-	}
+	if (match == FNM_NOMATCH)
+		return (0);
 
 	/* NB: If the fnmatch failed because of a wrong pattern, the error is
 	 * logged but the query-string is kept intact.
 	 */
-	VSLb(ctx->vsl, SLT_Error, "querystring.globfilter: wrong pattern `%s'",
-	    qsf->glob);
-	return (qsf->keep);
+	VSLb(ctx->vsl, SLT_Error, "querystring: failed to match glob `%s'",
+	    qsf->str);
+	return (keep);
 }
 
-static void *
-qs_re_init(VRT_CTX, const char *regex)
+int
+qs_cmp(const void *v1, const void *v2)
 {
-	void *re;
-	const char *error;
-	int error_offset;
+	const struct qs_param *p1, *p2;
+	size_t len;
+	int cmp;
 
-	AN(ctx->vsl);
+	AN(v1);
+	AN(v2);
+	p1 = v1;
+	p2 = v2;
 
-	re = VRE_compile(regex, 0, &error, &error_offset);
-	VSLb(ctx->vsl, SLT_Error, "Regex error (%s): '%s' pos %d", error,
-	    regex, error_offset);
-	return (re);
+	len = p1->len < p2->len ? p1->len : p2->len;
+	cmp = strncmp(p1->val, p2->val, len);
+
+	if (cmp || p1->len == p2->len)
+		return (cmp);
+	return (p1->len - p2->len);
 }
 
-static const char*
-qs_apply(VRT_CTX, const char *url, const char *qs, const struct qs_filter *qsf)
+static unsigned
+qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
+    const char *param, size_t len, unsigned keep)
 {
-	const char *cursor, *param_pos, *equal_pos;
-	char *begin, *end;
-	unsigned available;
-	int name_len, match;
+	struct qs_filter *qsf;
 
-	AN(url);
-	AN(qs);
-	assert(url <= qs);
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
 
-	available = WS_Reserve(ctx->ws, 0);
-	begin = ctx->ws->f;
-	end = &begin[available];
-	cursor = qs;
+	if (len == 0)
+		return (0);
 
-	qs_append(&begin, end, url, cursor - url + 1);
+	if (VTAILQ_EMPTY(&obj->filters))
+		return (1);
 
-	while (*cursor != '\0' && begin < end) {
-		param_pos = ++cursor;
-		equal_pos = NULL;
-
-		for (; !EOQP(*cursor); cursor++)
-			if (equal_pos == NULL && *cursor == '=')
-				equal_pos = cursor;
-
-		name_len = (equal_pos ? equal_pos : cursor) - param_pos;
-		match = name_len == 0;
-		if (!match && qsf->match != NULL)
-			match = qsf->match(ctx, param_pos, name_len, qsf);
-
-		if (!match) {
-			qs_append(&begin, end, param_pos, cursor - param_pos);
-			if (*cursor == '&') {
-				*begin = '&';
-				begin++;
-			}
-		}
+	VTAILQ_FOREACH(qsf, &obj->filters, list) {
+		CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
+		if (qsf->match(ctx, qsf, param, keep))
+			return (keep);
 	}
 
-	if (begin < end) {
-		begin -= (begin[-1] == '&');
-		begin -= (begin[-1] == '?');
-		*begin = '\0';
+	return (!keep);
+}
+
+static char *
+qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
+{
+	char sep;
+
+	sep = '?';
+	while (cnt > 0) {
+		assert(head < tail);
+		AZ(*cur);
+		*cur = sep;
+		cur++;
+		(void)snprintf(cur, head->len + 1, "%s", head->val);
+		sep = '&';
+		cur += head->len;
+		head++;
+		cnt--;
 	}
 
-	begin++;
-
-	if (begin > ctx->ws->e) {
-		WS_Release(ctx->ws, 0);
-		return (url);
-	}
-
-	end = begin;
-	begin = ctx->ws->f;
-	WS_Release(ctx->ws, end - begin);
-	return (begin);
+	assert(head == tail);
+	return cur;
 }
 
 static const char *
-qs_filter(VRT_CTX, const char *url, const struct qs_filter *qsf)
+qs_apply(VRT_CTX, const char *url, const char *qs, unsigned keep,
+    const struct vmod_querystring_filter *obj)
 {
-	const char *qs, *res;
-
-	res = NULL;
-	if (qs_empty(ctx->ws, url, &res))
-		return (res);
-
-	qs = res;
-	return (qs_apply(ctx, url, qs, qsf));
-}
-
-static int
-qs_build_list(struct ws *ws, struct qs_list *names, const char *p, va_list ap)
-{
-	struct qs_name *n;
-	const char *q;
-
-	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
-	AN(ws);
-	AN(names);
-	AN(p);
-	AN(VSTAILQ_EMPTY(names));
-
-	while (p != vrt_magic_string_end) {
-		q = p;
-		p = va_arg(ap, const char*);
-
-		if (q == NULL || *q == '\0')
-			continue;
-
-		n = (struct qs_name *)WS_Alloc(ws, sizeof *n);
-		if (n == NULL)
-			return (-1);
-		n->name = TRUST_ME(q);
-		VSTAILQ_INSERT_TAIL(names, n, list);
-	}
-
-	if (VSTAILQ_EMPTY(names))
-		return (-1);
-
-	return (0);
-}
-
-/***********************************************************************
- * Below are the functions that will actually be linked by Varnish.
- */
-
-const char *
-vmod_clean(VRT_CTX, const char *url)
-{
-	struct qs_filter qsf;
-	const char *res;
+	struct qs_param *params, *p;
+	const char *nm, *eq;
+	char *res, *cur, *tmp;
+	size_t len, tmp_len, cnt;
+	ssize_t ws_len;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\"", url);
+	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(url);
+	AN(qs);
+	assert(url <= qs);
+	assert(*qs == '?');
 
-	memset(&qsf, 0, sizeof qsf);
-	qsf.match = NULL;
-	qsf.keep = 0;
+	len = strlen(url);
+	res = WS_Alloc(ctx->ws, len + 1);
+	if (res == NULL) {
+		WS_ClearOverflow(ctx->ws, res);
+		return (url);
+	}
 
-	res = qs_filter(ctx, url, &qsf);
+	params = (void *)WS_Snapshot(ctx->ws);
+	ws_len = (ssize_t)WS_Reserve(ctx->ws, 0);
 
-	QS_LOG_RETURN(ctx, res);
+	p = params;
+
+	len = qs - url;
+	(void)snprintf(res, len + 1, "%s", url);
+	cur = res + len;
+	AZ(*cur);
+
+	cnt = 0;
+	qs++;
+	AN(*qs);
+
+	/* NB: during the matching phase we can use the preallocated space for
+	 * the result's query-string in order to copy the current parameter in
+	 * the loop. This saves an allocation in matchers that require a null-
+	 * terminated string.
+	 */
+	tmp = cur + 1;
+
+	while (*qs != '\0') {
+		nm = qs;
+		eq = NULL;
+
+		while (!EOQP(*qs)) {
+			if (eq == NULL && *qs == '=')
+				eq = qs;
+			qs++;
+		}
+
+		if (eq == nm)
+			tmp_len = 0;
+		else if (obj->match_name && eq != NULL)
+			tmp_len = eq - nm;
+		else
+			tmp_len = qs - nm;
+
+		(void)snprintf(tmp, tmp_len + 1, "%s", nm);
+
+		if (qs_match(ctx, obj, tmp, tmp_len, keep)) {
+			AN(tmp_len);
+			if (ws_len < (ssize_t)sizeof *p) {
+				ws_len = -1;
+				break;
+			}
+			p->val = nm;
+			p->len = qs - nm;
+			p++;
+			ws_len -= sizeof *p;
+			cnt++;
+		}
+
+		if (*qs == '&')
+			qs++;
+	}
+
+	if (ws_len < 0) {
+		WS_Release(ctx->ws, 0);
+		WS_Reset(ctx->ws, res);
+		return (url);
+	}
+
+	if (obj->sort)
+		qsort(params, cnt, sizeof *params, qs_cmp);
+
+	if (cnt > 0)
+		cur = qs_append(cur, cnt, params, p);
+
+	AZ(*cur);
+	cur = (char *)PRNDUP(cur + 1);
+	assert((void *)cur <= (void *)params);
+
+	WS_Release(ctx->ws, 0);
+	WS_Reset(ctx->ws, cur);
+
 	return (res);
 }
 
-const char *
-vmod_remove(VRT_CTX, const char *url)
-{
-	const char *cleaned_url;
+/***********************************************************************
+ * VMOD interfaces
+ */
 
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\"", url);
-
-	cleaned_url = qs_remove(ctx->ws, url);
-
-	QS_LOG_RETURN(ctx, cleaned_url);
-	return (cleaned_url);
-}
-
-const char *
-vmod_sort(VRT_CTX, const char *url)
+VCL_STRING
+vmod_remove(VRT_CTX, VCL_STRING url)
 {
 	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\"", url);
+	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
 
 	res = NULL;
 	if (qs_empty(ctx->ws, url, &res))
 		return (res);
 
 	qs = res;
-	res = qs_sort(ctx->ws, url, qs);
+	return (qs_truncate(ctx->ws, url, qs));
+}
 
-	QS_LOG_RETURN(ctx, res);
+VCL_VOID
+vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
+    const char *vcl_name, VCL_BOOL sort, VCL_STRING match)
+{
+	struct vmod_querystring_filter *obj;
+
+	ASSERT_CLI();
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	AN(objp);
+	AZ(*objp);
+	AN(vcl_name);
+
+	ALLOC_OBJ(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(obj);
+
+	VTAILQ_INIT(&obj->filters);
+	obj->sort = sort;
+
+	if (!strcmp(match, "name"))
+		obj->match_name = 1;
+	else if (strcmp(match, "param"))
+		WRONG("Unknown matching type");
+
+	*objp = obj;
+}
+
+VCL_VOID
+vmod_filter__fini(struct vmod_querystring_filter **objp)
+{
+	struct vmod_querystring_filter *obj;
+	struct qs_filter *qsf, *tmp;
+
+	ASSERT_CLI();
+	AN(objp);
+	obj = *objp;
+	*objp = NULL;
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	// XXX: TAKE_OBJ_NOTNULL(obj, objp, VMOD_QUERYSTRING_FILTER_MAGIC);
+
+	VTAILQ_FOREACH_SAFE(qsf, &obj->filters, list, tmp) {
+		CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
+		if (qsf->free != NULL)
+			qsf->free(qsf->ptr);
+		VTAILQ_REMOVE(&obj->filters, qsf, list);
+		FREE_OBJ(qsf);
+	}
+
+	FREE_OBJ(obj);
+}
+
+VCL_VOID
+vmod_filter_add_string(VRT_CTX, struct vmod_querystring_filter *obj,
+    VCL_STRING string)
+{
+	struct qs_filter *qsf;
+
+	ASSERT_CLI();
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(string);
+
+	ALLOC_OBJ(qsf, QS_FILTER_MAGIC);
+	AN(qsf);
+
+	qsf->str = string;
+	qsf->match = qs_match_string;
+	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
+}
+
+VCL_VOID
+vmod_filter_add_glob(VRT_CTX, struct vmod_querystring_filter *obj,
+    VCL_STRING glob)
+{
+	struct qs_filter *qsf;
+
+	ASSERT_CLI();
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(glob);
+
+	ALLOC_OBJ(qsf, QS_FILTER_MAGIC);
+	AN(qsf);
+
+	qsf->str = glob;
+	qsf->match = qs_match_glob;
+	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
+}
+
+VCL_VOID
+vmod_filter_add_regex(VRT_CTX, struct vmod_querystring_filter *obj,
+    VCL_STRING regex)
+{
+	struct qs_filter *qsf;
+	const char *error;
+	int error_offset;
+
+	ASSERT_CLI();
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(regex);
+
+	ALLOC_OBJ(qsf, QS_FILTER_MAGIC);
+	AN(qsf);
+
+	qsf->ptr = VRE_compile(regex, 0, &error, &error_offset);
+	if (qsf->ptr == NULL) {
+		AN(ctx->msg);
+		FREE_OBJ(qsf);
+		VSB_printf(ctx->msg,
+		    "vmod-querystring: regex error (%s): '%s' pos %d\n",
+		    error, regex, error_offset);
+		VRT_handling(ctx, VCL_RET_FAIL);
+		return;
+	}
+
+	qsf->match = qs_match_regex;
+	qsf->free = VRT_re_fini;
+	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
+}
+
+VCL_STRING
+vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
+    VCL_STRING url, VCL_ENUM mode)
+{
+	const char *tmp, *qs;
+	unsigned keep;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(mode);
+
+	tmp = NULL;
+	if (qs_empty(ctx->ws, url, &tmp))
+		return (tmp);
+
+	qs = tmp;
+	keep = 0;
+
+	if (!strcmp(mode, "keep"))
+		keep = 1;
+	else if (strcmp(mode, "drop"))
+		WRONG("Unknown filtering mode");
+
+	return (qs_apply(ctx, url, qs, keep, obj));
+}
+
+VCL_STRING
+vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
+    VCL_STRING url, VCL_ENUM mode)
+{
+	const char *res, *qs;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(mode);
+
+	if (url == NULL)
+		return (NULL);
+
+	qs = strchr(url, '?');
+	if (qs == NULL || qs[1] == '\0')
+		return (NULL);
+
+	res = vmod_filter_apply(ctx, obj, qs, mode);
+	AN(res);
+	if (*res == '?')
+		res++;
+	else
+		AZ(*res);
 	return (res);
 }
 
-const char *
-vmod_filtersep(VRT_CTX)
+VCL_STRING
+vmod_clean(VRT_CTX, VCL_STRING url)
 {
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return (NULL);
+	return (vmod_filter_apply(ctx, &qs_clean_filter, url, "keep"));
 }
 
-const char *
-vmod_filter(VRT_CTX, const char *url, const char *params, ...)
+VCL_STRING
+vmod_sort(VRT_CTX, VCL_STRING url)
 {
-	struct qs_filter qsf;
-	const char *res;
-	char *snap;
-	va_list ap;
-	int retval;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.match = &qs_match_list;
-	qsf.keep = 0;
-
-	VSTAILQ_INIT(&qsf.names);
-
-	snap = WS_Snapshot(ctx->ws);
-	AN(snap);
-
-	va_start(ap, params);
-	retval = qs_build_list(ctx->ws, &qsf.names, params, ap);
-	va_end(ap);
-
-	res = retval == 0 ? qs_filter(ctx, url, &qsf) : url;
-	WS_Reset(ctx->ws, snap);
-
-	QS_LOG_RETURN(ctx, res);
-	return (res);
-}
-
-const char *
-vmod_filter_except(VRT_CTX, const char *url, const char *params, ...)
-{
-	struct qs_filter qsf;
-	const char *res;
-	char *snap;
-	va_list ap;
-	int retval;
-
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\", ...", url, params);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.match = &qs_match_list;
-	qsf.keep = 1;
-
-	VSTAILQ_INIT(&qsf.names);
-
-	snap = WS_Snapshot(ctx->ws);
-	AN(snap);
-
-	va_start(ap, params);
-	retval = qs_build_list(ctx->ws, &qsf.names, params, ap);
-	va_end(ap);
-
-	res = retval == 0 ? qs_filter(ctx, url, &qsf) : url;
-	WS_Reset(ctx->ws, snap);
-
-	QS_LOG_RETURN(ctx, res);
-	return (res);
-}
-
-const char *
-vmod_regfilter(VRT_CTX, const char *url, const char *regex)
-{
-	struct qs_filter qsf;
-	const char *res;
-
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.keep = 0;
-	qsf.match = &qs_match_regex;
-	qsf.regex = qs_re_init(ctx, regex);
-
-	if (qsf.regex == NULL)
-		return (url);
-
-	res = qs_filter(ctx, url, &qsf);
-
-	VRT_re_fini(qsf.regex);
-	QS_LOG_RETURN(ctx, res);
-	return (res);
-}
-
-const char *
-vmod_regfilter_except(VRT_CTX, const char *url, const char *regex)
-{
-	struct qs_filter qsf;
-	const char *res;
-
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, regex);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.keep = 1;
-	qsf.match = &qs_match_regex;
-	qsf.regex = qs_re_init(ctx, regex);
-
-	if (qsf.regex == NULL)
-		return (url);
-
-	res = qs_filter(ctx, url, &qsf);
-
-	VRT_re_fini(qsf.regex);
-	QS_LOG_RETURN(ctx, res);
-	return (res);
-}
-
-const char *
-vmod_globfilter(VRT_CTX, const char *url, const char *glob)
-{
-	struct qs_filter qsf;
-	const char *res;
-
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, glob);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.keep = 0;
-	qsf.match = &qs_match_glob;
-	qsf.glob = glob;
-
-	res = qs_filter(ctx, url, &qsf);
-
-	QS_LOG_RETURN(ctx, res);
-	return (res);
-}
-
-const char *
-vmod_globfilter_except(VRT_CTX, const char *url, const char *glob)
-{
-	struct qs_filter qsf;
-	const char *res;
-
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	QS_LOG_CALL(ctx, "\"%s\", \"%s\"", url, glob);
-
-	memset(&qsf, 0, sizeof qsf);
-	qsf.keep = 1;
-	qsf.match = &qs_match_glob;
-	qsf.glob = glob;
-
-	res = qs_filter(ctx, url, &qsf);
-
-	QS_LOG_RETURN(ctx, res);
-	return (res);
+	return (vmod_filter_apply(ctx, &qs_sort_filter, url, "keep"));
 }

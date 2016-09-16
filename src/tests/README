@@ -1,0 +1,17 @@
+Test scripts for vmod-querystring
+=================================
+
+Naming scheme
+-------------
+
+	The intent is to make this test suite look familiar and copy
+	what the Varnish Cache test suite is doing:
+
+		[id]%05d.vtc
+
+	id ~ ^e --> Exact-match filter tests
+	id ~ ^f --> miscellaneous Filter tests
+	id ~ ^g --> Glob filter tests
+	id ~ ^m --> reMoval tests
+	id ~ ^p --> PCRE filter tests
+	id ~ ^r --> Regression tests, same number as ticket
