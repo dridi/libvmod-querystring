@@ -1,6 +1,17 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 1.0 (2016-09-16)
+-----------------------------------
+
+* Complete rewrite of the module (#23)
+* Simplification of autotools usage
+* License changed to GPLv3+
+* Enhanced RPM packaging
+* Convenient rpm and mock builds
+* Dropped support for Varnish 4.0 (EOL)
+* Various improvements and fixes
+
 Changes in version 0.5 (2016-04-01)
 -----------------------------------
 

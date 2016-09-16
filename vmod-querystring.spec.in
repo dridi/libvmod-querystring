@@ -49,6 +49,14 @@ make %{?_smp_mflags} check
 
 
 %changelog
+* Fri Sep 16 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0-1
+- Bump version
+- Change License to GPLv3+
+- Automatic package information
+- Expect a correct source archive
+- Disable silent rules
+- Overall simplification
+
 * Tue Mar 29 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.5-1
 - Bump version
 

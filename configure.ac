@@ -16,7 +16,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libvmod-querystring],
-	[0.5],
+	[1.0],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])

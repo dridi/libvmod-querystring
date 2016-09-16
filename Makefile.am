@@ -23,9 +23,9 @@ EXTRA_DIST = \
 	vmod-querystring.spec
 
 dist_doc_DATA = \
-	LICENSE \
+	CHANGELOG \
 	CONTRIBUTORS \
-	CHANGELOG
+	LICENSE
 
 # lcov support
 
