@@ -92,6 +92,8 @@ static struct vmod_querystring_filter qs_sort_filter = {
  * VMOD implementation
  */
 
+int qs_cmp(const void *, const void *);
+
 static const char *
 qs_truncate(struct ws *ws, const char *url, const char *qs)
 {

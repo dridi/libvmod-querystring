@@ -33,6 +33,11 @@ AM_PROG_AR
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
+ax_enable_compile_warnings=error
+AX_CODE_COVERAGE
+AX_COMPILER_FLAGS_CFLAGS
+AX_PTHREAD(, [AC_MSG_ERROR([Could not configure pthreads support])])
+
 AC_ARG_WITH([rst2man],
 	AS_HELP_STRING(
 		[--with-rst2man=PATH],
@@ -42,8 +47,6 @@ AC_ARG_WITH([rst2man],
 
 VARNISH_PREREQ([4.1])
 VARNISH_VMODS([querystring])
-
-AX_CODE_COVERAGE
 
 AC_CONFIG_FILES([
 	vmod-querystring.spec
@@ -63,4 +66,5 @@ AS_ECHO("
 	compiler:     $CC
 	cflags:       $CFLAGS
 	ldflags:      $LDFLAGS
+	warnings:     $WARN_CFLAGS
 ")
