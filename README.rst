@@ -131,7 +131,7 @@ script because releases are uploaded pre-configured. Instead you need to run
 In this case your dependencies are:
 
 - rst2man
-- varnish (at least 4.1)
+- varnish (at least 4.1.3)
 
 You can then proceed with the installation::
 

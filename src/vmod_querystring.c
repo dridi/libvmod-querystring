@@ -417,11 +417,7 @@ vmod_filter__fini(struct vmod_querystring_filter **objp)
 	struct qs_filter *qsf, *tmp;
 
 	ASSERT_CLI();
-	AN(objp);
-	obj = *objp;
-	*objp = NULL;
-	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
-	// XXX: TAKE_OBJ_NOTNULL(obj, objp, VMOD_QUERYSTRING_FILTER_MAGIC);
+	TAKE_OBJ_NOTNULL(obj, objp, VMOD_QUERYSTRING_FILTER_MAGIC);
 
 	VTAILQ_FOREACH_SAFE(qsf, &obj->filters, list, tmp) {
 		CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);

@@ -45,7 +45,7 @@ AC_ARG_WITH([rst2man],
 	[RST2MAN="$withval"],
 	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
 
-VARNISH_PREREQ([4.1])
+VARNISH_PREREQ([4.1.3])
 VARNISH_VMODS([querystring])
 
 AC_CONFIG_FILES([
