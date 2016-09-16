@@ -1,37 +1,67 @@
-# libvmod-querystring - querystring manipulation module for Varnish
-#
-# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+# Copyright (C) 2012-2016  Dridi Boukelmoune
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer.
-# 2. Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials
-#    provided with the distribution.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SUBDIRS = src
 
-ACLOCAL_AMFLAGS = -I m4 -I ${LIBVARNISHAPI_DATAROOTDIR}/aclocal
-DISTCHECK_CONFIGURE_FLAGS = VMOD_DIR='$${libdir}/varnish/vmods'
-EXTRA_DIST = README.rst LICENSE vmod-querystring.spec
+ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
 
-dist_doc_DATA = LICENSE CONTRIBUTORS CHANGELOG
+EXTRA_DIST = \
+	README.rst \
+	vmod-querystring.spec
+
+dist_doc_DATA = \
+	LICENSE \
+	CONTRIBUTORS \
+	CHANGELOG
+
+# lcov support
+
+CODE_COVERAGE_OUTPUT_DIRECTORY = lcov
+CODE_COVERAGE_IGNORE_PATTERN = "/usr/*"
+CODE_COVERAGE_GENHTML_OPTIONS = --prefix $(abs_top_srcdir)
+
+@CODE_COVERAGE_RULES@
+
+lcov: check-code-coverage
+
+# RPM packaging
+
+RPMBUILD = CC=gcc PKG_CONFIG_PATH= rpmbuild -D '_rpmdir rpmbuild' \
+	-D '_srcrpmdir rpmbuild/src'
+MOCK = mock $(MOCK_OPTS) --resultdir mockbuild
+
+dist: all
+
+rpm: dist rpmbuild-clean
+	$(RPMBUILD) -ts $(PACKAGE)-$(VERSION).tar.gz
+	$(RPMBUILD) --rebuild rpmbuild/src/$(PACKAGE)-$(VERSION)-*.src.rpm
+
+rpmlint: rpm
+	rpmlint $(PACKAGE).spec rpmbuild/*/$(PACKAGE)-*.rpm
+
+mockbuild: dist mockbuild-clean
+	$(MOCK) --buildsrpm --sources . --spec $(PACKAGE).spec
+	$(MOCK) --rebuild mockbuild/$(PACKAGE)-$(VERSION)-*.src.rpm
+
+rpmbuild-clean:
+	rm -rf rpmbuild/
+
+mockbuild-clean:
+	rm -rf mockbuild/
+
+clean-local: rpmbuild-clean mockbuild-clean
+
+.PHONY: rpmbuild-clean mockbuild-clean

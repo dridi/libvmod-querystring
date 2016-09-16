@@ -2,7 +2,12 @@
 
 set -e
 
+WORK_DIR="$PWD"
+ROOT_DIR="$(dirname "$0")"
 PLATFORM="$(uname -s)"
+
+test -n "$ROOT_DIR"
+cd "$ROOT_DIR"
 
 case "$PLATFORM" in
 FreeBSD|Linux|SunOS)
@@ -17,9 +22,11 @@ Darwin)
 esac
 
 mkdir -p m4
-
-aclocal -I m4
+aclocal
 $LIBTOOLIZE --copy --force
 autoheader
 automake --add-missing --copy --foreign
 autoconf
+
+cd "$WORK_DIR"
+"$ROOT_DIR"/configure "$@"

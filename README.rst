@@ -16,7 +16,7 @@ want for your web site or application.
 
 A query-string is just a character string starting after a question mark in a
 URL. But in a web context, it is usually a structured key/values store encoded
-with the MIME type ``application/x-www-form-urlencoded``. This module deals
+with the ``application/x-www-form-urlencoded`` media type. This module deals
 with this kind of query-strings.
 
 Examples
@@ -44,7 +44,7 @@ knowledge of the back-end application but it can usually be mitigated with
 a couple assumptions:
 
 - the application doesn't need query-strings
-- except for POST forms that are not cached
+- except for POST requests that are not cached
 - and for analytics/tracking purposes
 
 In this case it can be solved like this::
@@ -76,19 +76,29 @@ you may want to remove Google Analytics parameters from requests because:
 
 - they could create cache duplicates for every campaigns
 - the application does not need them, only marketing folks
+- the user's browser makes AJAX calls to GA regardless
 - they can be delivered to marketing via ``varnishncsa``
 
-It can be solved like this::
+It could be solved like this::
 
+    import std;
     import querystring;
 
+    sub vcl_init {
+        new ga = querystring.filter();
+        ga.add_regex("^utm_.*");
+    }
+
     sub vcl_recv {
-        set req.url = querystring.regfilter(req.url, "utm_.*");
+        std.log("ga:" + ga.extract(req.url, mode = keep));
+        set req.url = ga.apply(req.url);
     }
 
 This is enough to remove all Analytics parameters you may use (``utm_source``,
 ``utm_medium``, ``utm_campaign`` etc) and keep the rest of the query-string
-unless there are no other parameters in which case it's simply removed.
+unless there are no other parameters in which case it's simply removed. The
+log statement allows you to get those analytics parameters (and only them) in
+``varnishncsa`` using the format string ``%{VCL_Log:ga}x``.
 
 All functions are documented in the manual page ``vmod_querystring(3)``.
 
@@ -97,29 +107,55 @@ Installation
 
 The module requires the GNU Build System, you may follow these steps::
 
-    ./autogen.sh
-    ./configure
+    ./bootstrap
     make check
+
+Arguments to the ``bootstrap`` script are passed to the underlying execution
+of the generated ``configure`` script. Once ``bootstrap`` is done, you can
+later run the ``configure`` script directly if you need to reconfigure your
+build tree.
+
+When building from source, you need the following dependencies:
+
+- autoconf
+- autoconf-archive
+- automake
+- libtool
+- rst2man
+- varnish (at least 4.1.4-beta1)
+
+If you downloaded the latest release archive, there will be no ``bootstrap``
+script because releases are uploaded pre-configured. Instead you need to run
+``./configure`` to check and set your environment up.
+
+In this case your dependencies are:
+
+- rst2man
+- varnish (at least 4.1)
 
 You can then proceed with the installation::
 
     sudo make install
 
-Instead of directly installing the package you can build an RPM instead::
+Instead of directly installing the package you can build an RPM::
 
-    make dist
-    rpmbuild -tb *.tar.gz
+    make rpm
 
-If you need to build an RPM for a different platform you may use ``mock(1)``::
+If you need to build an RPM for a different platform you may use ``mock(1)``
+with the proper ``--root`` option. All you need to do is run ``make mock`` and
+set the desired flags in the ``MOCK_OPTS`` variable. For instance, to build
+RPMs for CentOS 7::
 
-    make dist
-    mock --buildsrpm --resultdir . --sources . --spec vmod-querystring.spec
-    mock --rebuild   --resultdir . *.src.rpm
+    make mockbuild MOCK_OPTS='--root epel-7-x86_64'
 
 If your Varnish installation did not use the default ``/usr`` prefix, you need
-this in your environment before running ``./autogen.sh``::
+this in your environment before running ``./bootstrap``::
 
-    export PKG_CONFIG_PATH=/path/to/lib/pkgconfig
+    export PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
+    export ACLOCAL_PATH=${PREFIX}/share/aclocal
+
+The module is then configured for an installation inside ``${PREFIX}``, unless
+the ``--prefix`` option was used in the ``configure`` execution.
 
 See also
 ========

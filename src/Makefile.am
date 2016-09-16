@@ -1,98 +1,72 @@
-# libvmod-querystring - querystring manipulation module for Varnish
-#
-# Copyright (C) 2012-2016, Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+# Copyright (C) 2012-2016  Dridi Boukelmoune
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer.
-# 2. Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials
-#    provided with the distribution.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AM_CPPFLAGS = @DEFINE_LOGGING@ @VMOD_INCLUDES@
-AM_CFLAGS = -Wall -Werror -Wextra
+AM_CPPFLAGS = $(CODE_COVERAGE_CPPFLAGS)
+AM_CFLAGS = -Wall -Werror -Wextra $(VARNISHAPI_CFLAGS) $(CODE_COVERAGE_CFLAGS)
+AM_LDFLAGS = $(VARNISHAPI_LIBS) $(VMOD_LDFLAGS) $(CODE_COVERAGE_LDFLAGS)
+
+if CODE_COVERAGE_ENABLED
+AM_CPPFLAGS += -DWITHOUT_ASSERTS
+endif
 
 # VMOD library
 
-vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_querystring.la
 
-VCC_FILES = \
-	vcc_querystring_if.c \
-	vcc_querystring_if.h
-
-DOC_FILES = \
-	vmod_querystring.rst \
-	vmod_querystring.man.rst
-
-libvmod_querystring_la_LDFLAGS = \
-	-module \
-	-export-dynamic \
-	-avoid-version \
-	-shared
+nodist_man_MANS = vmod_querystring.3
 
 libvmod_querystring_la_SOURCES = \
 	vmod_querystring.c
 
 nodist_libvmod_querystring_la_SOURCES = \
-	$(VCC_FILES)
+	vcc_querystring_if.c \
+	vcc_querystring_if.h
 
-$(srcdir)/vmod_querystring.c: $(VCC_FILES)
-
-$(VCC_FILES) $(DOC_FILES): .vcc
-
-.vcc: vmod_querystring.vcc
-	@echo vmodtool: @VMODTOOL@ $<
-	@@VMODTOOL@ -o vcc_querystring_if $<
-	@touch $@
+@BUILD_VMOD_QUERYSTRING@
 
 # Documentation
 
-dist_man_MANS = vmod_querystring.3
+pdf-local: vmod_querystring.pdf
 
-%.3: %.man.rst
-	${RST2MAN} $< $@
+.rst.pdf:
+	rst2pdf $< $@
 
 # Test suite
 
-VMOD_FILE="$(abs_builddir)/.libs/libvmod_querystring.so"
-
-VTC_LOG_COMPILER = \
-	env PATH="@TEST_PATH@" \
-	varnishtest -v \
-	-Dvmod_querystring="querystring from \"$(VMOD_FILE)\""
-
+AM_TESTS_ENVIRONMENT = PATH="$(VMOD_TEST_PATH)"
 TEST_EXTENSIONS = .vtc
+VTC_LOG_COMPILER = varnishtest -v
+AM_VTC_LOG_FLAGS = -Dvmod_querystring="$(VMOD_QUERYSTRING)"
 
-TESTS = @VTC_TESTS@
+TESTS = \
+	tests/e00001.vtc \
+	tests/f00001.vtc \
+	tests/f00002.vtc \
+	tests/f00003.vtc \
+	tests/f00004.vtc \
+	tests/f00005.vtc \
+	tests/g00001.vtc \
+	tests/m00001.vtc \
+	tests/p00001.vtc \
+	tests/p00002.vtc \
+	tests/p00003.vtc \
+	tests/r00022.vtc \
+	tests/r00026.vtc
 
 # misc
 
-EXTRA_DIST = \
-	vmod_querystring.vcc \
-	@VTC_TESTS@
-
-CLEANFILES = \
-	.vcc \
-	$(VCC_FILES) \
-	$(DOC_FILES) \
-	$(dist_man_MANS)
+EXTRA_DIST = vmod_querystring.vcc $(TESTS)
+CLEANFILES = vmod_querystring.pdf

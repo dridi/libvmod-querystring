@@ -1,21 +1,20 @@
-%global vmod    querystring
 %global vmoddir %{_libdir}/varnish/vmods
 
-Name:           vmod-%{vmod}
-Version:        0.5
+Name:           @PACKAGE@
+Version:        @PACKAGE_VERSION@
 Release:        1%{?dist}
 Group:          System Environment/Libraries
 Summary:        QueryString module for Varnish Cache
-URL:            https://www.varnish-cache.org/vmod/%{vmod}
-License:        BSD
+URL:            @PACKAGE_URL@
+License:        GPLv3+
 
-Source:         lib%{name}-%{version}.tar.gz
+Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  python
-BuildRequires:  varnish >= 4
-BuildRequires:  varnish-libs-devel >= 4
+BuildRequires:  python-docutils
+BuildRequires:  varnish >= 4.1
+BuildRequires:  varnish-libs-devel >= 4.1
 
-Requires:       varnish >= 4
+Requires:       varnish >= 4.1
 
 
 %description
@@ -26,17 +25,17 @@ query-strings), all other functions do the cleaning.
 
 
 %prep
-%setup -qn lib%{name}-%{version}
+%setup -q
 
 
 %build
-%configure --with-rst2man=true
+%configure --disable-silent-rules
 make %{?_smp_mflags}
 
 
 %install
 %make_install
-rm %{buildroot}%{vmoddir}/libvmod_%{vmod}.la
+rm %{buildroot}%{vmoddir}/libvmod_*.la
 
 
 %check
@@ -44,9 +43,9 @@ make %{?_smp_mflags} check
 
 
 %files
-%{vmoddir}/libvmod_%{vmod}.so
 %{_mandir}/man?/*
 %{_docdir}/*
+%{vmoddir}/libvmod_*.so
 
 
 %changelog
