@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/default.mk
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export PKG_CONFIG_PATH =
+export ACLOCAL_PATH =
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	./configure
+
+override_dh_fixperms:
+	find debian/vmod-querystring/ -name '*.la' -delete
+	dh_fixperms

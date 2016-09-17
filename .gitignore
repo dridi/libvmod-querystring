@@ -53,9 +53,13 @@ lcov/
 # packaging
 # ---------
 
-libvmod-querystring-*/
+vmod-querystring-*/
 mockbuild/
 rpmbuild/
 
-vmod-*.tar.gz
+vmod-*.tar.[gx]z
+*.build
+*.changes
+*.deb
+*.dsc
 *.spec

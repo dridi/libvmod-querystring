@@ -137,17 +137,6 @@ You can then proceed with the installation::
 
     sudo make install
 
-Instead of directly installing the package you can build an RPM::
-
-    make rpm
-
-If you need to build an RPM for a different platform you may use ``mock(1)``
-with the proper ``--root`` option. All you need to do is run ``make mock`` and
-set the desired flags in the ``MOCK_OPTS`` variable. For instance, to build
-RPMs for CentOS 7::
-
-    make mockbuild MOCK_OPTS='--root epel-7-x86_64'
-
 If your Varnish installation did not use the default ``/usr`` prefix, you need
 this in your environment before running ``./bootstrap``::
 
@@ -156,6 +145,42 @@ this in your environment before running ``./bootstrap``::
 
 The module is then configured for an installation inside ``${PREFIX}``, unless
 the ``--prefix`` option was used in the ``configure`` execution.
+
+RPM Packaging
+=============
+
+Instead of directly installing the package you can build an RPM::
+
+    make rpm
+
+The resulting packages can be found in the ``rpmbuild`` directory in your
+build tree.
+
+If you need to build an RPM for a different platform you may use ``mock(1)``
+with the proper ``--root`` option. All you need to do is run ``make mock`` and
+set the desired flags in the ``MOCK_OPTS`` variable. For instance, to build
+RPMs for CentOS 7::
+
+    make mockbuild MOCK_OPTS='--root epel-7-x86_64'
+
+The resulting packages can be found in the ``mockbuild`` directory in your
+build tree.
+
+DPKG Packaging
+==============
+
+Experimental DPKG packaging is also available, using the ``deb`` target::
+
+    make deb
+
+The resulting packages can be found at the top of your build tree.
+
+If you need to build a DEB for a specific platform you may use ``pdebuild(1)``
+and ``pbuilder(8)`` to set up the base tarball and then run::
+
+    make pdebuild
+
+The resulting packages can be found in ``/var/cache/pbuilder/result``.
 
 See also
 ========

@@ -20,6 +20,7 @@ ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
 
 EXTRA_DIST = \
 	README.rst \
+	debian \
 	vmod-querystring.spec
 
 dist_doc_DATA = \
@@ -65,3 +66,28 @@ mockbuild-clean:
 clean-local: rpmbuild-clean mockbuild-clean
 
 .PHONY: rpmbuild-clean mockbuild-clean
+
+# DEB packaging
+
+DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
+
+$(DEB_ORIG): distdir debuild-clean
+	tar -zcf $(PACKAGE)_$(VERSION).orig.tar.gz $(distdir)
+
+deb: $(DEB_ORIG)
+	cd $(distdir) && dpkg-buildpackage -rfakeroot -us -uc
+	rm -rf $(distdir)
+
+lintian: deb
+	lintian $(PACKAGE)_$(VERSION)-1_*.deb
+
+pdebuild: $(DEB_ORIG)
+	cd $(distdir) && pdebuild
+	rm -rf $(distdir)
+
+debuild-clean:
+	rm -f $(PACKAGE)_$(VERSION)*
+
+clean-local: debuild-clean
+
+.PHONY: debuild-clean
