@@ -1,6 +1,14 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 1.0.1 (2016-09-23)
+-------------------------------------
+
+* Experimental debian packaging
+* Continuous integration with Travis CI
+* Code coverage with Codecov
+* Library path for the test suite
+
 Changes in version 1.0 (2016-09-16)
 -----------------------------------
 
