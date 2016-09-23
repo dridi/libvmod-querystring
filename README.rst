@@ -157,9 +157,9 @@ The resulting packages can be found in the ``rpmbuild`` directory in your
 build tree.
 
 If you need to build an RPM for a different platform you may use ``mock(1)``
-with the proper ``--root`` option. All you need to do is run ``make mock`` and
-set the desired flags in the ``MOCK_OPTS`` variable. For instance, to build
-RPMs for CentOS 7::
+with the proper ``--root`` option. All you got to do is run ``make mockbuild``
+and set the desired flags in the ``MOCK_OPTS`` variable. For instance, to
+build RPMs for CentOS 7::
 
     make mockbuild MOCK_OPTS='--root epel-7-x86_64'
 
@@ -175,10 +175,12 @@ Experimental DPKG packaging is also available, using the ``deb`` target::
 
 The resulting packages can be found at the top of your build tree.
 
-If you need to build a DEB for a specific platform you may use ``pdebuild(1)``
-and ``pbuilder(8)`` to set up the base tarball and then run::
+If you need to build a Deb for a specific platform you may use ``pdebuild(1)``
+and ``pbuilder(8)`` to set up the base tarball and then run ``make pdebuild``
+and set the desired flags in the ``PDEBUILD_OPTS`` variable. For instance, to
+build Debs for Debian Sid::
 
-    make pdebuild
+    make pdebuild PDEBUILD_OPTS='-- --distribution sid'
 
 The resulting packages can be found in ``/var/cache/pbuilder/result``.
 

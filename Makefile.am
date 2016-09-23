@@ -82,7 +82,7 @@ lintian: deb
 	lintian $(PACKAGE)_$(VERSION)-1_*.deb
 
 pdebuild: $(DEB_ORIG)
-	cd $(distdir) && pdebuild
+	cd $(distdir) && pdebuild $(PDEBUILD_OPTS)
 	rm -rf $(distdir)
 
 debuild-clean:
