@@ -48,6 +48,11 @@ AC_ARG_WITH([rst2man],
 VARNISH_PREREQ([4.1.3])
 VARNISH_VMODS([querystring])
 
+# Not available before Varnish 5.0.1
+PKG_CHECK_VAR([VARNISHAPI_LIBDIR], [varnishapi], [libdir])
+AC_SUBST([VARNISH_LIBRARY_PATH],
+	[$VARNISHAPI_LIBDIR:$VARNISHAPI_LIBDIR/varnish])
+
 AC_CONFIG_FILES([
 	vmod-querystring.spec
 	Makefile
