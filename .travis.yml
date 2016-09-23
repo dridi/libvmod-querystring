@@ -1,0 +1,57 @@
+---
+sudo: required
+dist: trusty
+
+language: c
+
+addons:
+  apt:
+    packages:
+    - autoconf-archive
+    - debhelper
+    - debian-archive-keyring
+    - lcov
+    - pbuilder
+    - python-docutils
+
+compiler:
+  - clang
+  - gcc
+
+env:
+  matrix:
+    - CFLAGS=-O0
+    - CFLAGS=-O1
+    - CFLAGS=-O2
+    - CFLAGS=-O3
+    - CFLAGS=-Os
+    - MAKE_TARGET=distcheck
+
+matrix:
+  include:
+    - compiler: gcc
+      env: MAKE_TARGET=pdebuild
+    - compiler: gcc
+      env: MAKE_TARGET=lcov CONFIGURE_FLAGS=--enable-code-coverage
+
+install:
+  - set -e
+  - wget https://repo.varnish-cache.org/source/varnish-5.0.0.tar.gz
+  - tar -zxf varnish-*.tar.gz
+  - pushd varnish-*/
+  - ./configure --prefix=/usr
+  - make -sj32
+  - sudo make install
+  - popd
+  - wget http://git.savannah.gnu.org/cgit/autoconf-archive.git/plain/m4/ax_code_coverage.m4
+  - sudo mv ax_code_coverage.m4 /usr/share/aclocal/
+  - sudo pbuilder create --distribution sid --mirror ftp://ftp.us.debian.org/debian/ --debootstrapopts "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg"
+
+script:
+  - ./bootstrap $CONFIGURE_FLAGS
+  - make ${MAKE_TARGET:-check}
+
+after_success:
+  - test "$MAKE_TARGET" = lcov || exit 0
+  - cp libvmod-querystring-*-coverage.info codecov.info
+  - bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
