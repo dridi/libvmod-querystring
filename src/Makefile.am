@@ -26,7 +26,7 @@ endif
 
 vmod_LTLIBRARIES = libvmod_querystring.la
 
-nodist_man_MANS = vmod_querystring.3
+dist_man_MANS = vmod_querystring.3
 
 libvmod_querystring_la_SOURCES = \
 	vmod_querystring.c
