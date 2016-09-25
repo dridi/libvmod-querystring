@@ -1,7 +1,7 @@
   # Copyright (C) 2012-2016  Dridi Boukelmoune
   # All rights reserved.
 
-$Module querystring Varnish Query-String Module
+$Module querystring 3 Varnish Query-String Module
 
 DESCRIPTION
 ===========
