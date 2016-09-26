@@ -4,26 +4,19 @@ set -e
 
 WORK_DIR="$PWD"
 ROOT_DIR="$(dirname "$0")"
-PLATFORM="$(uname -s)"
 
 test -n "$ROOT_DIR"
 cd "$ROOT_DIR"
 
-case "$PLATFORM" in
-FreeBSD|Linux|SunOS)
-	LIBTOOLIZE=libtoolize
-	;;
-Darwin)
-	LIBTOOLIZE=glibtoolize
-	;;
-*)
-	echo "WARNING: unrecognized platform: $PLATFORM" >&2
-	LIBTOOLIZE=libtoolize
-esac
+if ! which libtoolize >/dev/null 2>&1
+then
+	echo "libtoolize: command not found, falling back to glibtoolize" >&2
+	alias libtoolize=glibtoolize
+fi
 
 mkdir -p m4
 aclocal
-$LIBTOOLIZE --copy --force
+libtoolize --copy --force
 autoheader
 automake --add-missing --copy --foreign
 autoconf
