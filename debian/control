@@ -21,12 +21,10 @@ Description:
  The purpose of this module is to give you a fine-grained control over a URL's
  query-string in Varnish Cache. It's possible to remove the query-string, clean
  it, sort its parameters or filter it to only keep a subset of them.
-
  This can greatly improve your hit ratio and efficiency with Varnish, because
  by default two URLs with the same path but different query-strings are also
  different. This is what the RFCs mandate but probably not what you usually
  want for your web site or application.
-
  A query-string is just a character string starting after a question mark in a
  URL. But in a web context, it is usually a structured key/values store encoded
  with the `application/x-www-form-urlencoded' media type. This module deals
