@@ -1,6 +1,6 @@
 Source: vmod-querystring
 Priority: optional
-Maintainer: Dridi <dridi.boukelmoune@gmail.com>
+Maintainer: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 Build-Depends:
  debhelper (>= 9),
  libvarnishapi-dev (>= 4.1.3),
