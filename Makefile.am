@@ -73,7 +73,7 @@ DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
 PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
 
 $(DEB_ORIG): distdir debuild-clean
-	tar -zcf $(PACKAGE)_$(VERSION).orig.tar.gz $(distdir)
+	tar -zcf $(DEB_ORIG) $(distdir)
 
 deb: $(DEB_ORIG)
 	cd $(distdir) && dpkg-buildpackage -rfakeroot -us -uc
