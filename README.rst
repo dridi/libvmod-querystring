@@ -184,12 +184,14 @@ The resulting packages can be found at the top of your build tree.
 
 If you need to build a Deb for a specific platform you may use ``pdebuild(1)``
 and ``pbuilder(8)`` to set up the base tarball and then run ``make pdebuild``
-and set the desired flags in the ``PDEBUILD_OPTS`` variable. For instance, to
-build Debs for Debian Sid::
+and set the desired flags in the ``PDEBUILD_OPTS`` variable. For instance to
+build debs for Debian Sid, assuming your environment is properly configured
+to switch between distributions::
 
     make pdebuild PDEBUILD_OPTS='-- --distribution sid'
 
-The resulting packages can be found in ``/var/cache/pbuilder/result``.
+The resulting packages can be found in the ``pdebuild`` directory in your
+build tree.
 
 See also
 ========

@@ -70,6 +70,7 @@ clean-local: rpmbuild-clean mockbuild-clean
 # DEB packaging
 
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
+PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
 
 $(DEB_ORIG): distdir debuild-clean
 	tar -zcf $(PACKAGE)_$(VERSION).orig.tar.gz $(distdir)
@@ -81,13 +82,16 @@ deb: $(DEB_ORIG)
 lintian: deb
 	lintian $(PACKAGE)_$(VERSION)-1_*.deb
 
-pdebuild: $(DEB_ORIG)
-	cd $(distdir) && pdebuild $(PDEBUILD_OPTS)
+pdebuild: $(DEB_ORIG) pdebuild-clean
+	cd $(distdir) && $(PDEBUILD)
 	rm -rf $(distdir)
 
 debuild-clean:
 	rm -f $(PACKAGE)_$(VERSION)*
 
-clean-local: debuild-clean
+pdebuild-clean:
+	rm -rf pdebuild/
 
-.PHONY: debuild-clean
+clean-local: debuild-clean pdebuild-clean
+
+.PHONY: debuild-clean pdebuild-clean
