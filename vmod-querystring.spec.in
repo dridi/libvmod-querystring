@@ -39,12 +39,12 @@ with this kind of query-strings.
 
 %build
 %configure --disable-silent-rules
-make %{?_smp_mflags}
+%make_build CFLAGS="%{optflags}"
 
 
 %install
 %make_install
-rm %{buildroot}%{vmoddir}/libvmod_*.la
+rm %{buildroot}%{vmoddir}/*.la
 
 
 %check
@@ -54,7 +54,7 @@ make %{?_smp_mflags} check
 %files
 %{_mandir}/man?/*
 %{_docdir}/*
-%{vmoddir}/libvmod_*.so
+%{vmoddir}/*.so
 
 
 %changelog
