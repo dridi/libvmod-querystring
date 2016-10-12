@@ -1,4 +1,4 @@
-Source: vmod-querystring
+Source: @PACKAGE@
 Priority: optional
 Maintainer: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 Build-Depends:
@@ -9,9 +9,9 @@ Build-Depends:
  varnish (>= 4.1.3)
 Standards-Version: 3.9.5
 Section: libs
-Homepage: https://github.com/dridi/libvmod-querystring
+Homepage: @PACKAGE_URL@
 
-Package: vmod-querystring
+Package: @PACKAGE@
 Architecture: any
 Depends:
  ${shlibs:Depends},

@@ -54,9 +54,11 @@ AC_SUBST([VARNISH_LIBRARY_PATH],
 	[$VARNISHAPI_LIBDIR:$VARNISHAPI_LIBDIR/varnish])
 
 AC_CONFIG_FILES([
-	vmod-querystring.spec
 	Makefile
+	debian/control
+	debian/copyright
 	src/Makefile
+	vmod-querystring.spec
 ])
 
 AC_OUTPUT

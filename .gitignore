@@ -63,3 +63,5 @@ vmod-*.tar.[gx]z
 *.deb
 *.dsc
 *.spec
+control
+copyright
