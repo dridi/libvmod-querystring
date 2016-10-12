@@ -14,7 +14,7 @@ BuildRequires:  python-docutils
 BuildRequires:  varnish >= 4.1.3
 BuildRequires:  pkgconfig(varnishapi) >= 4.1.3
 
-Requires:       varnish >= 4.1.3
+Requires:       varnish >= @VARNISH_VERSION@
 
 
 %description
