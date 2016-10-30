@@ -40,8 +40,8 @@ lcov: check-code-coverage
 
 # RPM packaging
 
-RPMBUILD = CC=gcc PKG_CONFIG_PATH= rpmbuild -D '_rpmdir rpmbuild' \
-	-D '_srcrpmdir rpmbuild/src'
+RPMBUILD = CC= PKG_CONFIG_PATH= ACLOCAL_PATH= \
+	rpmbuild -D '_rpmdir rpmbuild' -D '_srcrpmdir rpmbuild/src'
 MOCK = mock $(MOCK_OPTS) --resultdir mockbuild
 
 dist: all
