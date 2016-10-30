@@ -1,0 +1,58 @@
+#!/usr/bin/gmake -f
+
+PROJECT = vmod-querystring
+ARCHIVE = $(PROJECT).tar.gz
+TARGETS = check distcheck lcov mockbuild pdebuild
+RESERVE = rpmlint lintian
+
+HACK := $(shell rm -f $(ARCHIVE) >/dev/null)
+
+.PHONY: $(TARGETS) $(RESERVE) clean
+
+all: $(TARGETS)
+
+clean:
+	rm -rf build/
+
+$(ARCHIVE):
+	@make -k distclean >/dev/null 2>&1 || :
+	./bootstrap
+	make dist
+	mkdir -p build
+	./configure --version | awk 'NR == 1 {print $$NF}' >build/version.txt
+	mv $(PROJECT)-$$(cat build/version.txt).tar.gz $(PROJECT).tar.gz
+	make distclean
+
+define build =
+	rm -rf build/$1
+	mkdir -p build/$1
+	tar -zxf $2 -C build/$1
+	cd build/$1/* && ./configure $3 >configure.log 2>&1
+	$(MAKE) -C build/$1/* $1 >build/$1/build.log 2>&1
+endef
+
+check: $(ARCHIVE)
+	$(call build,$@,$<,CLAGS=-O0)
+	$(call build,$@,$<,CLAGS=-O1)
+	$(call build,$@,$<,CLAGS=-O2)
+	$(call build,$@,$<,CLAGS=-O3)
+
+distcheck: $(ARCHIVE)
+	$(call build,$@,$<,--with-rst2man=:)
+
+lcov: $(ARCHIVE)
+	$(call build,$@,$<,--enable-code-coverage)
+
+mockbuild: $(ARCHIVE)
+	$(call build,$@,$<)
+
+# XXX: PDEBUILD_OPTS='-- --basetgz /var/cache/pbuilder/<dist>.tgz'
+
+pdebuild: $(ARCHIVE)
+	$(call build,$@,$<)
+
+rpmlint: $(ARCHIVE)
+	$(call build,$@,$<)
+
+lintian: $(ARCHIVE)
+	$(call build,$@,$<)
