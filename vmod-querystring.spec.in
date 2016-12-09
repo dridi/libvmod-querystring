@@ -10,7 +10,6 @@ License:        GPLv3+
 
 Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  python-docutils
 BuildRequires:  varnish >= 4.1.3
 BuildRequires:  pkgconfig(varnishapi) >= 4.1.3
 
@@ -38,7 +37,7 @@ with this kind of query-strings.
 
 
 %build
-%configure --disable-silent-rules
+%configure --disable-silent-rules --with-rst2man=:
 %make_build CFLAGS="%{optflags}"
 
 
@@ -58,6 +57,9 @@ make %{?_smp_mflags} check
 
 
 %changelog
+* Fri Dec 09 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.2-1
+- Drop build requirement on python-docutils
+
 * Fri Sep 16 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0-1
 - Bump version
 - Change License to GPLv3+
