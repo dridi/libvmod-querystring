@@ -113,10 +113,11 @@ Installation
 ============
 
 The module requires the GNU Build System, also known as autotools. Grab the
-latest release [1]_ and follow these steps:
+latest release [1]_ and follow these steps::
 
     tar -xzf vmod-querystring-${VERSION}.tar.gz
     cd vmod-querystring-${VERSION}
+
     ./configure --with-rst2man=:
     make check # optional
     sudo make install
