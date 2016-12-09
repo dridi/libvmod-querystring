@@ -112,46 +112,31 @@ All functions are documented in the manual page ``vmod_querystring(3)``.
 Installation
 ============
 
-The module requires the GNU Build System, you may follow these steps::
+The module requires the GNU Build System, also known as autotools. Grab the
+latest release [1]_ and follow these steps:
 
-    ./bootstrap
-    make check
-
-Arguments to the ``bootstrap`` script are passed to the underlying execution
-of the generated ``configure`` script. Once ``bootstrap`` is done, you can
-later run the ``configure`` script directly if you need to reconfigure your
-build tree.
-
-When building from source, you need the following dependencies:
-
-- autoconf
-- autoconf-archive
-- automake
-- libtool
-- rst2man
-- varnish (at least 4.1.4-beta1)
-
-If you downloaded the latest release archive, there will be no ``bootstrap``
-script because releases are uploaded pre-configured. Instead you need to run
-``./configure`` to check and set your environment up.
-
-In this case your dependencies are:
-
-- rst2man
-- varnish (at least 4.1.3)
-
-You can then proceed with the installation::
-
+    tar -xzf vmod-querystring-${VERSION}.tar.gz
+    cd vmod-querystring-${VERSION}
+    ./configure --with-rst2man=:
+    make check # optional
     sudo make install
 
+You only need to have Varnish (at least 4.1.3) and its development files
+installed on your system. Instead of manually installing the module you can
+build packages, see below. The ``configure`` script also needs ``pkg-config``
+installed to find Varnish development files.
+
 If your Varnish installation did not use the default ``/usr`` prefix, you need
-this in your environment before running ``./bootstrap``::
+this in your environment before running ``./configure``::
 
     export PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
     export ACLOCAL_PATH=${PREFIX}/share/aclocal
 
 The module is then configured for an installation inside ``${PREFIX}``, unless
 the ``--prefix`` option was used in the ``configure`` execution.
+
+Alongside the release archive, you will find a PDF export of the corresponding
+manual.
 
 RPM Packaging
 =============
@@ -209,3 +194,5 @@ __ https://tools.ietf.org/html/rfc7234#section-2
 
 The test suite also shows the differences in cache hits and misses with and
 without the use of this module.
+
+.. [1] https://github.com/Dridi/libvmod-querystring/releases
