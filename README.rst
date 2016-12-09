@@ -222,4 +222,4 @@ __ https://tools.ietf.org/html/rfc7234#section-2
 The test suite also shows the differences in cache hits and misses with and
 without the use of this module.
 
-.. [1] https://github.com/Dridi/libvmod-querystring/releases
+.. [1] https://github.com/Dridi/libvmod-querystring/releases/latest
