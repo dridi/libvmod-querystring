@@ -112,12 +112,14 @@ All functions are documented in the manual page ``vmod_querystring(3)``.
 Installation
 ============
 
-The module requires the GNU Build System, also known as autotools. Grab the
-latest release [1]_ and follow these steps::
+The module relies on the GNU Build System, also known as autotools. To install
+it, start by grabbing the latest release [1]_ and follow these steps::
 
+    # Get to the source tree
     tar -xzf vmod-querystring-${VERSION}.tar.gz
     cd vmod-querystring-${VERSION}
 
+    # Build and install
     ./configure --with-rst2man=:
     make check # optional
     sudo make install
