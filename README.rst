@@ -178,6 +178,30 @@ to switch between distributions::
 The resulting packages can be found in the ``pdebuild`` directory in your
 build tree.
 
+Hacking
+=======
+
+When working on the source code, there are additional dependencies:
+
+- autoconf
+- autoconf-archive
+- automake
+- libtool
+- rst2man (python-docutils)
+- varnish (at least 4.1.4-beta1)
+
+You will notice the lack of a ``configure`` script, it needs to be generated
+with the various autotools programs. Instead, you can use the ``bootstrap``
+script that takes care of both generating and running ``configure``. It also
+works for VPATH_ builds.
+
+.. _VPATH: https://www.gnu.org/software/automake/manual/html_node/VPATH-Builds.html
+
+Arguments to the ``bootstrap`` script are passed to the underlying execution
+of the generated ``configure`` script. Once ``bootstrap`` is done, you can
+later run the ``configure`` script directly if you need to reconfigure your
+build tree or use more than one VPATH.
+
 See also
 ========
 
