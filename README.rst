@@ -121,6 +121,7 @@ it, start by grabbing the latest release [1]_ and follow these steps::
 
     # Build and install
     ./configure --with-rst2man=:
+    make
     make check # optional
     sudo make install
 
