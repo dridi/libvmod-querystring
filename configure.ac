@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016  Dridi Boukelmoune
+# Copyright (C) 2012-2017  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,11 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libvmod-querystring],
-	[1.0.1],
+	[1.0.2],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])
-AC_COPYRIGHT([Copyright (C) 2012-2016  Dridi Boukelmoune])
+AC_COPYRIGHT([Copyright (C) 2012-2017  Dridi Boukelmoune])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/vmod_querystring.vcc])
@@ -45,13 +45,14 @@ AC_ARG_WITH([rst2man],
 	[RST2MAN="$withval"],
 	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
 
+# To build from git, Varnish >= 5.1.1 is needed
 VARNISH_PREREQ([4.1.3])
 VARNISH_VMODS([querystring])
 
-# Not available before Varnish 5.0.1
-PKG_CHECK_VAR([VARNISHAPI_LIBDIR], [varnishapi], [libdir])
-AC_SUBST([VARNISH_LIBRARY_PATH],
-	[$VARNISHAPI_LIBDIR:$VARNISHAPI_LIBDIR/varnish])
+AS_VERSION_COMPARE([$VARNISH_VERSION], [5.1],
+	[CFLAGS="$CFLAGS -Wint-conversion"],
+	[CFLAGS="$CFLAGS -Wno-int-conversion"],
+	[CFLAGS="$CFLAGS -Wno-int-conversion"])
 
 AC_CONFIG_FILES([
 	Makefile

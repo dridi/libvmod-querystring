@@ -192,7 +192,7 @@ When working on the source code, there are additional dependencies:
 - automake
 - libtool
 - rst2man (python-docutils)
-- varnish (at least 4.1.4-beta1)
+- varnish (at least 5.1.1)
 
 You will notice the lack of a ``configure`` script, it needs to be generated
 with the various autotools programs. Instead, you can use the ``bootstrap``
