@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 Build-Depends:
  debhelper (>= 9),
- libvarnishapi-dev (>= 4.1.3),
+ libvarnishapi-dev (>= 4.1.3) | varnish-dev (>= 4.1.3),
  pkg-config (>= 0.21),
  python-docutils,
  varnish (>= 4.1.3)
