@@ -107,6 +107,20 @@ unless there are no other parameters in which case it's simply removed. The
 log statement allows you to get those analytics parameters (and only them) in
 ``varnishncsa`` using the format string ``%{VCL_Log:ga}x``.
 
+Sometimes you might want to whitelist query strings which you know impact the 
+application and just remove all the remaining query strings that bots and others
+might add to your page, this can be achieved with the below.
+
+    sub vcl_init {
+        new whitelist_querystring = querystring.filter();
+        whitelist_querystring.add_string("page");
+    }
+
+    sub vcl_recv {
+        # Only keep ?page=
+        set req.url = whitelist_querystring.apply(req.url, mode = keep);
+     }
+
 All functions are documented in the manual page ``vmod_querystring(3)``.
 
 Installation
