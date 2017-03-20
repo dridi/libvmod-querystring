@@ -36,7 +36,7 @@ matrix:
 
 install:
   - set -e
-  - wget https://repo.varnish-cache.org/source/varnish-5.0.0.tar.gz
+  - wget https://repo.varnish-cache.org/source/varnish-5.1.1.tar.gz
   - tar -zxf varnish-*.tar.gz
   - pushd varnish-*/
   - ./configure --prefix=/usr
