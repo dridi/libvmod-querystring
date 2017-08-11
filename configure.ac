@@ -49,20 +49,7 @@ AC_ARG_WITH([rst2man],
 VARNISH_PREREQ([4.1.3])
 VARNISH_VMODS([querystring])
 
-AC_ARG_ENABLE([dev-flags],
-	AS_HELP_STRING(
-		[--enable-dev-flags],
-		[Enable additional flags for development]),
-	[dev_flags="$withval"],
-	[dev_flags=no])
-
-if test "$dev_flags" != no
-then
-	AS_VERSION_COMPARE([$VARNISH_VERSION], [5.1],
-		[CFLAGS="$CFLAGS -Wint-conversion"],
-		[CFLAGS="$CFLAGS -Wno-int-conversion"],
-		[CFLAGS="$CFLAGS -Wno-int-conversion"])
-fi
+CFLAGS="$CFLAGS -Wno-int-conversion"
 
 AC_CONFIG_FILES([
 	Makefile

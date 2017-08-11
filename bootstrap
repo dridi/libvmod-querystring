@@ -22,4 +22,4 @@ automake --add-missing --copy --foreign
 autoconf
 
 cd "$WORK_DIR"
-"$ROOT_DIR"/configure --enable-dev-flags "$@"
+"$ROOT_DIR"/configure "$@"
