@@ -10,6 +10,7 @@ addons:
     - autoconf-archive
     - debhelper
     - debian-archive-keyring
+    - fakeroot
     - lcov
     - pbuilder
     - python-docutils
