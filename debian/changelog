@@ -1,3 +1,9 @@
+vmod-querystring (1.0.3-1) unstable; urgency=low
+
+  * Minor build fix
+
+ -- Dridi Boukelmoune <dridi.boukelmoune@gmail.com>  Tue, 22 Aug 2017 22:02:13 +0200
+
 vmod-querystring (1.0.2-1) unstable; urgency=low
 
   * Varnish 5.1 support
