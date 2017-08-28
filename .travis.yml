@@ -37,13 +37,7 @@ matrix:
 
 install:
   - set -e
-  - wget https://repo.varnish-cache.org/source/varnish-5.1.1.tar.gz
-  - tar -zxf varnish-*.tar.gz
-  - pushd varnish-*/
-  - ./configure --prefix=/usr
-  - make -sj32
-  - sudo make install
-  - popd
+  - travis/install_varnish.sh
   - wget http://git.savannah.gnu.org/cgit/autoconf-archive.git/plain/m4/ax_code_coverage.m4
   - sudo mv ax_code_coverage.m4 /usr/share/aclocal/
   - sudo pbuilder create --distribution sid --mirror ftp://ftp.us.debian.org/debian/ --debootstrapopts "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg"
