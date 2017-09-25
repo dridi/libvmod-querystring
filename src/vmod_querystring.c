@@ -23,8 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <vcl.h>
+#include <vdef.h>
 #include <vrt.h>
+#include <vcl.h>
 #include <cache/cache.h>
 
 #include "vcc_querystring_if.h"
