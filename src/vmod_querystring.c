@@ -23,10 +23,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <vdef.h>
-#include <vrt.h>
-#include <vcl.h>
 #include <cache/cache.h>
+
+#ifndef VRT_H_INCLUDED
+#  include <vrt.h>
+#endif
+
+#include <vdef.h>
+#include <vcl.h>
+#include <vre.h>
+#include <vsb.h>
 
 #include "vcc_querystring_if.h"
 
