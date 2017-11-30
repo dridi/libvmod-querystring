@@ -29,7 +29,10 @@
 #  include <vrt.h>
 #endif
 
-#include <vdef.h>
+#ifndef VDEF_H_INCLUDED
+#  include <vdef.h>
+#endif
+
 #include <vcl.h>
 #include <vre.h>
 #include <vsb.h>
