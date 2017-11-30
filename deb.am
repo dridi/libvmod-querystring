@@ -14,29 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = src
+DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
+PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
 
-ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
+$(DEB_ORIG): distdir debuild-clean
+	tar -zcf $(DEB_ORIG) $(distdir)
 
-EXTRA_DIST = \
-	README.rst \
-	debian \
-	vmod-querystring.spec
+deb: $(DEB_ORIG)
+	cd $(distdir) && dpkg-buildpackage -rfakeroot -us -uc
+	rm -rf $(distdir)
 
-dist_doc_DATA = \
-	CHANGELOG \
-	CONTRIBUTORS \
-	LICENSE
+lintian: deb
+	lintian $(PACKAGE)_$(VERSION)-1_*.deb
 
-# lcov support
+pdebuild: $(DEB_ORIG) pdebuild-clean
+	mkdir pdebuild/
+	cd $(distdir) && $(PDEBUILD)
+	rm -rf $(distdir)
 
-CODE_COVERAGE_OUTPUT_DIRECTORY = lcov
-CODE_COVERAGE_IGNORE_PATTERN = "/usr/*"
-CODE_COVERAGE_GENHTML_OPTIONS = --prefix $(abs_top_srcdir)
+debuild-clean:
+	rm -f $(PACKAGE)_$(VERSION)*
 
-@CODE_COVERAGE_RULES@
+pdebuild-clean:
+	rm -rf pdebuild/
 
-lcov: check-code-coverage
+clean-local: debuild-clean pdebuild-clean
 
-include rpm.am
-include deb.am
+.PHONY: debuild-clean pdebuild-clean

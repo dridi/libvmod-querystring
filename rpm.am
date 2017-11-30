@@ -14,29 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = src
+RPMBUILD = CC= PKG_CONFIG_PATH= ACLOCAL_PATH= \
+	rpmbuild -D '_rpmdir rpmbuild' -D '_srcrpmdir rpmbuild/src'
+MOCK = mock $(MOCK_OPTS) --resultdir mockbuild
 
-ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
+dist: all
 
-EXTRA_DIST = \
-	README.rst \
-	debian \
-	vmod-querystring.spec
+rpm: dist rpmbuild-clean
+	$(RPMBUILD) -ts $(PACKAGE)-$(VERSION).tar.gz
+	$(RPMBUILD) --rebuild rpmbuild/src/$(PACKAGE)-$(VERSION)-*.src.rpm
 
-dist_doc_DATA = \
-	CHANGELOG \
-	CONTRIBUTORS \
-	LICENSE
+rpmlint: rpm
+	rpmlint $(PACKAGE).spec rpmbuild/*/$(PACKAGE)-*.rpm
 
-# lcov support
+mockbuild: dist mockbuild-clean
+	$(MOCK) --buildsrpm --sources . --spec $(PACKAGE).spec
+	$(MOCK) --rebuild mockbuild/$(PACKAGE)-$(VERSION)-*.src.rpm
 
-CODE_COVERAGE_OUTPUT_DIRECTORY = lcov
-CODE_COVERAGE_IGNORE_PATTERN = "/usr/*"
-CODE_COVERAGE_GENHTML_OPTIONS = --prefix $(abs_top_srcdir)
+rpmbuild-clean:
+	rm -rf rpmbuild/
 
-@CODE_COVERAGE_RULES@
+mockbuild-clean:
+	rm -rf mockbuild/
 
-lcov: check-code-coverage
+clean-local: rpmbuild-clean mockbuild-clean
 
-include rpm.am
-include deb.am
+.PHONY: rpmbuild-clean mockbuild-clean
