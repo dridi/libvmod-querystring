@@ -47,7 +47,7 @@ rm %{buildroot}%{vmoddir}/*.la
 
 
 %check
-%make_build check
+%make_build check VERBOSE=1
 
 
 %files
@@ -61,6 +61,7 @@ rm %{buildroot}%{vmoddir}/*.la
 - Move the %%optflags to the %%configure command
 - Drop --disable-silent-rules (now default)
 - Switch to %%make_build in %%check
+- Show the test logs on failures
 
 * Sat Aug 12 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.3-1
 - Bump version
