@@ -27,16 +27,54 @@ AC_CONFIG_SRCDIR([src/vmod_querystring.vcc])
 AC_CONFIG_HEADER([config.h])
 
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
-AM_SILENT_RULES([yes])
 AM_PROG_AR
 
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
-ax_enable_compile_warnings=error
+QS_ARG_ENABLE([warnings], [no])
+
 AX_CODE_COVERAGE
-AX_COMPILER_FLAGS_CFLAGS
 AX_PTHREAD(, [AC_MSG_ERROR([Could not configure pthreads support])])
+
+if test "$enable_warnings" != no
+then
+	# FreeBSD's WARNS level 6
+	QS_CHECK_CFLAGS([
+		-Werror
+		-Wall
+		-W
+		-Wstrict-prototypes
+		-Wmissing-prototypes
+		-Wpointer-arith
+		-Wreturn-type
+		-Wcast-qual
+		-Wwrite-strings
+		-Wswitch
+		-Wshadow
+		-Wunused-parameter
+		-Wcast-align
+		-Wchar-subscripts
+		-Winline
+		-Wnested-externs
+		-Wredundant-decls
+		-Wold-style-definition
+		-Wmissing-variable-declarations
+	])
+
+	# Other desirable warnings
+	QS_CHECK_CFLAGS([
+		-Wextra
+		-Wmissing-declarations
+		-Wredundant-decls
+		-Wsign-compare
+		-Wunused-result
+		-Wformat-security
+	])
+
+	# Varnish API breakage still ABI-compatible
+	QS_CHECK_CFLAGS([-Wno-int-conversion])
+fi
 
 AC_ARG_WITH([rst2man],
 	AS_HELP_STRING(
@@ -48,8 +86,6 @@ AC_ARG_WITH([rst2man],
 # To build from git, Varnish >= 5.1.1 is needed
 VARNISH_PREREQ([4.1.3])
 VARNISH_VMODS([querystring])
-
-CFLAGS="$CFLAGS -Wno-int-conversion"
 
 AC_CONFIG_FILES([
 	Makefile
@@ -71,5 +107,4 @@ AS_ECHO("
 	compiler:     $CC
 	cflags:       $CFLAGS
 	ldflags:      $LDFLAGS
-	warnings:     $WARN_CFLAGS
 ")

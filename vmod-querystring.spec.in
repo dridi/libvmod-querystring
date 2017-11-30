@@ -37,8 +37,8 @@ with this kind of query-strings.
 
 
 %build
-%configure --disable-silent-rules --with-rst2man=:
-%make_build CFLAGS="%{optflags}"
+%configure --with-rst2man=: CFLAGS="%{optflags}"
+%make_build
 
 
 %install
@@ -47,7 +47,7 @@ rm %{buildroot}%{vmoddir}/*.la
 
 
 %check
-make %{?_smp_mflags} check
+%make_build check
 
 
 %files
@@ -57,6 +57,14 @@ make %{?_smp_mflags} check
 
 
 %changelog
+* Thu Nov 30 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
+- Move the %%optflags to the %%configure command
+- Drop --disable-silent-rules (now default)
+- Switch to %%make_build in %%check
+
+* Sat Aug 12 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.3-1
+- Bump version
+
 * Fri Dec 09 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.2-1
 - Drop build requirement on python-docutils
 
