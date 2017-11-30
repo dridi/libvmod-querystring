@@ -68,3 +68,19 @@ AC_REQUIRE([_QS_CHECK_CFLAGS])dnl
 qs_check_cflags m4_normalize([$1])
 CFLAGS="$qs_CFLAGS $qs_save_CFLAGS"
 ])
+
+# QS_FORCE_CFLAGS(CFLAGS)
+# -----------------------
+AC_DEFUN([QS_FORCE_CFLAGS], [
+AC_REQUIRE([_QS_CHECK_CFLAGS])dnl
+qs_save_CFLAGS="$qs_save_CFLAGS m4_normalize([$1])"
+CFLAGS="$qs_CFLAGS $qs_save_CFLAGS"
+])
+
+# QS_CHECK_PROG(VARIABLE, PROGS)
+# ------------------------------
+AC_DEFUN([QS_CHECK_PROG], [
+AC_CHECK_PROGS([$1], [$2], [no])
+test "$[$1]" = no &&
+AC_MSG_ERROR([Could not find program $2])
+])

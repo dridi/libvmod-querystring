@@ -14,20 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = src
+lcov: all
+if LCOV_ENABLED
+	@$(LCOV) -z -d .
+	@$(MAKE) $(AM_MAKEFLAGS) -k check
+	@$(LCOV) -c -o $(PACKAGE).info -d .
+	@$(GENHTML) -o lcov $(PACKAGE).info
+	@echo file://$(abs_builddir)/lcov/index.html
+endif
 
-ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
+clean-local: lcov-clean
 
-EXTRA_DIST = \
-	README.rst \
-	debian \
-	vmod-querystring.spec
+lcov-clean:
+	@find $(abs_builddir) -depth '(' \
+		-name '*.gcda' -o \
+		-name '*.gcov' -o \
+		-name '*.gcno' -o \
+		-name '*.info' \
+		')' -delete
+	@rm -rf $(abs_builddir)/lcov/
 
-dist_doc_DATA = \
-	CHANGELOG \
-	CONTRIBUTORS \
-	LICENSE
-
-include lcov.am
-include rpm.am
-include deb.am
+.PHONY: lcov lcov-clean

@@ -47,6 +47,7 @@ vcc_*_if.h
 
 lcov/
 
+*.gcda
 *.gcno
 *.info
 

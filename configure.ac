@@ -33,8 +33,8 @@ LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
 QS_ARG_ENABLE([warnings], [no])
+QS_ARG_ENABLE([lcov], [no])
 
-AX_CODE_COVERAGE
 AX_PTHREAD(, [AC_MSG_ERROR([Could not configure pthreads support])])
 
 if test "$enable_warnings" != no
@@ -74,6 +74,14 @@ then
 
 	# Varnish API breakage still ABI-compatible
 	QS_CHECK_CFLAGS([-Wno-int-conversion])
+fi
+
+AM_CONDITIONAL([LCOV_ENABLED], [test "$enable_lcov" != no])
+if test "$enable_lcov" != no
+then
+	QS_CHECK_PROG([LCOV], [lcov])
+	QS_CHECK_PROG([GENHTML], [genhtml])
+	QS_FORCE_CFLAGS([-O0 -g -fprofile-arcs -ftest-coverage])
 fi
 
 AC_ARG_WITH([rst2man],
