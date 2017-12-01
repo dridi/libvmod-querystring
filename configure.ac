@@ -71,9 +71,6 @@ then
 		-Wunused-result
 		-Wformat-security
 	])
-
-	# Varnish API breakage still ABI-compatible
-	QS_CHECK_CFLAGS([-Wno-int-conversion])
 fi
 
 AM_CONDITIONAL([LCOV_ENABLED], [test "$enable_lcov" != no])

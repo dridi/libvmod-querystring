@@ -42,12 +42,6 @@
 /* End Of Query Parameter */
 #define EOQP(c) (c == '\0' || c == '&')
 
-#define WS_ClearOverflow(ws, tmp)	\
-	do {				\
-		tmp = WS_Snapshot(ws);	\
-		WS_Reset(ws, tmp);	\
-	} while (0)
-
 /***********************************************************************
  * Type definitions
  */
@@ -105,10 +99,10 @@ static struct vmod_querystring_filter qs_sort_filter = {
 int qs_cmp(const void *, const void *);
 
 static const char *
-qs_truncate(struct ws *ws, const char *url, const char *qs)
+qs_truncate(struct ws *ws, const char * const url, const char *qs)
 {
-	char *res;
-	size_t len;
+	size_t len, res;
+	char *str;
 
 	CHECK_OBJ_NOTNULL(ws, WS_MAGIC);
 	AN(url);
@@ -117,20 +111,23 @@ qs_truncate(struct ws *ws, const char *url, const char *qs)
 
 	len = qs - url;
 	if (len == 0)
-		return "";
+		return ("");
 
-	res = WS_Copy(ws, url, len + 1);
-	if (res == NULL) {
-		WS_ClearOverflow(ws, res);
+	res = WS_Reserve(ws, 0);
+	if (res < len + 1) {
+		WS_Release(ws, 0);
 		return (url);
 	}
 
-	res[len] = '\0';
-	return (res);
+	str = ws->f;
+	(void)memcpy(str, url, len);
+	str[len] = '\0';
+	WS_Release(ws, len + 1);
+	return (str);
 }
 
 static int
-qs_empty(struct ws *ws, const char *url, const char **res)
+qs_empty(struct ws *ws, const char * const url, const char **res)
 {
 	const char *qs;
 
@@ -271,14 +268,13 @@ qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
 }
 
 static const char *
-qs_apply(VRT_CTX, const char *url, const char *qs, unsigned keep,
+qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
     const struct vmod_querystring_filter *obj)
 {
 	struct qs_param *params, *p;
 	const char *nm, *eq;
 	char *res, *cur, *tmp;
 	size_t len, tmp_len, cnt;
-	ssize_t ws_len;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
@@ -288,22 +284,21 @@ qs_apply(VRT_CTX, const char *url, const char *qs, unsigned keep,
 	assert(url <= qs);
 	assert(*qs == '?');
 
-	len = strlen(url);
-	res = WS_Alloc(ctx->ws, len + 1);
-	if (res == NULL) {
-		WS_ClearOverflow(ctx->ws, res);
+	(void)WS_Reserve(ctx->ws, 0);
+	res = ctx->ws->f;
+	len = strlen(url) + 1;
+
+	params = (void *)PRNDUP(res + len);
+	p = params;
+	if ((uintptr_t)p > (uintptr_t)ctx->ws->e) {
+		WS_Release(ctx->ws, 0);
 		return (url);
 	}
 
-	params = (void *)WS_Snapshot(ctx->ws);
-	ws_len = (ssize_t)WS_Reserve(ctx->ws, 0);
-
-	p = params;
-
 	len = qs - url;
-	(void)snprintf(res, len + 1, "%s", url);
+	(void)memcpy(res, url, len);
 	cur = res + len;
-	AZ(*cur);
+	*cur = '\0';
 
 	cnt = 0;
 	qs++;
@@ -333,29 +328,23 @@ qs_apply(VRT_CTX, const char *url, const char *qs, unsigned keep,
 		else
 			tmp_len = qs - nm;
 
-		(void)snprintf(tmp, tmp_len + 1, "%s", nm);
+		(void)memcpy(tmp, nm, tmp_len);
+		tmp[tmp_len] = '\0';
 
 		if (qs_match(ctx, obj, tmp, tmp_len, keep)) {
 			AN(tmp_len);
-			if (ws_len < (ssize_t)sizeof *p) {
-				ws_len = -1;
-				break;
+			if ((uintptr_t)(p + 1) > (uintptr_t)ctx->ws->e) {
+				WS_Release(ctx->ws, 0);
+				return (url);
 			}
 			p->val = nm;
 			p->len = qs - nm;
 			p++;
-			ws_len -= sizeof *p;
 			cnt++;
 		}
 
 		if (*qs == '&')
 			qs++;
-	}
-
-	if (ws_len < 0) {
-		WS_Release(ctx->ws, 0);
-		WS_Reset(ctx->ws, res);
-		return (url);
 	}
 
 	if (obj->sort)
@@ -366,11 +355,9 @@ qs_apply(VRT_CTX, const char *url, const char *qs, unsigned keep,
 
 	AZ(*cur);
 	cur = (char *)PRNDUP(cur + 1);
-	assert((void *)cur <= (void *)params);
+	assert((uintptr_t)cur <= (uintptr_t)params);
 
-	WS_Release(ctx->ws, 0);
-	WS_Reset(ctx->ws, cur);
-
+	WS_Release(ctx->ws, cur - res);
 	return (res);
 }
 
