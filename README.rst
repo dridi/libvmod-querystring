@@ -188,7 +188,6 @@ Hacking
 When working on the source code, there are additional dependencies:
 
 - autoconf
-- autoconf-archive
 - automake
 - libtool
 - rst2man (python-docutils)
