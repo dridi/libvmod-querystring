@@ -48,5 +48,5 @@ script:
 
 after_success:
   - test "$MAKE_TARGET" = lcov || exit 0
-  - cp libvmod-querystring-*-coverage.info codecov.info
+  - cp vmod-querystring.info codecov.info
   - bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
