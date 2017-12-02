@@ -33,6 +33,7 @@ LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
 QS_ARG_ENABLE([warnings], [no])
+QS_ARG_ENABLE([docs], [no])
 QS_ARG_ENABLE([lcov], [no])
 
 AX_PTHREAD(, [AC_MSG_ERROR([Could not configure pthreads support])])
@@ -81,12 +82,12 @@ then
 	QS_FORCE_CFLAGS([-O0 -g -fprofile-arcs -ftest-coverage])
 fi
 
-AC_ARG_WITH([rst2man],
-	AS_HELP_STRING(
-		[--with-rst2man=PATH],
-		[Location of rst2man (auto)]),
-	[RST2MAN="$withval"],
-	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
+if test "$enable_docs" != no
+then
+	QS_CHECK_PROG([RST2MAN], [rst2man rst2man.py])
+else
+	AC_SUBST([RST2MAN], [:])
+fi
 
 # To build from git, Varnish >= 5.1.1 is needed
 VARNISH_PREREQ([4.1.3])

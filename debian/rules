@@ -11,7 +11,7 @@ export ACLOCAL_PATH =
 	dh $@
 
 override_dh_auto_configure:
-	./configure --disable-silent-rules
+	./configure
 
 override_dh_fixperms:
 	find debian/vmod-querystring/ -name '*.la' -delete

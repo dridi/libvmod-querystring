@@ -37,7 +37,7 @@ with this kind of query-strings.
 
 
 %build
-%configure --with-rst2man=: CFLAGS="%{optflags}"
+%configure CFLAGS="%{optflags}"
 %make_build
 
 
@@ -57,6 +57,9 @@ rm %{buildroot}%{vmoddir}/*.la
 
 
 %changelog
+* Sat Dec 02 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
+- Drop --with-rst2man=: in %%configure (now automatic)
+
 * Thu Nov 30 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
 - Move the %%optflags to the %%configure command
 - Drop --disable-silent-rules (now default)
@@ -88,4 +91,4 @@ rm %{buildroot}%{vmoddir}/*.la
 - Bump version
 
 * Mon Apr 15 2013 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.2-1
-- Initial version.
+- Initial version

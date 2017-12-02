@@ -120,7 +120,7 @@ it, start by grabbing the latest release [1]_ and follow these steps::
     cd vmod-querystring-${VERSION}
 
     # Build and install
-    ./configure --with-rst2man=:
+    ./configure
     make
     make check # optional
     sudo make install
