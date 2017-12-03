@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 AM_CFLAGS = $(VARNISHAPI_CFLAGS)
-AM_LDFLAGS = $(VARNISHAPI_LIBS) $(VMOD_LDFLAGS)
+AM_LDFLAGS = $(VMOD_LDFLAGS)
 
 if LCOV_ENABLED
 AM_CPPFLAGS = -DWITHOUT_ASSERTS
