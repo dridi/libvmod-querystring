@@ -38,10 +38,10 @@ check: $(ARCHIVE)
 	$(call build,$@,$<,CLAGS=-O3)
 
 distcheck: $(ARCHIVE)
-	$(call build,$@,$<,--with-rst2man=:)
+	$(call build,$@,$<,)
 
 lcov: $(ARCHIVE)
-	$(call build,$@,$<,--enable-code-coverage)
+	$(call build,$@,$<,--enable-lcov)
 
 mockbuild: $(ARCHIVE)
 	$(call build,$@,$<)
