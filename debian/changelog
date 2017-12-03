@@ -1,3 +1,10 @@
+vmod-querystring (1.0.4-1) unstable; urgency=low
+
+  * Better workspace handling
+  * Minor build fix
+
+ -- Dridi Boukelmoune <dridi.boukelmoune@gmail.com>  Sun, 03 Dec 2017 12:07:41 +0200
+
 vmod-querystring (1.0.3-1) unstable; urgency=low
 
   * Minor build fix
