@@ -152,7 +152,7 @@ qs_empty(struct ws *ws, const char * const url, const char **res)
 	return (0);
 }
 
-static int __match_proto__(qs_match_f)
+static int
 qs_match_string(VRT_CTX, const struct qs_filter *qsf, const char *s,
     unsigned keep)
 {
@@ -164,7 +164,7 @@ qs_match_string(VRT_CTX, const struct qs_filter *qsf, const char *s,
 	return (!strcmp(s, qsf->str));
 }
 
-static int __match_proto__(qs_match_f)
+static int
 qs_match_regex(VRT_CTX, const struct qs_filter *qsf, const char *s,
     unsigned keep)
 {
@@ -176,7 +176,7 @@ qs_match_regex(VRT_CTX, const struct qs_filter *qsf, const char *s,
 	return (VRT_re_match(ctx, s, qsf->ptr));
 }
 
-static int __match_proto__(qs_match_f)
+static int
 qs_match_glob(VRT_CTX, const struct qs_filter *qsf, const char *s,
     unsigned keep)
 {
