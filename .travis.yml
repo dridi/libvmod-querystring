@@ -44,7 +44,7 @@ install:
 
 script:
   - ./bootstrap $CONFIGURE_FLAGS
-  - make ${MAKE_TARGET:-check}
+  - make ${MAKE_TARGET:-check} VERBOSE=1
 
 after_success:
   - test "$MAKE_TARGET" = lcov || exit 0
