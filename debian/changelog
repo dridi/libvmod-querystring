@@ -1,3 +1,9 @@
+vmod-querystring (1.0.5-1) unstable; urgency=low
+
+  * Varnish 6.0 support
+
+ -- Dridi Boukelmoune <dridi.boukelmoune@gmail.com>  Mon, 16 Apr 2018 20:55:15 +0200
+
 vmod-querystring (1.0.4-1) unstable; urgency=low
 
   * Better workspace handling

@@ -58,6 +58,9 @@ find %{buildroot} -type f -name '*.la' -exec rm -f {} ';'
 
 
 %changelog
+* Mon Apr 16 2018 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.5-1
+- Bump version
+
 * Thu Mar 29 2018 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.5-1
 - Retire %%vmoddir
 - Ensure python availability

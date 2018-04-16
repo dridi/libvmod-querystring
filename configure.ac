@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017  Dridi Boukelmoune
+# Copyright (C) 2012-2018  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libvmod-querystring],
-	[1.0.4],
+	[1.0.5],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])
