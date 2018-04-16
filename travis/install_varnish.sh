@@ -7,7 +7,7 @@
 set -e
 set -u
 
-VERSION=5.1.1
+VERSION=6.0.0
 
 if [ "${TRAVIS_EVENT_TYPE:-}" = cron ]
 then
