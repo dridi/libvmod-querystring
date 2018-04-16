@@ -89,8 +89,9 @@ else
 	AC_SUBST([RST2MAN], [:])
 fi
 
-# To build from git, Varnish >= 5.1.1 is needed
-VARNISH_PREREQ([4.1.3])
+# $QS_VARNISH_VERSION is set by the bootstrap script
+
+VARNISH_PREREQ([${QS_VARNISH_VERSION:-4.1.3}])
 VARNISH_VMODS([querystring])
 
 AC_CONFIG_FILES([

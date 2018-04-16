@@ -22,9 +22,12 @@ autoheader
 automake --add-missing --copy --foreign
 autoconf
 
+# To build from git, Varnish >= 6 is needed
+
 cd "$WORK_DIR"
 "$ROOT_DIR"/configure \
 	--enable-silent-rules \
 	--enable-warnings \
 	--enable-docs \
-	"$@"
+	"$@" \
+	QS_VARNISH_VERSION=6.0.0
