@@ -1,6 +1,3 @@
-  # Copyright (C) 2012-2018  Dridi Boukelmoune
-  # All rights reserved.
-
 $Module querystring 3 Varnish Query-String Module
 $ABI vrt
 $Synopsis manual
@@ -171,6 +168,14 @@ Example
 
         set req.url = querystring.remove(req.url);
 
+COPYRIGHT
+=========
+
+Copyright (C) 2012-2018  Dridi Boukelmoune.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
 
 SEE ALSO
 ========
