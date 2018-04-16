@@ -114,4 +114,9 @@ AS_ECHO("
 	compiler:     $CC
 	cflags:       $CFLAGS
 	ldflags:      $LDFLAGS
+
+	--enable-silent-rules=$enable_silent_rules
+	--enable-warnings=$enable_warnings
+	--enable-docs=$enable_docs
+	--enable-lcov=$enable_lcov
 ")
