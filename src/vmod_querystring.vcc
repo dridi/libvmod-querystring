@@ -114,10 +114,23 @@ Description
 $Method STRING .apply(STRING, ENUM {keep, drop} mode = "drop")
 
 Description
-    The URL parameter is filtered against the filter's criteria, resulting in
-    a new URL with a clean (and possibly sorted) query-string. Parameters
-    matching the criteria may be kept or dropped, according to the optional
-    *mode* argument that can be either ``drop`` (default) or ``keep``.
+    The URL parameters of the first argument are filtered against the
+    criteria defined using the `add_*()` methods documented above,
+    resulting in a new URL with a cleaned (and possibly sorted)
+    query-string.
+
+    The optional *mode* argument determines the effect of the filter:
+
+    * for the default ``drop``, parameters matching the criteria are
+      removed such that only parameters remain which do not match.
+
+    * for ``keep``, parameters matching the criteria are kept and all
+      other parameters are removed.
+
+    In short:
+
+    * ``drop`` for _backlisting_
+    * ``keep`` for _whitelisting_
 
 Example
     ::
