@@ -13,6 +13,7 @@ addons:
     - lcov
     - pbuilder
     - python-docutils
+    - python-sphinx
 
 compiler:
   - clang
