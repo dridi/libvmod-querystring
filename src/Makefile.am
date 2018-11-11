@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016  Dridi Boukelmoune
+# Copyright (C) 2012-2018  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -59,6 +59,8 @@ TESTS = \
 	tests/f00003.vtc \
 	tests/f00004.vtc \
 	tests/f00005.vtc \
+	tests/f00006.vtc \
+	tests/f00007.vtc \
 	tests/g00001.vtc \
 	tests/m00001.vtc \
 	tests/p00001.vtc \

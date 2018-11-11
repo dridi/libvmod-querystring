@@ -1,0 +1,62 @@
+# Copyright (C) 2018  Dridi Boukelmoune
+# All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+varnishtest "Prune duplicate parameters"
+
+server s1 "" -start
+
+varnish v1 -vcl+backend {
+	import ${vmod_querystring};
+
+	sub vcl_init {
+		new uniq_name = querystring.filter(uniq = true);
+		new uniq_param = querystring.filter(uniq = true,
+		    match = param);
+	}
+
+	sub vcl_recv {
+		return (synth(200));
+	}
+
+	sub vcl_synth {
+		set resp.http.Uniq-Name-URL = uniq_name.apply(req.url);
+		set resp.http.Uniq-Param-URL = uniq_param.apply(req.url);
+	}
+} -start
+
+client c1 {
+	txreq -url "/?b&a&b"
+	rxresp
+	expect resp.http.Uniq-Name-URL  == "/?b&a&b"
+	expect resp.http.Uniq-Param-URL == "/?b&a&b"
+
+	txreq -url "/?a&b&b"
+	rxresp
+	expect resp.http.Uniq-Name-URL  == "/?a&b"
+	expect resp.http.Uniq-Param-URL == "/?a&b"
+
+	txreq -url "/?a=0&b=1&b=1"
+	rxresp
+	expect resp.http.Uniq-Name-URL  == "/?a=0&b=1"
+	expect resp.http.Uniq-Param-URL == "/?a=0&b=1"
+
+	txreq -url "/?a=0&b=1&b=2"
+	rxresp
+	expect resp.http.Uniq-Name-URL  == "/?a=0&b=1"
+	expect resp.http.Uniq-Param-URL == "/?a=0&b=1&b=2"
+} -run
+
+

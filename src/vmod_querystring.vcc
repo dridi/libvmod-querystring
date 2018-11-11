@@ -35,14 +35,16 @@ For example::
     /path?query-string
 
 If it doesn't make any difference to your back-end application, you may also
-sort the parameters inside the query-string. It will make the hashing more
-deterministic for Varnish, possibly improving your hit rate even more.
+sort the parameters inside the query-string and remove duplicates. It will
+make the hashing more deterministic for Varnish, possibly improving your hit
+rate even more.
 
 .. raw:: pdf
 
    PageBreak
 
-$Object filter(BOOL sort = 0, ENUM {name, param} match = "name")
+$Object filter(BOOL sort = 0, BOOL uniq = 0,
+    ENUM {name, param} match = "name")
 
 A filter is first set up in *vcl_init* and then used during transactions. The
 setup includes the creation of the filter to which you add criteria. During
@@ -50,7 +52,7 @@ transactions, you may apply the filter to URLs (like ``req.url`` or a
 ``Location`` header) or extract the filtered query-string.
 
 A filter may sort its parameters, but by default it will maintain order. The
-filter constructor takes an optional ``sort`` parameter, you may use its name
+filter constructor takes an optional ``sort`` argument, you may use its name
 to improve readability.
 
 Example
@@ -74,7 +76,7 @@ Example
 It is also possible for a filter to either match parameters by name, or by
 themselves. By default the criteria are tested against the name only, leaving
 alone the contents starting at the equal sign when there's one. For that the
-constructor takes another optional ``match`` parameter that can take either
+constructor takes another optional ``match`` argument that can take either
 ``name`` (default) or ``param``.
 
 Example
@@ -91,31 +93,36 @@ Example
             }
         }
 
+Finally, a filter can drop consecutive duplicate parameters if the optional
+``uniq`` argument. Combined with a sort, this effectively removes all the
+duplicates from the URL. The ``match`` argument determines how parameters are
+considered duplicates.
+
 $Method VOID .add_string(STRING)
 
 Description
-    Use the string parameter as an exact-match criterion.
+    Use the ``string`` argument as an exact-match criterion.
 
 $Method VOID .add_glob(STRING)
 
 Description
-    Use the string parameter as a GLOB pattern matching criterion. The
+    Use the ``string`` argument as a GLOB pattern matching criterion. The
     underlying ``fnmatch`` function may fail, in which case the query-param
     is kept to avoid spurious filtering and the error is logged.
 
 $Method VOID .add_regex(STRING)
 
 Description
-    The string parameter is compiled to a regular expression that will be used
-    as the matching criterion. If the regular expression is invalid, it will
-    fail the ``vcl.load`` command and report the error in the ``varnish-cli``
-    output.
+    The ``string`` argument is compiled to a regular expression that will be
+    used as the matching criterion. If the regular expression is invalid, it
+    will fail the ``vcl.load`` command and report the error in the
+    ``varnish-cli`` output.
 
-$Method STRING .apply(STRING, ENUM {keep, drop} mode = "drop")
+$Method STRING .apply(STRING url, ENUM {keep, drop} mode = "drop")
 
 Description
-    The URL parameter is filtered against the filter's criteria, resulting in
-    a new URL with a clean (and possibly sorted) query-string. Parameters
+    The ``url`` argument is filtered against the filter's criteria, resulting
+    in a new URL with a clean (and possibly sorted) query-string. Parameters
     matching the criteria may be kept or dropped, according to the optional
     *mode* argument that can be either ``drop`` (default) or ``keep``.
 
@@ -124,14 +131,14 @@ Example
 
         set req.url = myfilter.apply(req.url, mode = drop);
 
-$Method STRING .extract(STRING, ENUM {keep, drop} mode = "drop")
+$Method STRING .extract(STRING url, ENUM {keep, drop} mode = "drop")
 
 Description
     This method works exactly like ``.apply`` and discards all URL parts but
     the query-string.
 
 
-$Function STRING clean(STRING)
+$Function STRING clean(STRING url)
 
 Description
     This is a shorthand function that works like applying a filter with no
@@ -143,12 +150,13 @@ Example
         set req.url = querystring.clean(req.url);
 
 
-$Function STRING sort(STRING)
+$Function STRING sort(STRING url, BOOL uniq = 0)
 
 Description
     This is a shorthand function that works like applying a sorting-enabled
     filter with no criteria. It will keep all parameters and shave off the
-    empty ones.
+    empty ones. If the ``uniq`` argument is ``true`` duplicate parameters are
+    also removed.
 
 Example
     ::
@@ -156,7 +164,7 @@ Example
         set req.url = querystring.sort(req.url);
 
 
-$Function STRING remove(STRING)
+$Function STRING remove(STRING url)
 
 Description
     This is a shorthand function that works like applying a filter with a

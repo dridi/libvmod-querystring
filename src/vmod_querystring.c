@@ -1,5 +1,5 @@
 /*-
- * Copyright (C) 2016  Dridi Boukelmoune
+ * Copyright (C) 2016-2018  Dridi Boukelmoune
  * All rights reserved.
  *
  * Author: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
@@ -48,7 +48,8 @@
 
 struct qs_param {
 	const char	*val;
-	size_t		len;
+	size_t		val_len;
+	size_t		cmp_len;
 };
 
 struct qs_filter;
@@ -75,6 +76,7 @@ struct vmod_querystring_filter {
 #define VMOD_QUERYSTRING_FILTER_MAGIC	0xbe8ecdb4
 	VTAILQ_HEAD(, qs_filter)	filters;
 	unsigned			sort;
+	unsigned			uniq;
 	unsigned			match_name;
 };
 
@@ -90,6 +92,12 @@ static struct vmod_querystring_filter qs_clean_filter = {
 static struct vmod_querystring_filter qs_sort_filter = {
 	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
 	.sort = 1,
+};
+
+static struct vmod_querystring_filter qs_sort_uniq_filter = {
+	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
+	.sort = 1,
+	.uniq = 1,
 };
 
 /***********************************************************************
@@ -213,12 +221,12 @@ qs_cmp(const void *v1, const void *v2)
 	p1 = v1;
 	p2 = v2;
 
-	len = p1->len < p2->len ? p1->len : p2->len;
+	len = p1->cmp_len < p2->cmp_len ? p1->cmp_len : p2->cmp_len;
 	cmp = strncmp(p1->val, p2->val, len);
 
-	if (cmp || p1->len == p2->len)
+	if (cmp || p1->cmp_len == p2->cmp_len)
 		return (cmp);
-	return (p1->len - p2->len);
+	return (p1->cmp_len - p2->cmp_len);
 }
 
 static unsigned
@@ -245,10 +253,51 @@ qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
 	return (!keep);
 }
 
+static size_t
+qs_uniq(size_t cnt, struct qs_param *head, struct qs_param **tail)
+{
+	struct qs_param *uniq_tail = NULL;
+	size_t uniq_cnt = 0;
+
+	AN(cnt);
+	AN(head);
+	AN(tail);
+	AN(*tail);
+
+	assert(head < *tail);
+	uniq_tail = head;
+	uniq_cnt++;
+	head++;
+	cnt--;
+
+	while (cnt > 0) {
+		assert(uniq_tail < head);
+		assert(head < *tail);
+		if (qs_cmp(head, uniq_tail)) {
+			uniq_tail++;
+			uniq_cnt++;
+			if (uniq_tail != head)
+				(void)memcpy(uniq_tail, head, sizeof *head);
+		}
+		head++;
+		cnt--;
+	}
+
+	assert(head == *tail);
+	assert(uniq_tail < *tail);
+	*tail = uniq_tail + 1;
+	return (uniq_cnt);
+}
+
 static char *
 qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
 {
 	char sep;
+
+	AN(cur);
+	AN(cnt);
+	AN(head);
+	AN(tail);
 
 	sep = '?';
 	while (cnt > 0) {
@@ -256,15 +305,15 @@ qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
 		AZ(*cur);
 		*cur = sep;
 		cur++;
-		(void)snprintf(cur, head->len + 1, "%s", head->val);
+		(void)snprintf(cur, head->val_len + 1, "%s", head->val);
 		sep = '&';
-		cur += head->len;
+		cur += head->val_len;
 		head++;
 		cnt--;
 	}
 
 	assert(head == tail);
-	return cur;
+	return (cur);
 }
 
 static const char *
@@ -338,7 +387,8 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 				return (url);
 			}
 			p->val = nm;
-			p->len = qs - nm;
+			p->val_len = qs - nm;
+			p->cmp_len = tmp_len;
 			p++;
 			cnt++;
 		}
@@ -349,6 +399,11 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 
 	if (obj->sort)
 		qsort(params, cnt, sizeof *params, qs_cmp);
+
+	if (obj->uniq && cnt > 0) {
+		cnt = qs_uniq(cnt, params, &p);
+		AN(cnt);
+	}
 
 	if (cnt > 0)
 		cur = qs_append(cur, cnt, params, p);
@@ -383,7 +438,7 @@ vmod_remove(VRT_CTX, VCL_STRING url)
 
 VCL_VOID
 vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
-    const char *vcl_name, VCL_BOOL sort, VCL_STRING match)
+    const char *vcl_name, VCL_BOOL sort, VCL_BOOL uniq, VCL_STRING match)
 {
 	struct vmod_querystring_filter *obj;
 
@@ -398,6 +453,7 @@ vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
 
 	VTAILQ_INIT(&obj->filters);
 	obj->sort = sort;
+	obj->uniq = uniq;
 
 	if (!strcmp(match, "name"))
 		obj->match_name = 1;
@@ -558,9 +614,11 @@ vmod_clean(VRT_CTX, VCL_STRING url)
 }
 
 VCL_STRING
-vmod_sort(VRT_CTX, VCL_STRING url)
+vmod_sort(VRT_CTX, VCL_STRING url, VCL_BOOL uniq)
 {
+	struct vmod_querystring_filter *filter;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return (vmod_filter_apply(ctx, &qs_sort_filter, url, "keep"));
+	filter = uniq ? &qs_sort_uniq_filter : &qs_sort_filter;
+	return (vmod_filter_apply(ctx, filter, url, "keep"));
 }
