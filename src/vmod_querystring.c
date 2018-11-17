@@ -231,14 +231,14 @@ qs_cmp(const void *v1, const void *v2)
 
 static unsigned
 qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
-    const char *param, size_t len, unsigned keep)
+    const struct qs_param *param, unsigned keep)
 {
 	struct qs_filter *qsf;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
 
-	if (len == 0)
+	if (param->cmp_len == 0)
 		return (0);
 
 	if (VTAILQ_EMPTY(&obj->filters))
@@ -246,7 +246,7 @@ qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
 
 	VTAILQ_FOREACH(qsf, &obj->filters, list) {
 		CHECK_OBJ_NOTNULL(qsf, QS_FILTER_MAGIC);
-		if (qsf->match(ctx, qsf, param, keep))
+		if (qsf->match(ctx, qsf, param->val, keep))
 			return (keep);
 	}
 
@@ -320,10 +320,10 @@ static const char *
 qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
     const struct vmod_querystring_filter *obj)
 {
-	struct qs_param *params, *p;
+	struct qs_param *params, *p, tmp;
 	const char *nm, *eq;
-	char *res, *cur, *tmp;
-	size_t len, tmp_len, cnt;
+	char *res, *cur;
+	size_t len, cnt;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
@@ -347,7 +347,6 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	len = qs - url;
 	(void)memcpy(res, url, len);
 	cur = res + len;
-	*cur = '\0';
 
 	cnt = 0;
 	qs++;
@@ -356,9 +355,9 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	/* NB: during the matching phase we can use the preallocated space for
 	 * the result's query-string in order to copy the current parameter in
 	 * the loop. This saves an allocation in matchers that require a null-
-	 * terminated string.
+	 * terminated string (e.g. glob and regex).
 	 */
-	tmp = cur + 1;
+	tmp.val = cur;
 
 	while (*qs != '\0') {
 		nm = qs;
@@ -371,24 +370,26 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 		}
 
 		if (eq == nm)
-			tmp_len = 0;
+			tmp.cmp_len = 0;
 		else if (obj->match_name && eq != NULL)
-			tmp_len = eq - nm;
+			tmp.cmp_len = eq - nm;
 		else
-			tmp_len = qs - nm;
+			tmp.cmp_len = qs - nm;
 
-		(void)memcpy(tmp, nm, tmp_len);
-		tmp[tmp_len] = '\0';
+		/* NB: reminder, tmp.val == cur */
+		(void)memcpy(cur, nm, tmp.cmp_len);
+		cur[tmp.cmp_len] = '\0';
+		tmp.val_len = qs - nm;
 
-		if (qs_match(ctx, obj, tmp, tmp_len, keep)) {
-			AN(tmp_len);
+		if (qs_match(ctx, obj, &tmp, keep)) {
+			AN(tmp.cmp_len);
 			if ((uintptr_t)(p + 1) > (uintptr_t)ctx->ws->e) {
 				WS_Release(ctx->ws, 0);
 				return (url);
 			}
 			p->val = nm;
-			p->val_len = qs - nm;
-			p->cmp_len = tmp_len;
+			p->val_len = tmp.val_len;
+			p->cmp_len = tmp.cmp_len;
 			p++;
 			cnt++;
 		}
@@ -405,6 +406,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 		AN(cnt);
 	}
 
+	*cur = '\0';
 	if (cnt > 0)
 		cur = qs_append(cur, cnt, params, p);
 
