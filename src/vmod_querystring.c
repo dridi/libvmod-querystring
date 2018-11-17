@@ -254,17 +254,14 @@ qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
 }
 
 static size_t
-qs_uniq(size_t cnt, struct qs_param *head, struct qs_param **tail)
+qs_uniq(size_t cnt, struct qs_param *head)
 {
 	struct qs_param *uniq_tail = NULL;
 	size_t uniq_cnt = 0;
 
 	AN(cnt);
 	AN(head);
-	AN(tail);
-	AN(*tail);
 
-	assert(head < *tail);
 	uniq_tail = head;
 	uniq_cnt++;
 	head++;
@@ -272,7 +269,6 @@ qs_uniq(size_t cnt, struct qs_param *head, struct qs_param **tail)
 
 	while (cnt > 0) {
 		assert(uniq_tail < head);
-		assert(head < *tail);
 		if (qs_cmp(head, uniq_tail)) {
 			uniq_tail++;
 			uniq_cnt++;
@@ -283,25 +279,20 @@ qs_uniq(size_t cnt, struct qs_param *head, struct qs_param **tail)
 		cnt--;
 	}
 
-	assert(head == *tail);
-	assert(uniq_tail < *tail);
-	*tail = uniq_tail + 1;
 	return (uniq_cnt);
 }
 
 static char *
-qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
+qs_append(char *cur, size_t cnt, struct qs_param *head)
 {
 	char sep;
 
 	AN(cur);
 	AN(cnt);
 	AN(head);
-	AN(tail);
 
 	sep = '?';
 	while (cnt > 0) {
-		assert(head < tail);
 		AZ(*cur);
 		*cur = sep;
 		cur++;
@@ -312,7 +303,6 @@ qs_append(char *cur, size_t cnt, struct qs_param *head, struct qs_param *tail)
 		cnt--;
 	}
 
-	assert(head == tail);
 	return (cur);
 }
 
@@ -402,13 +392,13 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 		qsort(params, cnt, sizeof *params, qs_cmp);
 
 	if (obj->uniq && cnt > 0) {
-		cnt = qs_uniq(cnt, params, &p);
+		cnt = qs_uniq(cnt, params);
 		AN(cnt);
 	}
 
 	*cur = '\0';
 	if (cnt > 0)
-		cur = qs_append(cur, cnt, params, p);
+		cur = qs_append(cur, cnt, params);
 
 	AZ(*cur);
 	cur = (char *)PRNDUP(cur + 1);
