@@ -254,32 +254,47 @@ qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
 }
 
 static size_t
-qs_uniq(size_t cnt, struct qs_param *head)
+qs_search(struct qs_param *key, struct qs_param *src, size_t cnt)
 {
-	struct qs_param *uniq_tail = NULL;
-	size_t uniq_cnt = 0;
+	size_t i, l = 0, u = cnt;
+	int cmp;
 
-	AN(cnt);
-	AN(head);
+	/* bsearch a position */
+	do {
+		i = (l + u) / 2;
+		cmp = qs_cmp(key, src + i);
+		if (cmp < 0)
+			u = i;
+		if (cmp > 0)
+			l = i + 1;
+	} while (l < u && cmp);
 
-	uniq_tail = head;
-	uniq_cnt++;
-	head++;
-	cnt--;
+	/* ensure a stable sort */
+	while (cmp >= 0 && ++i < cnt)
+		cmp = qs_cmp(key, src + i);
 
-	while (cnt > 0) {
-		assert(uniq_tail < head);
-		if (qs_cmp(head, uniq_tail)) {
-			uniq_tail++;
-			uniq_cnt++;
-			if (uniq_tail != head)
-				(void)memcpy(uniq_tail, head, sizeof *head);
-		}
-		head++;
-		cnt--;
+	return (i);
+}
+
+static ssize_t
+qs_insert(struct qs_param *new, struct qs_param *params, size_t cnt,
+    unsigned sort, unsigned uniq)
+{
+	size_t pos = cnt;
+
+	if (sort && cnt > 0)
+		pos = qs_search(new, params, cnt);
+
+	if (uniq && pos > 0 && !qs_cmp(new, params + pos - 1))
+		return (-1);
+
+	if (pos != cnt) {
+		assert(pos < cnt);
+		new = params + pos;
+		(void)memmove(new + 1, new, (cnt - pos) * sizeof *new);
 	}
 
-	return (uniq_cnt);
+	return (pos);
 }
 
 static char *
@@ -314,6 +329,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	const char *nm, *eq;
 	char *res, *cur;
 	size_t len, cnt;
+	ssize_t pos;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
@@ -371,29 +387,28 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 		cur[tmp.cmp_len] = '\0';
 		tmp.val_len = qs - nm;
 
+		pos = -1;
 		if (qs_match(ctx, obj, &tmp, keep)) {
 			AN(tmp.cmp_len);
+			p = params + cnt;
 			if ((uintptr_t)(p + 1) > (uintptr_t)ctx->ws->e) {
 				WS_Release(ctx->ws, 0);
 				return (url);
 			}
+			pos = qs_insert(&tmp, params, cnt, obj->sort,
+			    obj->uniq);
+		}
+
+		if (pos >= 0) {
+			p = params + pos;
 			p->val = nm;
 			p->val_len = tmp.val_len;
 			p->cmp_len = tmp.cmp_len;
-			p++;
 			cnt++;
 		}
 
 		if (*qs == '&')
 			qs++;
-	}
-
-	if (obj->sort)
-		qsort(params, cnt, sizeof *params, qs_cmp);
-
-	if (obj->uniq && cnt > 0) {
-		cnt = qs_uniq(cnt, params);
-		AN(cnt);
 	}
 
 	*cur = '\0';

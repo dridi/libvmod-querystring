@@ -154,9 +154,9 @@ $Function STRING sort(STRING url, BOOL uniq = 0)
 
 Description
     This is a shorthand function that works like applying a sorting-enabled
-    filter with no criteria. It will keep all parameters and shave off the
-    empty ones. If the ``uniq`` argument is ``true`` duplicate parameters are
-    also removed.
+    filter with no criteria matching full parameters, not just their names. It
+    will keep all parameters and shave off the empty ones. If the ``uniq``
+    argument is ``true`` duplicate parameters are also removed.
 
 Example
     ::
