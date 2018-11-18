@@ -61,6 +61,7 @@ TESTS = \
 	tests/f00005.vtc \
 	tests/f00006.vtc \
 	tests/f00007.vtc \
+	tests/f00008.vtc \
 	tests/g00001.vtc \
 	tests/m00001.vtc \
 	tests/p00001.vtc \

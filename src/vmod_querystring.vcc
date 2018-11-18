@@ -68,7 +68,7 @@ Example
         }
 
         sub vcl_hash {
-            hash_data(qf.apply(req.url));
+            hash_data(qf.apply()); # implicitly on req.url
             hash_data(req.http.host);
             return (lookup);
         }
@@ -88,7 +88,7 @@ Example
         }
 
         sub vcl_recv {
-            if (fr.extract(req.url)) {
+            if (fr.extract()) {
                 set req.backend_hint = www_fr;
             }
         }
@@ -97,6 +97,11 @@ Finally, a filter can drop consecutive duplicate parameters if the optional
 ``uniq`` argument. Combined with a sort, this effectively removes all the
 duplicates from the URL. The ``match`` argument determines how parameters are
 considered duplicates.
+
+Since most of the time it is either ``req.url`` or ``bereq.url`` that is
+filtered, omitting the ``url`` argument for functions that take one will
+default to one of them depending on whether the function was called during a
+client or backend transaction.
 
 $Method VOID .add_string(STRING)
 
@@ -133,7 +138,7 @@ Description
 Example
     ::
 
-        set req.url = myfilter.apply(req.url, mode = drop);
+        set req.url = myfilter.apply(mode = drop);
 
 $Method STRING .extract([STRING url], ENUM {keep, drop} mode = "drop")
 
@@ -151,7 +156,7 @@ Description
 Example
     ::
 
-        set req.url = querystring.clean(req.url);
+        set req.url = querystring.clean();
 
 
 $Function STRING sort([STRING url], BOOL uniq = 0)
@@ -165,7 +170,7 @@ Description
 Example
     ::
 
-        set req.url = querystring.sort(req.url);
+        set req.url = querystring.sort();
 
 
 $Function STRING remove([STRING url])
@@ -178,7 +183,7 @@ Description
 Example
     ::
 
-        set req.url = querystring.remove(req.url);
+        set req.url = querystring.remove();
 
 COPYRIGHT
 =========

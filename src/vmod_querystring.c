@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <cache/cache.h>
+#include <vrt_obj.h>
 
 #include <vcl.h>
 #include <vre.h>
@@ -33,6 +34,20 @@
 
 /* End Of Query Parameter */
 #define EOQP(c) (c == '\0' || c == '&')
+
+#define CHECK_VALID_URL(ctx, arg)					\
+	do {								\
+		if (!(arg)->valid_url) {				\
+			if ((ctx)->req)					\
+				(arg)->url = VRT_r_req_url(ctx);	\
+			else if ((ctx)->bo)				\
+				(arg)->url = VRT_r_bereq_url(ctx);	\
+			else {						\
+				VRT_fail(ctx, "Invalid transaction");	\
+				return (NULL);				\
+			}						\
+		}							\
+	} while (0)
 
 /***********************************************************************
  * Type definitions
@@ -428,8 +443,7 @@ vmod_remove(VRT_CTX, struct vmod_remove_arg *arg)
 	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
 	AN(arg);
 
-	if (!arg->valid_url)
-		INCOMPL();
+	CHECK_VALID_URL(ctx, arg);
 
 	res = NULL;
 	if (qs_empty(ctx->ws, arg->url, &res))
@@ -570,8 +584,7 @@ vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
 	AN(arg);
 	AN(arg->mode);
 
-	if (!arg->valid_url)
-		INCOMPL();
+	CHECK_VALID_URL(ctx, arg);
 
 	tmp = NULL;
 	if (qs_empty(ctx->ws, arg->url, &tmp))
@@ -602,8 +615,7 @@ vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
 	AN(arg);
 	AN(arg->mode);
 
-	if (!arg->valid_url)
-		INCOMPL();
+	CHECK_VALID_URL(ctx, arg);
 
 	if (arg->url == NULL)
 		return (NULL);
