@@ -1,6 +1,42 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 1.0.5 (2018-11-18)
+-------------------------------------
+
+* Varnish 6.1 support
+* Removal of duplicate parameters (uniq)
+* Stable sorting algorithm
+
+Changes in version 1.0.5 (2018-04-16)
+-------------------------------------
+
+* Varnish 6.0 support (#38)
+
+Changes in version 1.0.4 (2017-12-03)
+-------------------------------------
+
+* Varnish 5.2 support
+* $ABI vrt compatibility
+* Packaging improvements (#34, #36, #37)
+
+Changes in version 1.0.3 (2017-08-23)
+-------------------------------------
+
+* Packaging fix for RHEL 7 (#33)
+
+Changes in version 1.0.2 (2017-03-20)
+-------------------------------------
+
+* Varnish 5.1.1 support
+* Packaging improvements
+
+Changes in version 1.0.2 (2017-03-20)
+-------------------------------------
+
+* Varnish 5.1.1 support
+* Packaging improvements
+
 Changes in version 1.0.1 (2016-09-23)
 -------------------------------------
 

@@ -16,11 +16,11 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libvmod-querystring],
-	[1.0.5],
+	[1.0.6],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])
-AC_COPYRIGHT([Copyright (C) 2012-2017  Dridi Boukelmoune])
+AC_COPYRIGHT([Copyright (C) 2012-2018  Dridi Boukelmoune])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/vmod_querystring.vcc])
