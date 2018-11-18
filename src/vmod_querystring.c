@@ -25,14 +25,6 @@
 
 #include <cache/cache.h>
 
-#ifndef VRT_H_INCLUDED
-#  include <vrt.h>
-#endif
-
-#ifndef VDEF_H_INCLUDED
-#  include <vdef.h>
-#endif
-
 #include <vcl.h>
 #include <vre.h>
 #include <vsb.h>
@@ -428,19 +420,23 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
  */
 
 VCL_STRING
-vmod_remove(VRT_CTX, VCL_STRING url)
+vmod_remove(VRT_CTX, struct vmod_remove_arg *arg)
 {
 	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
+	AN(arg);
+
+	if (!arg->valid_url)
+		INCOMPL();
 
 	res = NULL;
-	if (qs_empty(ctx->ws, url, &res))
+	if (qs_empty(ctx->ws, arg->url, &res))
 		return (res);
 
 	qs = res;
-	return (qs_truncate(ctx->ws, url, qs));
+	return (qs_truncate(ctx->ws, arg->url, qs));
 }
 
 VCL_VOID
@@ -462,10 +458,12 @@ vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
 	obj->sort = sort;
 	obj->uniq = uniq;
 
-	if (!strcmp(match, "name"))
+	if (match == vmod_enum_name)
 		obj->match_name = 1;
-	else if (strcmp(match, "param"))
-		WRONG("Unknown matching type");
+	else if (match != vmod_enum_param) {
+		VRT_fail(ctx, "Unknown matching type: %s", match);
+		FREE_OBJ(obj);
+	}
 
 	*objp = obj;
 }
@@ -562,48 +560,62 @@ vmod_filter_add_regex(VRT_CTX, struct vmod_querystring_filter *obj,
 
 VCL_STRING
 vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
-    VCL_STRING url, VCL_ENUM mode)
+    struct vmod_filter_apply_arg *arg)
 {
 	const char *tmp, *qs;
 	unsigned keep;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
-	AN(mode);
+	AN(arg);
+	AN(arg->mode);
+
+	if (!arg->valid_url)
+		INCOMPL();
 
 	tmp = NULL;
-	if (qs_empty(ctx->ws, url, &tmp))
+	if (qs_empty(ctx->ws, arg->url, &tmp))
 		return (tmp);
 
 	qs = tmp;
 	keep = 0;
 
-	if (!strcmp(mode, "keep"))
+	if (arg->mode == vmod_enum_keep)
 		keep = 1;
-	else if (strcmp(mode, "drop"))
-		WRONG("Unknown filtering mode");
+	else if (arg->mode != vmod_enum_drop) {
+		VRT_fail(ctx, "Unknown filtering mode: %s", arg->mode);
+		return (NULL);
+	}
 
-	return (qs_apply(ctx, url, qs, keep, obj));
+	return (qs_apply(ctx, arg->url, qs, keep, obj));
 }
 
 VCL_STRING
 vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
-    VCL_STRING url, VCL_ENUM mode)
+    struct vmod_filter_extract_arg *arg)
 {
+	struct vmod_filter_apply_arg apply_arg;
 	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
-	AN(mode);
+	AN(arg);
+	AN(arg->mode);
 
-	if (url == NULL)
+	if (!arg->valid_url)
+		INCOMPL();
+
+	if (arg->url == NULL)
 		return (NULL);
 
-	qs = strchr(url, '?');
+	qs = strchr(arg->url, '?');
 	if (qs == NULL || qs[1] == '\0')
 		return (NULL);
 
-	res = vmod_filter_apply(ctx, obj, qs, mode);
+	apply_arg.valid_url = 1;
+	apply_arg.url = qs;
+	apply_arg.mode = arg->mode;
+	res = vmod_filter_apply(ctx, obj, &apply_arg);
 	AN(res);
 	if (*res == '?')
 		res++;
@@ -613,19 +625,30 @@ vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_STRING
-vmod_clean(VRT_CTX, VCL_STRING url)
+vmod_clean(VRT_CTX, struct vmod_clean_arg *arg)
 {
+	struct vmod_filter_apply_arg apply_arg;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	return (vmod_filter_apply(ctx, &qs_clean_filter, url, "keep"));
+	AN(arg);
+	apply_arg.valid_url = arg->valid_url;
+	apply_arg.url = arg->url;
+	apply_arg.mode = vmod_enum_keep;
+	return (vmod_filter_apply(ctx, &qs_clean_filter, &apply_arg));
 }
 
 VCL_STRING
-vmod_sort(VRT_CTX, VCL_STRING url, VCL_BOOL uniq)
+vmod_sort(VRT_CTX, struct vmod_sort_arg *arg)
 {
 	struct vmod_querystring_filter *filter;
+	struct vmod_filter_apply_arg apply_arg;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	filter = uniq ? &qs_sort_uniq_filter : &qs_sort_filter;
-	return (vmod_filter_apply(ctx, filter, url, "keep"));
+	AN(arg);
+	filter = arg->uniq ? &qs_sort_uniq_filter : &qs_sort_filter;
+
+	apply_arg.valid_url = arg->valid_url;
+	apply_arg.url = arg->url;
+	apply_arg.mode = vmod_enum_keep;
+	return (vmod_filter_apply(ctx, filter, &apply_arg));
 }

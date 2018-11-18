@@ -118,7 +118,7 @@ Description
     will fail the ``vcl.load`` command and report the error in the
     ``varnish-cli`` output.
 
-$Method STRING .apply(STRING url, ENUM {keep, drop} mode = "drop")
+$Method STRING .apply([STRING url], ENUM {keep, drop} mode = "drop")
 
 Description
     The ``url`` argument is filtered against the filter's criteria, previously
@@ -135,14 +135,14 @@ Example
 
         set req.url = myfilter.apply(req.url, mode = drop);
 
-$Method STRING .extract(STRING url, ENUM {keep, drop} mode = "drop")
+$Method STRING .extract([STRING url], ENUM {keep, drop} mode = "drop")
 
 Description
     This method works exactly like ``.apply`` and discards all URL parts but
     the query-string.
 
 
-$Function STRING clean(STRING url)
+$Function STRING clean([STRING url])
 
 Description
     This is a shorthand function that works like applying a filter with no
@@ -154,7 +154,7 @@ Example
         set req.url = querystring.clean(req.url);
 
 
-$Function STRING sort(STRING url, BOOL uniq = 0)
+$Function STRING sort([STRING url], BOOL uniq = 0)
 
 Description
     This is a shorthand function that works like applying a sorting-enabled
@@ -168,7 +168,7 @@ Example
         set req.url = querystring.sort(req.url);
 
 
-$Function STRING remove(STRING url)
+$Function STRING remove([STRING url])
 
 Description
     This is a shorthand function that works like applying a filter with a

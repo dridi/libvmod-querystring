@@ -91,7 +91,7 @@ fi
 
 # $QS_VARNISH_VERSION is set by the bootstrap script
 
-VARNISH_PREREQ([${QS_VARNISH_VERSION:-4.1.3}])
+VARNISH_PREREQ([${QS_VARNISH_VERSION:-6.0.0}])
 VARNISH_VMODS([querystring])
 
 AC_CONFIG_FILES([
