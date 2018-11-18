@@ -121,10 +121,14 @@ Description
 $Method STRING .apply(STRING url, ENUM {keep, drop} mode = "drop")
 
 Description
-    The ``url`` argument is filtered against the filter's criteria, resulting
-    in a new URL with a clean (and possibly sorted) query-string. Parameters
-    matching the criteria may be kept or dropped, according to the optional
-    *mode* argument that can be either ``drop`` (default) or ``keep``.
+    The ``url`` argument is filtered against the filter's criteria, previously
+    added using the ``add_*()`` methods in ``vcl_init``. The result is a new
+    URL with a clean (possibly sorted and de-duplicated) query-string.
+
+    Depending on the optional ``mode`` argument the matching criteria act as a
+    black list for ``drop`` (default) or a white list for ``keep``. In the
+    resulting URL the query-string will either contain only the matching
+    parameters or everything but them.
 
 Example
     ::
