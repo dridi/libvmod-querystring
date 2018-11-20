@@ -19,7 +19,7 @@ varnishtest "Filter empty or NULL strings"
 server s1 "" -start
 
 varnish v1 -vcl+backend {
-	import ${vmod_querystring};
+	import querystring;
 
 	sub vcl_init {
 		new noop = querystring.filter();

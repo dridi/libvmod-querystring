@@ -17,7 +17,7 @@
 varnishtest "Check vcl.discard with a querystring filter"
 
 varnish v1 -vcl {
-	import ${vmod_querystring};
+	import querystring;
 
 	backend be { .host = "${bad_ip}"; .port = "9080"; }
 

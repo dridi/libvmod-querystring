@@ -19,7 +19,7 @@ varnishtest "Sort parameters in query-strings"
 server s1 "" -start
 
 varnish v1 -vcl+backend {
-	import ${vmod_querystring};
+	import querystring;
 
 	sub vcl_recv {
 		return (synth(200));

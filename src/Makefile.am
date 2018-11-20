@@ -46,11 +46,11 @@ pdf-local: vmod_querystring.pdf
 # Test suite
 
 AM_TESTS_ENVIRONMENT = \
-		       PATH="$(VMOD_TEST_PATH):$(PATH)" \
+	PATH="$(VMOD_TEST_PATH):$(PATH)" \
 	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH):$(LD_LIBRARY_PATH)"
 TEST_EXTENSIONS = .vtc
 VTC_LOG_COMPILER = varnishtest -v
-AM_VTC_LOG_FLAGS = -Dvmod_querystring="$(VMOD_QUERYSTRING)"
+AM_VTC_LOG_FLAGS = -p vmod_path="$(abs_builddir)/.libs"
 
 TESTS = \
 	tests/e00001.vtc \

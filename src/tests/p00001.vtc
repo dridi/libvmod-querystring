@@ -21,7 +21,7 @@ server s1 "" -start
 varnish v1 -vcl+backend "" -start
 
 varnish v1 -errvcl "vmod-querystring: regex error" {
-	import ${vmod_querystring};
+	import querystring;
 
 	backend be { .host = "${bad_ip}"; .port = "9080"; }
 
