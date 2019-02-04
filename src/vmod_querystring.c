@@ -32,6 +32,13 @@
 
 #include "vcc_querystring_if.h"
 
+/* Varnish < 6.2 compat */
+#ifndef VPFX
+  #define VPFX(a) vmod_ ## a
+  #define VARGS(a) vmod_ ## a ## _arg
+  #define VENUM(a) vmod_enum_ ## a
+#endif
+
 /* End Of Query Parameter */
 #define EOQP(c) (c == '\0' || c == '&')
 
@@ -78,7 +85,7 @@ struct qs_filter {
 	VTAILQ_ENTRY(qs_filter)	list;
 };
 
-struct vmod_querystring_filter {
+struct VPFX(querystring_filter) {
 	unsigned			magic;
 #define VMOD_QUERYSTRING_FILTER_MAGIC	0xbe8ecdb4
 	VTAILQ_HEAD(, qs_filter)	filters;
@@ -91,17 +98,17 @@ struct vmod_querystring_filter {
  * Static data structures
  */
 
-static struct vmod_querystring_filter qs_clean_filter = {
+static struct VPFX(querystring_filter) qs_clean_filter = {
 	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
 	.sort = 0,
 };
 
-static struct vmod_querystring_filter qs_sort_filter = {
+static struct VPFX(querystring_filter) qs_sort_filter = {
 	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
 	.sort = 1,
 };
 
-static struct vmod_querystring_filter qs_sort_uniq_filter = {
+static struct VPFX(querystring_filter) qs_sort_uniq_filter = {
 	.magic = VMOD_QUERYSTRING_FILTER_MAGIC,
 	.sort = 1,
 	.uniq = 1,
@@ -237,7 +244,7 @@ qs_cmp(const void *v1, const void *v2)
 }
 
 static unsigned
-qs_match(VRT_CTX, const struct vmod_querystring_filter *obj,
+qs_match(VRT_CTX, const struct VPFX(querystring_filter) *obj,
     const struct qs_param *param, unsigned keep)
 {
 	struct qs_filter *qsf;
@@ -330,7 +337,7 @@ qs_append(char *cur, size_t cnt, struct qs_param *head)
 
 static const char *
 qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
-    const struct vmod_querystring_filter *obj)
+    const struct VPFX(querystring_filter) *obj)
 {
 	struct qs_param *params, *p, tmp;
 	const char *nm, *eq;
@@ -435,7 +442,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
  */
 
 VCL_STRING
-vmod_remove(VRT_CTX, struct vmod_remove_arg *arg)
+vmod_remove(VRT_CTX, struct VARGS(remove) *arg)
 {
 	const char *res, *qs;
 
@@ -454,10 +461,10 @@ vmod_remove(VRT_CTX, struct vmod_remove_arg *arg)
 }
 
 VCL_VOID
-vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
+vmod_filter__init(VRT_CTX, struct VPFX(querystring_filter) **objp,
     const char *vcl_name, VCL_BOOL sort, VCL_BOOL uniq, VCL_STRING match)
 {
-	struct vmod_querystring_filter *obj;
+	struct VPFX(querystring_filter) *obj;
 
 	ASSERT_CLI();
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -472,9 +479,9 @@ vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
 	obj->sort = sort;
 	obj->uniq = uniq;
 
-	if (match == vmod_enum_name)
+	if (match == VENUM(name))
 		obj->match_name = 1;
-	else if (match != vmod_enum_param) {
+	else if (match != VENUM(param)) {
 		VRT_fail(ctx, "Unknown matching type: %s", match);
 		FREE_OBJ(obj);
 	}
@@ -483,9 +490,9 @@ vmod_filter__init(VRT_CTX, struct vmod_querystring_filter **objp,
 }
 
 VCL_VOID
-vmod_filter__fini(struct vmod_querystring_filter **objp)
+vmod_filter__fini(struct VPFX(querystring_filter) **objp)
 {
-	struct vmod_querystring_filter *obj;
+	struct VPFX(querystring_filter) *obj;
 	struct qs_filter *qsf, *tmp;
 
 	ASSERT_CLI();
@@ -503,7 +510,7 @@ vmod_filter__fini(struct vmod_querystring_filter **objp)
 }
 
 VCL_VOID
-vmod_filter_add_string(VRT_CTX, struct vmod_querystring_filter *obj,
+vmod_filter_add_string(VRT_CTX, struct VPFX(querystring_filter) *obj,
     VCL_STRING string)
 {
 	struct qs_filter *qsf;
@@ -522,7 +529,7 @@ vmod_filter_add_string(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_VOID
-vmod_filter_add_glob(VRT_CTX, struct vmod_querystring_filter *obj,
+vmod_filter_add_glob(VRT_CTX, struct VPFX(querystring_filter) *obj,
     VCL_STRING glob)
 {
 	struct qs_filter *qsf;
@@ -541,7 +548,7 @@ vmod_filter_add_glob(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_VOID
-vmod_filter_add_regex(VRT_CTX, struct vmod_querystring_filter *obj,
+vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
     VCL_STRING regex)
 {
 	struct qs_filter *qsf;
@@ -573,8 +580,8 @@ vmod_filter_add_regex(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_STRING
-vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
-    struct vmod_filter_apply_arg *arg)
+vmod_filter_apply(VRT_CTX, struct VPFX(querystring_filter) *obj,
+    struct VARGS(filter_apply) *arg)
 {
 	const char *tmp, *qs;
 	unsigned keep;
@@ -593,9 +600,9 @@ vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
 	qs = tmp;
 	keep = 0;
 
-	if (arg->mode == vmod_enum_keep)
+	if (arg->mode == VENUM(keep))
 		keep = 1;
-	else if (arg->mode != vmod_enum_drop) {
+	else if (arg->mode != VENUM(drop)) {
 		VRT_fail(ctx, "Unknown filtering mode: %s", arg->mode);
 		return (NULL);
 	}
@@ -604,10 +611,10 @@ vmod_filter_apply(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_STRING
-vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
-    struct vmod_filter_extract_arg *arg)
+vmod_filter_extract(VRT_CTX, struct VPFX(querystring_filter) *obj,
+    struct VARGS(filter_extract) *arg)
 {
-	struct vmod_filter_apply_arg apply_arg;
+	struct VARGS(filter_apply) apply_arg;
 	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -637,23 +644,23 @@ vmod_filter_extract(VRT_CTX, struct vmod_querystring_filter *obj,
 }
 
 VCL_STRING
-vmod_clean(VRT_CTX, struct vmod_clean_arg *arg)
+vmod_clean(VRT_CTX, struct VARGS(clean) *arg)
 {
-	struct vmod_filter_apply_arg apply_arg;
+	struct VARGS(filter_apply) apply_arg;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	AN(arg);
 	apply_arg.valid_url = arg->valid_url;
 	apply_arg.url = arg->url;
-	apply_arg.mode = vmod_enum_keep;
+	apply_arg.mode = VENUM(keep);
 	return (vmod_filter_apply(ctx, &qs_clean_filter, &apply_arg));
 }
 
 VCL_STRING
-vmod_sort(VRT_CTX, struct vmod_sort_arg *arg)
+vmod_sort(VRT_CTX, struct VARGS(sort) *arg)
 {
-	struct vmod_querystring_filter *filter;
-	struct vmod_filter_apply_arg apply_arg;
+	struct VPFX(querystring_filter) *filter;
+	struct VARGS(filter_apply) apply_arg;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	AN(arg);
@@ -661,6 +668,6 @@ vmod_sort(VRT_CTX, struct vmod_sort_arg *arg)
 
 	apply_arg.valid_url = arg->valid_url;
 	apply_arg.url = arg->url;
-	apply_arg.mode = vmod_enum_keep;
+	apply_arg.mode = VENUM(keep);
 	return (vmod_filter_apply(ctx, filter, &apply_arg));
 }
