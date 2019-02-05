@@ -614,7 +614,7 @@ VCL_STRING
 vmod_filter_extract(VRT_CTX, struct VPFX(querystring_filter) *obj,
     struct VARGS(filter_extract) *arg)
 {
-	struct VARGS(filter_apply) apply_arg;
+	struct VARGS(filter_apply) apply_arg[1];
 	const char *res, *qs;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -631,10 +631,10 @@ vmod_filter_extract(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	if (qs == NULL || qs[1] == '\0')
 		return (NULL);
 
-	apply_arg.valid_url = 1;
-	apply_arg.url = qs;
-	apply_arg.mode = arg->mode;
-	res = vmod_filter_apply(ctx, obj, &apply_arg);
+	apply_arg->valid_url = 1;
+	apply_arg->url = qs;
+	apply_arg->mode = arg->mode;
+	res = vmod_filter_apply(ctx, obj, apply_arg);
 	AN(res);
 	if (*res == '?')
 		res++;
@@ -646,28 +646,28 @@ vmod_filter_extract(VRT_CTX, struct VPFX(querystring_filter) *obj,
 VCL_STRING
 vmod_clean(VRT_CTX, struct VARGS(clean) *arg)
 {
-	struct VARGS(filter_apply) apply_arg;
+	struct VARGS(filter_apply) apply_arg[1];
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	AN(arg);
-	apply_arg.valid_url = arg->valid_url;
-	apply_arg.url = arg->url;
-	apply_arg.mode = VENUM(keep);
-	return (vmod_filter_apply(ctx, &qs_clean_filter, &apply_arg));
+	apply_arg->valid_url = arg->valid_url;
+	apply_arg->url = arg->url;
+	apply_arg->mode = VENUM(keep);
+	return (vmod_filter_apply(ctx, &qs_clean_filter, apply_arg));
 }
 
 VCL_STRING
 vmod_sort(VRT_CTX, struct VARGS(sort) *arg)
 {
 	struct VPFX(querystring_filter) *filter;
-	struct VARGS(filter_apply) apply_arg;
+	struct VARGS(filter_apply) apply_arg[1];
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	AN(arg);
 	filter = arg->uniq ? &qs_sort_uniq_filter : &qs_sort_filter;
 
-	apply_arg.valid_url = arg->valid_url;
-	apply_arg.url = arg->url;
-	apply_arg.mode = VENUM(keep);
-	return (vmod_filter_apply(ctx, filter, &apply_arg));
+	apply_arg->valid_url = arg->valid_url;
+	apply_arg->url = arg->url;
+	apply_arg->mode = VENUM(keep);
+	return (vmod_filter_apply(ctx, filter, apply_arg));
 }
