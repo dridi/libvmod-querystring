@@ -1,5 +1,5 @@
 Name:           @PACKAGE@
-Version:        @PACKAGE_VERSION@
+Version:        @VERSION@
 Release:        1%{?dist}
 Group:          System Environment/Libraries
 Summary:        QueryString module for Varnish Cache
@@ -58,48 +58,5 @@ find %{buildroot} -type f -name '*.la' -exec rm -f {} ';'
 
 
 %changelog
-* Mon Apr 16 2018 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.5-1
-- Bump version
-
-* Thu Mar 29 2018 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.5-1
-- Retire %%vmoddir
-- Ensure python availability
-
-* Sun Dec 03 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
-- Bump version
-
-* Sat Dec 02 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
-- Drop --with-rst2man=: in %%configure (now automatic)
-
-* Thu Nov 30 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.4-1
-- Move the %%optflags to the %%configure command
-- Drop --disable-silent-rules (now default)
-- Switch to %%make_build in %%check
-- Show the test logs on failures
-
-* Sat Aug 12 2017 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.3-1
-- Bump version
-
-* Fri Dec 09 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0.2-1
-- Drop build requirement on python-docutils
-
-* Fri Sep 16 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 1.0-1
-- Bump version
-- Change License to GPLv3+
-- Automatic package information
-- Expect a correct source archive
-- Disable silent rules
-- Overall simplification
-
-* Tue Mar 29 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.5-1
-- Bump version
-
-* Thu Feb 11 2016 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.4-1
-- Bump version
-- Drop Varnish 3 source code requirement
-
-* Tue Aug 04 2015 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.3-1
-- Bump version
-
-* Mon Apr 15 2013 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - 0.2-1
-- Initial version
+* Wed Feb 06 2019 Dridi Boukelmoune <dridi.boukelmoune@gmail.com> - @VERSION@-1
+- Changelog not maintained

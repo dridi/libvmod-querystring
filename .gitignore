@@ -56,6 +56,7 @@ lcov/
 
 vmod-querystring-*/
 mockbuild/
+pdebuild/
 rpmbuild/
 
 vmod-*.tar.[gx]z
@@ -65,4 +66,5 @@ vmod-*.tar.[gx]z
 *.dsc
 *.spec
 control
+changelog
 copyright

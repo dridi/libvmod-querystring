@@ -96,6 +96,7 @@ VARNISH_VMODS([querystring])
 
 AC_CONFIG_FILES([
 	Makefile
+	debian/changelog
 	debian/control
 	debian/copyright
 	src/Makefile
