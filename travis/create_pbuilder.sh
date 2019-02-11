@@ -13,5 +13,9 @@ then
 		--distribution sid \
 		--mirror http://ftp.us.debian.org/debian/ \
 		--debootstrapopts \
-		"--keyring=/usr/share/keyrings/debian-archive-keyring.gpg"
+		"--keyring=/usr/share/keyrings/debian-archive-keyring.gpg" || {
+		cat /var/cache/pbuilder/build/*/debootstrap/debootstrap.log
+		false
+	}
+		
 fi
