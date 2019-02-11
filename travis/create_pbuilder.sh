@@ -11,7 +11,7 @@ if [ "${MAKE_TARGET:-}" = pdebuild ]
 then
 	sudo pbuilder create \
 		--distribution sid \
-		--mirror ftp://ftp.us.debian.org/debian/ \
+		--mirror http://ftp.us.debian.org/debian/ \
 		--debootstrapopts \
 		"--keyring=/usr/share/keyrings/debian-archive-keyring.gpg"
 fi
