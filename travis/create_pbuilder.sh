@@ -11,5 +11,8 @@ if [ "${MAKE_TARGET:-}" = pdebuild ]
 then
 	sudo pbuilder create --debug \
 		--distribution sid \
-		--mirror http://ftp.us.debian.org/debian/
+		--mirror http://ftp.us.debian.org/debian/ || {
+		cat /var/cache/pbuilder/build/*/debootstrap/debootstrap.log
+		false
+	}
 fi
