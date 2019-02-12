@@ -8,8 +8,8 @@ License:        GPLv3+
 
 Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  varnish >= 4.1.3
-BuildRequires:  pkgconfig(varnishapi) >= 4.1.3
+BuildRequires:  varnish >= @VARNISH_VERSION@
+BuildRequires:  pkgconfig(varnishapi) >= @VARNISH_VERSION@
 
 # varnish-devel may not require Python as it should
 BuildRequires:  python(abi) >= 2.7
