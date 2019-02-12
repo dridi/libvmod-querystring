@@ -9,14 +9,5 @@ set -u
 
 if [ "${MAKE_TARGET:-}" = pdebuild ]
 then
-	sudo pbuilder create \
-		--debug \
-		--distribution sid \
-		--mirror http://ftp.us.debian.org/debian/ \
-		--debootstrapopts \
-		"--keyring=/usr/share/keyrings/debian-archive-keyring.gpg" || {
-		cat /var/cache/pbuilder/build/*/debootstrap/debootstrap.log
-		false
-	}
-		
+	sudo pbuilder create --debug
 fi
