@@ -10,6 +10,7 @@ set -u
 if [ "${MAKE_TARGET:-}" = pdebuild ]
 then
 	sudo pbuilder create \
+		--debug \
 		--distribution sid \
 		--mirror http://ftp.us.debian.org/debian/ \
 		--debootstrapopts \
