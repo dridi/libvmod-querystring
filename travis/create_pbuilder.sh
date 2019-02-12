@@ -9,5 +9,5 @@ set -u
 
 if [ "${MAKE_TARGET:-}" = pdebuild ]
 then
-	sudo pbuilder create --debug
+	sudo pbuilder create --debug --distribution sid
 fi
