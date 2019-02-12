@@ -9,20 +9,17 @@ ROOT_DIR="$(dirname "$0")"
 test -n "$ROOT_DIR"
 cd "$ROOT_DIR"
 
-if ! which libtoolize >/dev/null 2>&1
+if ! command -v libtoolize >/dev/null
 then
 	echo "libtoolize: command not found, falling back to glibtoolize" >&2
 	alias libtoolize=glibtoolize
 fi
 
-mkdir -p m4
 aclocal -I .
 libtoolize --copy --force
 autoheader
 automake --add-missing --copy --foreign
 autoconf
-
-# To build from git, Varnish >= 6 is needed
 
 cd "$WORK_DIR"
 "$ROOT_DIR"/configure \
