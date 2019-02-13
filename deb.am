@@ -17,7 +17,7 @@
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
 PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
 
-$(DEB_ORIG): distdir debuild-clean
+$(DEB_ORIG): distdir deb-clean
 	tar -zcf $(DEB_ORIG) $(distdir)
 
 deb: $(DEB_ORIG)
@@ -32,12 +32,12 @@ pdebuild: $(DEB_ORIG) pdebuild-clean
 	cd $(distdir) && $(PDEBUILD)
 	rm -rf $(distdir)
 
-debuild-clean:
+deb-clean:
 	rm -f $(PACKAGE)_$(VERSION)*
 
 pdebuild-clean:
 	rm -rf pdebuild/
 
-clean-local: debuild-clean pdebuild-clean
+clean-local: deb-clean pdebuild-clean
 
-.PHONY: debuild-clean pdebuild-clean
+.PHONY: deb-clean pdebuild-clean
