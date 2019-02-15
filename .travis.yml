@@ -15,6 +15,7 @@ addons:
     - pbuilder
     - python-docutils
     - python-sphinx
+    - sbuild
 
 compiler:
   - clang
