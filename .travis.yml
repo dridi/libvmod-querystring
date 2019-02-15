@@ -36,15 +36,18 @@ matrix:
     - compiler: gcc
       env: MAKE_TARGET=pdebuild PDEBUILD_OPTS='-- --debug'
     - compiler: gcc
+      env: MAKE_TARGET=sbuild SBUILD_OPTS='--dist sid'
+    - compiler: gcc
       env: MAKE_TARGET=lcov CONFIGURE_FLAGS=--enable-lcov
   allow_failures:
     - compiler: gcc
-      env: MAKE_TARGET=deb DPKG_BUILDPACKAGE_OPTS='-d'
+      env: MAKE_TARGET=sbuild SBUILD_OPTS='--dist sid'
 
 install:
   - set -e
   - travis/install_varnish.sh
   - travis/create_pbuilder.sh
+  - travis/create_sbuild.sh
 
 script:
   - ./bootstrap $CONFIGURE_FLAGS
