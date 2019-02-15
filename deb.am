@@ -17,6 +17,7 @@
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
 DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc $(DPKG_BUILDPACKAGE_OPTS)
 PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
+SBUILD = sbuild $(PACKAGE)_$(VERSION)-1.dsc $(SBUILD_OPTS)
 
 $(DEB_ORIG): distdir
 	tar -zcf $(DEB_ORIG) $(distdir)
@@ -35,12 +36,22 @@ pdebuild: $(DEB_ORIG) pdebuild-clean
 	cd $(distdir) && $(PDEBUILD)
 	rm -rf $(distdir)
 
+sbuild: $(DEB_ORIG) sbuild-clean
+	mkdir sbuild/
+	mv $(distdir) $(DEB_ORIG) sbuild/
+	cd sbuild/$(distdir) && $(DPKG_BUILDPACKAGE) -S -d
+	cd sbuild && $(SBUILD)
+	rm -rf sbuild/$(distdir) $(DEB_ORIG)
+
 deb-clean:
 	rm -rf dpkgbuild/
 
 pdebuild-clean:
 	rm -rf pdebuild/
 
-clean-local: deb-clean pdebuild-clean
+sbuild-clean:
+	rm -rf sbuild/
 
-.PHONY: deb-clean pdebuild-clean
+clean-local: deb-clean pdebuild-clean sbuild-clean
+
+.PHONY: deb-clean pdebuild-clean sbuild-clean

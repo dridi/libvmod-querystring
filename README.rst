@@ -196,6 +196,16 @@ to switch between distributions::
 The resulting packages can be found in the ``pdebuild`` directory in your
 build tree.
 
+As an alternative to ``pdebuild(1)`` you may prefer ``sbuild(1)`` instead.
+Similarly, you may run ``make sbuild`` and set the desired flags in the
+``SBUILD_OPTS`` variable. For instance to build debs for Debian Sid, assuming
+your environment is properly configured to switch between distributions::
+
+    make sbuild SBUILD_OPTS='--dist sid'
+
+The resulting packages can be found in the ``sbuild`` directory in your
+build tree.
+
 Hacking
 =======
 
