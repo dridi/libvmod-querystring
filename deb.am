@@ -23,9 +23,9 @@ $(DEB_ORIG): distdir
 
 deb: $(DEB_ORIG) deb-clean
 	mkdir dpkgbuild/
-	cp -p -r $(distdir) $(DEB_ORIG) dpkgbuild/
+	mv $(distdir) $(DEB_ORIG) dpkgbuild/
 	cd dpkgbuild/$(distdir) && $(DPKG_BUILDPACKAGE)
-	rm -rf $(distdir) dpkgbuild/$(distdir) dpkgbuild/$(DEB_ORIG)
+	rm -rf dpkgbuild/$(distdir) dpkgbuild/$(DEB_ORIG)
 
 lintian: deb
 	lintian $(PACKAGE)_$(VERSION)-1_*.deb
