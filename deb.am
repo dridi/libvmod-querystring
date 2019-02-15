@@ -15,15 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
-DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc
+DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc $(DPKG_BUILDPACKAGE_OPTS)
 PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
 
-$(DEB_ORIG): distdir deb-clean
+$(DEB_ORIG): distdir
 	tar -zcf $(DEB_ORIG) $(distdir)
 
-deb: $(DEB_ORIG)
-	cd $(distdir) && $(DPKG_BUILDPACKAGE) -rfakeroot
-	rm -rf $(distdir)
+deb: $(DEB_ORIG) deb-clean
+	mkdir dpkgbuild/
+	cp -p -r $(distdir) $(DEB_ORIG) dpkgbuild/
+	cd dpkgbuild/$(distdir) && $(DPKG_BUILDPACKAGE)
+	rm -rf $(distdir) dpkgbuild/$(distdir) dpkgbuild/$(DEB_ORIG)
 
 lintian: deb
 	lintian $(PACKAGE)_$(VERSION)-1_*.deb
@@ -34,7 +36,7 @@ pdebuild: $(DEB_ORIG) pdebuild-clean
 	rm -rf $(distdir)
 
 deb-clean:
-	rm -f $(PACKAGE)*_$(VERSION)*
+	rm -rf dpkgbuild/
 
 pdebuild-clean:
 	rm -rf pdebuild/

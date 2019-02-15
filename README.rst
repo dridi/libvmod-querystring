@@ -171,11 +171,19 @@ build tree.
 DPKG Packaging
 ==============
 
-Experimental DPKG packaging is also available, using the ``deb`` target::
+Experimental DPKG packaging is also available with ``dpkg-buildpackage(1)``,
+using the ``deb`` target::
 
     make deb
 
-The resulting packages can be found at the top of your build tree.
+It is possible to either redefine the ``DPKG_BUILDPACKAGE`` command or simply
+add options via ``DPKG_BUILDPACKAGE_OPTS``. For example to specify a specific
+privilege escalation method::
+
+    make deb DPKG_BUILDPACKAGE_OPTS=-rfakeroot
+
+The resulting packages can be found in the ``dpkgbuild`` directory in your
+build tree. By default sources and changes are NOT signed.
 
 If you need to build a Deb for a specific platform you may use ``pdebuild(1)``
 and ``pbuilder(8)`` to set up the base tarball and then run ``make pdebuild``
