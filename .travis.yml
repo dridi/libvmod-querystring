@@ -9,6 +9,7 @@ addons:
     packages:
     - debhelper
     - debian-archive-keyring
+    - dpkg-dev
     - fakeroot
     - lcov
     - pbuilder
@@ -31,9 +32,14 @@ env:
 matrix:
   include:
     - compiler: gcc
+      env: MAKE_TARGET=deb DPKG_BUILDPACKAGE_OPTS='-d'
+    - compiler: gcc
       env: MAKE_TARGET=pdebuild PDEBUILD_OPTS='-- --debug'
     - compiler: gcc
       env: MAKE_TARGET=lcov CONFIGURE_FLAGS=--enable-lcov
+  allow_failures:
+    - compiler: gcc
+      env: MAKE_TARGET=deb DPKG_BUILDPACKAGE_OPTS='-d'
 
 install:
   - set -e
