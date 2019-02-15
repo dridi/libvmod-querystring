@@ -33,7 +33,7 @@ pdebuild: $(DEB_ORIG) pdebuild-clean
 	rm -rf $(distdir)
 
 deb-clean:
-	rm -f $(PACKAGE)_$(VERSION)*
+	rm -f $(PACKAGE)*_$(VERSION)*
 
 pdebuild-clean:
 	rm -rf pdebuild/
