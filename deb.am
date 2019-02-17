@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
-DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc $(DPKG_BUILDPACKAGE_OPTS)
-PDEBUILD = pdebuild --buildresult "$(abs_builddir)/pdebuild" $(PDEBUILD_OPTS)
-SBUILD = sbuild $(PACKAGE)_$(VERSION)-1.dsc $(SBUILD_OPTS)
+DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc
+PDEBUILD = pdebuild
+SBUILD = sbuild
 
 $(DEB_ORIG): distdir
 	tar -zcf $(DEB_ORIG) $(distdir)
@@ -25,7 +25,8 @@ $(DEB_ORIG): distdir
 deb: $(DEB_ORIG) deb-clean
 	mkdir dpkgbuild/
 	mv $(distdir) $(DEB_ORIG) dpkgbuild/
-	cd dpkgbuild/$(distdir) && $(DPKG_BUILDPACKAGE)
+	cd dpkgbuild/$(distdir) && \
+		$(DPKG_BUILDPACKAGE) $(DPKG_BUILDPACKAGE_OPTS)
 	rm -rf dpkgbuild/$(distdir) dpkgbuild/$(DEB_ORIG)
 
 lintian: deb
@@ -33,14 +34,16 @@ lintian: deb
 
 pdebuild: $(DEB_ORIG) pdebuild-clean
 	mkdir pdebuild/
-	cd $(distdir) && $(PDEBUILD)
-	rm -rf $(distdir)
+	cd $(distdir) && $(PDEBUILD) $(PDEBUILD_OPTS) \
+		--buildresult "$(abs_builddir)/pdebuild"
+	rm -rf $(distdir) $(DEB_ORIG)
 
 sbuild: $(DEB_ORIG) sbuild-clean
 	mkdir sbuild/
 	mv $(distdir) $(DEB_ORIG) sbuild/
-	cd sbuild/$(distdir) && $(DPKG_BUILDPACKAGE) -S -d
-	cd sbuild && $(SBUILD)
+	cd sbuild/$(distdir) && \
+		$(DPKG_BUILDPACKAGE) $(DPKG_BUILDPACKAGE_OPTS) -S -d
+	cd sbuild && $(SBUILD) $(PACKAGE)_$(VERSION)-1.dsc $(SBUILD_OPTS)
 	rm -rf sbuild/$(distdir) $(DEB_ORIG)
 
 deb-clean:

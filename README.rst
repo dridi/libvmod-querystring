@@ -183,7 +183,8 @@ privilege escalation method::
     make deb DPKG_BUILDPACKAGE_OPTS=-rfakeroot
 
 The resulting packages can be found in the ``dpkgbuild`` directory in your
-build tree. By default sources and changes are NOT signed.
+build tree. By default sources and changes are NOT signed, in order to sign
+packages the ``DPKG_BUILDPACKAGE`` variable MUST be redefined.
 
 If you need to build a Deb for a specific platform you may use ``pdebuild(1)``
 and ``pbuilder(8)`` to set up the base tarball and then run ``make pdebuild``
