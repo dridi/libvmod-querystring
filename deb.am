@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 DEB_ORIG = $(PACKAGE)_$(VERSION).orig.tar.gz
-DPKG_BUILDPACKAGE = dpkg-buildpackage -us -uc
-PDEBUILD = pdebuild
-SBUILD = sbuild
+DPKG_BUILDPACKAGE ?= dpkg-buildpackage -us -uc
+PDEBUILD ?= pdebuild
+SBUILD ?= sbuild
 
 $(DEB_ORIG): distdir
 	tar -zcf $(DEB_ORIG) $(distdir)
