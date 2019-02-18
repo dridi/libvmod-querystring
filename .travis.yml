@@ -1,4 +1,8 @@
 ---
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+
 sudo: required
 dist: xenial
 

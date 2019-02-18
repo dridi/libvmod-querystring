@@ -1,5 +1,5 @@
 /*-
- * Copyright (C) 2016-2018  Dridi Boukelmoune
+ * Copyright (C) 2016-2019  Dridi Boukelmoune
  * All rights reserved.
  *
  * Author: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
