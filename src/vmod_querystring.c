@@ -554,6 +554,7 @@ vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	struct qs_filter *qsf;
 	const char *error;
 	int error_offset;
+	ssize_t msg_len;
 
 	ASSERT_CLI();
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -567,10 +568,18 @@ vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	if (qsf->ptr == NULL) {
 		AN(ctx->msg);
 		FREE_OBJ(qsf);
-		VSB_printf(ctx->msg,
-		    "vmod-querystring: regex error (%s): '%s' pos %d\n",
+		msg_len = VSB_len(ctx->msg);
+		VRT_fail(ctx,
+		    "vmod-querystring: regex error (%s): '%s' pos %d",
 		    error, regex, error_offset);
-		VRT_handling(ctx, VCL_RET_FAIL);
+
+		/* NB: VRT_fail may or may not pass the error message to the
+		 * CLI, deal with it. */
+		if (msg_len == VSB_len(ctx->msg))
+			VSB_printf(ctx->msg, "vmod-querystring: "
+			    "regex error (%s): '%s' pos %d\n",
+			    error, regex, error_offset);
+
 		return;
 	}
 
