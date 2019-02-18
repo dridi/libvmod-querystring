@@ -18,6 +18,7 @@ varnishtest "Filter empty or NULL strings"
 
 server s1 "" -start
 
+varnish v1 -arg "-j none"
 varnish v1 -vcl+backend {
 	import querystring;
 

@@ -16,6 +16,7 @@
 
 varnishtest "Check vcl.discard with a querystring filter"
 
+varnish v1 -arg "-j none"
 varnish v1 -vcl {
 	import querystring;
 

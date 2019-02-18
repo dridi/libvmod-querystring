@@ -22,6 +22,7 @@ server s1 {
 	txresp
 } -start
 
+varnish v1 -arg "-j none"
 varnish v1 -vcl+backend {
 	import querystring;
 

@@ -23,6 +23,7 @@ server s1 {
 	expect req.http.Extracted-QS == "utm_source=git&sessid_123=abc&_=456"
 } -start
 
+varnish v1 -arg "-j none"
 varnish v1 -vcl+backend {
 	import querystring;
 

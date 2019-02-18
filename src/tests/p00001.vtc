@@ -18,6 +18,7 @@ varnishtest "Check vcl.load failure on invalid regex"
 
 server s1 "" -start
 
+varnish v1 -arg "-j none"
 varnish v1 -vcl+backend "" -start
 
 varnish v1 -errvcl "vmod-querystring: regex error" {
