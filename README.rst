@@ -171,8 +171,8 @@ build tree.
 DPKG Packaging
 ==============
 
-Experimental DPKG packaging is also available with ``dpkg-buildpackage(1)``,
-using the ``deb`` target::
+DPKG packaging is also available with ``dpkg-buildpackage(1)``, using the
+``deb`` target::
 
     make deb
 
