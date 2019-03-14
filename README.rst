@@ -215,7 +215,7 @@ When working on the source code, there are additional dependencies:
 - autoconf
 - automake
 - libtool
-- rst2man (python-docutils)
+- rst2man (python3-docutils)
 - varnish (at least 6.0.0)
 
 You will notice the lack of a ``configure`` script, it needs to be generated

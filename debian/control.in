@@ -6,7 +6,7 @@ Build-Depends:
  libvarnishapi-dev (>= @VARNISH_VERSION@) |
  varnish-dev (>= @VARNISH_VERSION@),
  pkg-config (>= 0.21),
- python-docutils,
+ python3-docutils,
  varnish (>= @VARNISH_VERSION@)
 Standards-Version: 3.9.5
 Section: libs

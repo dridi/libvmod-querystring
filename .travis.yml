@@ -17,8 +17,8 @@ addons:
     - fakeroot
     - lcov
     - pbuilder
-    - python-docutils
-    - python-sphinx
+    - python3-docutils
+    - python3-sphinx
     - sbuild
 
 compiler:
