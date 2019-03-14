@@ -14,7 +14,7 @@ BuildRequires:  pkgconfig(varnishapi) >= @VARNISH_VERSION@
 BuildRequires:  varnish >= 6.0.0
 BuildRequires:  python(abi) >= 3.4
 
-Requires:       varnish >= @VARNISH_VERSION@
+Requires:       varnish >= %(varnishd -V 2>&1 | awk -F '[- ]' '{print $3; exit}')
 
 
 %description

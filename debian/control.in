@@ -17,7 +17,7 @@ Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- varnish (>= @VARNISH_VERSION@)
+ ${varnish:Depends},
 Description: QueryString module for Varnish Cache
  The purpose of this module is to give you a fine-grained control over a URL's
  query-string in Varnish Cache. It's possible to remove the query-string, clean

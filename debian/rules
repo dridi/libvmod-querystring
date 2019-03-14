@@ -13,3 +13,7 @@ export ACLOCAL_PATH =
 override_dh_fixperms:
 	find debian/vmod-querystring/ -name '*.la' -delete
 	dh_fixperms
+
+override_dh_gencontrol:
+	varnishd -V 2>&1 | awk -F '[- ]' '{print "varnish:Depends=varnish (>= " $$3 ")"; exit}' >> debian/substvars
+	dh_gencontrol -- -Tdebian/substvars
