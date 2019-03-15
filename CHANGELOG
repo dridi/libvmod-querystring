@@ -1,6 +1,13 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 2.0.1 (2019-03-15)
+-------------------------------------
+
+* Varnish 6.2 support
+* DPKG packaging
+* sbuild support
+
 Changes in version 2.0 (2018-11-18)
 -----------------------------------
 
