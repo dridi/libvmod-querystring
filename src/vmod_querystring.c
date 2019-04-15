@@ -135,7 +135,7 @@ qs_truncate(struct ws *ws, const char * const url, const char *qs)
 	if (len == 0)
 		return ("");
 
-	res = WS_Reserve(ws, 0);
+	res = WS_ReserveAll(ws);
 	if (res < len + 1) {
 		WS_Release(ws, 0);
 		return (url);
