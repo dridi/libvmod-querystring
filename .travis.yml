@@ -33,6 +33,8 @@ env:
     - CFLAGS=-O3
     - CFLAGS=-Os
     - MAKE_TARGET=distcheck
+    - VARNISH_BRANCH=master
+    - VARNISH_BRANCH=6.0
 
 matrix:
   include:
