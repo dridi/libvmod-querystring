@@ -94,6 +94,9 @@ fi
 VARNISH_PREREQ([${QS_VARNISH_VERSION:-6.0.0}])
 VARNISH_VMODS([querystring])
 
+QS_CHECK_SYM([WS_ReserveAll], [#include <cache/cache.h>],
+	[$VARNISHAPI_CFLAGS])
+
 AC_CONFIG_FILES([
 	Makefile
 	debian/changelog

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017  Dridi Boukelmoune
+# Copyright (C) 2012-2019  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -83,4 +83,29 @@ AC_DEFUN([QS_CHECK_PROG], [
 AC_CHECK_PROGS([$1], [$2], [no])
 test "$[$1]" = no &&
 AC_MSG_ERROR([Could not find program $2])
+])
+
+# QS_CHECK_SYM(FUNC, PROLOGUE, CFLAGS)
+# ------------------------------------
+AC_DEFUN([QS_CHECK_SYM], [
+qs_save_CFLAGS="$CFLAGS"
+CFLAGS="$qs_CFLAGS $3"
+AC_MSG_CHECKING([for $1])
+AC_COMPILE_IFELSE(
+	[
+		AC_LANG_SOURCE([
+			$2
+			int main(void) {
+				(void)$1;
+				return (0);
+			}
+		])
+	], [
+		AC_DEFINE([HAVE_]m4_toupper([$1]), [1],
+			[Define if $1 exists.])
+		AC_MSG_RESULT([yes])
+	], [
+		AC_MSG_RESULT([no])
+	])
+CFLAGS="$qs_save_CFLAGS"
 ])

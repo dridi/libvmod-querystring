@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+
 #include <fnmatch.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +57,10 @@
 			}						\
 		}							\
 	} while (0)
+
+#ifndef HAVE_WS_RESERVEALL
+#  define WS_ReserveAll(ws) WS_Reserve(ws, 0)
+#endif
 
 /***********************************************************************
  * Type definitions
@@ -135,7 +141,7 @@ qs_truncate(struct ws *ws, const char * const url, const char *qs)
 	if (len == 0)
 		return ("");
 
-	res = WS_Reserve(ws, 0);
+	res = WS_ReserveAll(ws);
 	if (res < len + 1) {
 		WS_Release(ws, 0);
 		return (url);
@@ -353,7 +359,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	assert(url <= qs);
 	assert(*qs == '?');
 
-	(void)WS_Reserve(ctx->ws, 0);
+	(void)WS_ReserveAll(ctx->ws);
 	res = ctx->ws->f;
 	len = strlen(url) + 1;
 
