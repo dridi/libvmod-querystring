@@ -15,3 +15,4 @@ Naming scheme
 	id ~ ^m --> reMoval tests
 	id ~ ^p --> PCRE filter tests
 	id ~ ^r --> Regression tests, same number as ticket
+	id ~ ^w --> Workspace overflow tests

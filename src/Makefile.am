@@ -50,7 +50,7 @@ AM_TESTS_ENVIRONMENT = \
 	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH):$(LD_LIBRARY_PATH)"
 TEST_EXTENSIONS = .vtc
 VTC_LOG_COMPILER = varnishtest -v
-AM_VTC_LOG_FLAGS = -p vmod_path="$(abs_builddir)/.libs"
+AM_VTC_LOG_FLAGS = -p vmod_path="$(abs_builddir)/.libs:$(VARNISHAPI_VMODDIR)"
 
 TESTS = \
 	tests/e00001.vtc \
@@ -68,7 +68,8 @@ TESTS = \
 	tests/p00002.vtc \
 	tests/p00003.vtc \
 	tests/r00022.vtc \
-	tests/r00026.vtc
+	tests/r00026.vtc \
+	tests/w00001.vtc
 
 # misc
 

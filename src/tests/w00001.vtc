@@ -1,0 +1,77 @@
+# Copyright (C) 2019  Dridi Boukelmoune
+# All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+varnishtest "Workspace overflow"
+
+server s1 {
+	rxreq
+	txresp
+	expect req.url == "/url/with/a/path/too/long/and/also?with=query"
+
+	rxreq
+	txresp
+	expect req.url == "/url/with/a/path/too/long/and?with=query"
+
+	rxreq
+	expect req.url == "/?long=query&with=params"
+	txresp
+} -start
+
+varnish v1 -arg "-j none"
+varnish v1 -vcl+backend {
+	import vtc;
+	import querystring;
+
+	sub vcl_init {
+		new qs = querystring.filter();
+		qs.add_string("with");
+	}
+
+	sub vcl_recv {
+		vtc.workspace_snapshot(client);
+		vtc.workspace_alloc(client, -32); # probably 64bit only
+
+		if (req.http.Call == "querystring.remove") {
+			set req.url = querystring.remove();
+		}
+		elsif (req.http.Call == "qs.apply") {
+			set req.url = qs.apply();
+		}
+		else {
+			return (fail);
+		}
+
+		vtc.workspace_reset(client);
+
+		return (pass);
+	}
+} -start
+
+client c1 {
+	txreq -url "/url/with/a/path/too/long/and/also?with=query" \
+	      -hdr "Call: querystring.remove"
+	rxresp
+	expect resp.status == 200
+
+	txreq -url "/url/with/a/path/too/long/and?with=query" \
+	      -hdr "Call: qs.apply"
+	rxresp
+	expect resp.status == 200
+
+	txreq -url "/?long=query&with=params" -hdr "Call: qs.apply"
+	rxresp
+	expect resp.status == 200
+} -run
