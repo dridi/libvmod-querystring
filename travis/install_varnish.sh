@@ -8,26 +8,19 @@ set -e
 set -u
 
 VERSION=6.0.0
+BRANCH=${VARNISH_BRANCH:-}
 
-case ${VARNISH_BRANCH:-} in
-master)
-	wget https://github.com/varnishcache/varnish-cache/archive/master.tar.gz
-	tar xf master.tar.gz
-	cd varnish-cache-master/
+if [ -n "${BRANCH}" ]
+then
+	wget "https://github.com/varnishcache/varnish-cache/archive/$BRANCH.tar.gz"
+	tar xf "$BRANCH.tar.gz"
+	cd "varnish-cache-$BRANCH/"
 	./autogen.sh
-	;;
-6.0)
-	wget https://github.com/varnishcache/varnish-cache/archive/6.0.tar.gz
-	tar xf 6.0.tar.gz
-	cd varnish-cache-6.0/
-	./autogen.sh
-	;;
-*)
+else
 	wget https://varnish-cache.org/_downloads/varnish-$VERSION.tgz
 	tar xf varnish-$VERSION.tgz
 	cd varnish-$VERSION/
-	;;
-esac
+fi
 
 ./configure --prefix=/usr
 make -sj32

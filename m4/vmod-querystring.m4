@@ -85,8 +85,8 @@ test "$[$1]" = no &&
 AC_MSG_ERROR([Could not find program $2])
 ])
 
-# QS_CHECK_SYM(FUNC, PROLOGUE, CFLAGS)
-# ------------------------------------
+# QS_CHECK_SYM(SYMBOL, PROLOGUE, CFLAGS)
+# --------------------------------------
 AC_DEFUN([QS_CHECK_SYM], [
 qs_save_CFLAGS="$CFLAGS"
 CFLAGS="$qs_CFLAGS $3"
@@ -95,7 +95,8 @@ AC_COMPILE_IFELSE(
 	[
 		AC_LANG_SOURCE([
 			$2
-			int main(void) {
+			int
+			main(void) {
 				(void)$1;
 				return (0);
 			}
