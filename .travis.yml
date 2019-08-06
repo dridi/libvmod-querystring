@@ -43,7 +43,7 @@ matrix:
     - compiler: gcc
       env: MAKE_TARGET=pdebuild PDEBUILD_OPTS='-- --debug'
     - compiler: gcc
-      env: MAKE_TARGET=sbuild SBUILD='sudo sbuild' SBUILD_OPTS='--dist sid'
+      env: MAKE_TARGET=sbuild SBUILD='sudo sbuild' SBUILD_OPTS='--dist buster'
     - compiler: gcc
       env: MAKE_TARGET=lcov CONFIGURE_FLAGS=--enable-lcov
 
@@ -54,7 +54,7 @@ matrix:
     - compiler: gcc
       env: MAKE_TARGET=pdebuild PDEBUILD_OPTS='-- --debug'
     - compiler: gcc
-      env: MAKE_TARGET=sbuild SBUILD='sudo sbuild' SBUILD_OPTS='--dist sid'
+      env: MAKE_TARGET=sbuild SBUILD='sudo sbuild' SBUILD_OPTS='--dist buster'
 
 install:
   - set -e
