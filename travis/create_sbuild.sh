@@ -9,8 +9,8 @@ set -u
 
 if [ "${MAKE_TARGET:-}" = sbuild ]
 then
-	sudo sbuild-createchroot sid --verbose \
+	sudo sbuild-createchroot buster --verbose \
 		--include=perl \
-		/srv/chroot/sid-amd64-sbuild \
+		/srv/chroot/buster-amd64-sbuild \
 		http://ftp.us.debian.org/debian/
 fi
