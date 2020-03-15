@@ -125,7 +125,7 @@ it, start by grabbing the latest release [1]_ and follow these steps::
     make check # optional
     sudo make install
 
-You only need to have Varnish (at least 4.1.3) and its development files
+You only need to have Varnish (at least 6.0.0) and its development files
 installed on your system. Instead of manually installing the module you can
 build packages, see below. The ``configure`` script also needs ``pkg-config``
 installed to find Varnish development files.
