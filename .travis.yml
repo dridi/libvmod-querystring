@@ -20,6 +20,7 @@ addons:
     - python3-docutils
     - python3-sphinx
     - sbuild
+    - schroot
 
 compiler:
   - clang
