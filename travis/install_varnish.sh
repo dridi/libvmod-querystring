@@ -10,6 +10,11 @@ set -u
 VERSION=6.0.0
 BRANCH=${VARNISH_BRANCH:-}
 
+if [ -n "${CFLAGS:-}" ]
+then
+	CFLAGS="$CFLAGS -Wno-error"
+fi
+
 if [ -n "${BRANCH}" ]
 then
 	wget "https://github.com/varnishcache/varnish-cache/archive/$BRANCH.tar.gz"
