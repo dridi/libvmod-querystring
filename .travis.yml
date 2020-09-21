@@ -4,7 +4,7 @@
 # This file is in the public domain.
 
 sudo: required
-dist: xenial
+dist: focal
 
 language: c
 
