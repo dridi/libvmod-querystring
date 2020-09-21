@@ -97,6 +97,9 @@ VARNISH_VMODS([querystring])
 QS_CHECK_SYM([WS_ReserveAll], [#include <cache/cache.h>],
 	[$VARNISHAPI_CFLAGS])
 
+QS_CHECK_SYM([WS_Reservation], [#include <cache/cache.h>],
+	[$VARNISHAPI_CFLAGS])
+
 AC_CONFIG_FILES([
 	Makefile
 	debian/changelog

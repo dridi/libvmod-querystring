@@ -62,6 +62,10 @@
 #  define WS_ReserveAll(ws) WS_Reserve(ws, 0)
 #endif
 
+#ifndef HAVE_WS_RESERVATION
+#  define WS_Reservation(ws) WS_Front(ws)
+#endif
+
 /***********************************************************************
  * Type definitions
  */
@@ -147,7 +151,7 @@ qs_truncate(struct ws *ws, const char * const url, const char *qs)
 		return (url);
 	}
 
-	str = ws->f;
+	str = WS_Reservation(ws);
 	(void)memcpy(str, url, len);
 	str[len] = '\0';
 	WS_Release(ws, len + 1);
@@ -348,7 +352,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	struct qs_param *params, *p, tmp;
 	const char *nm, *eq;
 	char *res, *cur;
-	size_t len, cnt;
+	size_t res_len, len, cnt;
 	ssize_t pos;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -359,16 +363,17 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 	assert(url <= qs);
 	assert(*qs == '?');
 
-	(void)WS_ReserveAll(ctx->ws);
-	res = ctx->ws->f;
-	len = strlen(url) + 1;
+	res_len = WS_ReserveAll(ctx->ws);
+	res = WS_Reservation(ctx->ws);
+	len = PRNDUP(strlen(url) + 1);
 
-	params = (void *)PRNDUP(res + len);
-	p = params;
-	if ((uintptr_t)p > (uintptr_t)ctx->ws->e) {
+	if (len > res_len) {
 		WS_Release(ctx->ws, 0);
 		return (url);
 	}
+
+	params = TRUST_ME(res + len);
+	p = params;
 
 	len = qs - url;
 	(void)memcpy(res, url, len);
@@ -411,7 +416,7 @@ qs_apply(VRT_CTX, const char * const url, const char *qs, unsigned keep,
 		if (qs_match(ctx, obj, &tmp, keep)) {
 			AN(tmp.cmp_len);
 			p = params + cnt;
-			if ((uintptr_t)(p + 1) > (uintptr_t)ctx->ws->e) {
+			if (pdiff(res, p + 1) > res_len) {
 				WS_Release(ctx->ws, 0);
 				return (url);
 			}
