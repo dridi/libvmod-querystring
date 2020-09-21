@@ -16,11 +16,11 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libvmod-querystring],
-	[2.0.1],
+	[2.0.2],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])
-AC_COPYRIGHT([Copyright (C) 2012-2019  Dridi Boukelmoune])
+AC_COPYRIGHT([Copyright (C) 2012-2020  Dridi Boukelmoune])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/vmod_querystring.vcc])
@@ -91,7 +91,7 @@ fi
 
 # $QS_VARNISH_VERSION is set by the bootstrap script
 
-VARNISH_PREREQ([${QS_VARNISH_VERSION:-6.0.0}])
+VARNISH_PREREQ([${QS_VARNISH_VERSION:-6.0.6}])
 VARNISH_VMODS([querystring])
 
 QS_CHECK_SYM([WS_ReserveAll], [#include <cache/cache.h>],

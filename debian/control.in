@@ -3,11 +3,11 @@ Priority: optional
 Maintainer: Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
 Build-Depends:
  debhelper (>= 9),
- libvarnishapi-dev (>= 6.0.0) |
- varnish-dev (>= 6.0.0),
+ libvarnishapi-dev (>= 6.0.6) |
+ varnish-dev (>= 6.0.6),
  pkg-config (>= 0.21),
  python3-docutils,
- varnish (>= 6.0.0)
+ varnish (>= 6.0.6)
 Standards-Version: 3.9.5
 Section: libs
 Homepage: @PACKAGE_URL@

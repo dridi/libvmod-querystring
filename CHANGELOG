@@ -1,6 +1,12 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 2.0.2 (2020-09-21)
+-------------------------------------
+
+* Varnish minimum version bumped to 6.0.6
+* Varnish 6.5 support
+
 Changes in version 2.0.1 (2019-03-15)
 -------------------------------------
 
