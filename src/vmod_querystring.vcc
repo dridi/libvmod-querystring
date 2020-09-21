@@ -1,5 +1,5 @@
 $Module querystring 3 Varnish Query-String Module
-$ABI strict
+$ABI vrt
 $Synopsis manual
 
 DESCRIPTION
