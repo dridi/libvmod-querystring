@@ -574,8 +574,9 @@ vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
     VCL_STRING regex)
 {
 	struct qs_filter *qsf;
-	const char *error;
-	int error_offset;
+	struct vsb vsb[1];
+	char errbuf[VRE_ERROR_LEN];
+	int errorcode, erroroffset;
 	ssize_t msg_len;
 
 	ASSERT_CLI();
@@ -586,21 +587,25 @@ vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	ALLOC_OBJ(qsf, QS_FILTER_MAGIC);
 	AN(qsf);
 
-	qsf->ptr = VRE_compile(regex, 0, &error, &error_offset);
+	qsf->ptr = VRE_compile(regex, 0, &errorcode, &erroroffset, 1);
 	if (qsf->ptr == NULL) {
+		AN(VSB_init(vsb, errbuf, sizeof errbuf));
+		AZ(VRE_error(vsb, errorcode));
+		AZ(VSB_finish(vsb));
+
 		AN(ctx->msg);
 		FREE_OBJ(qsf);
 		msg_len = VSB_len(ctx->msg);
 		VRT_fail(ctx,
 		    "vmod-querystring: regex error (%s): '%s' pos %d",
-		    error, regex, error_offset);
+		    errbuf, regex, erroroffset);
 
 		/* NB: VRT_fail may or may not pass the error message to the
 		 * CLI, deal with it. */
 		if (msg_len == VSB_len(ctx->msg))
 			VSB_printf(ctx->msg, "vmod-querystring: "
 			    "regex error (%s): '%s' pos %d\n",
-			    error, regex, error_offset);
+			    errbuf, regex, erroroffset);
 
 		return;
 	}
