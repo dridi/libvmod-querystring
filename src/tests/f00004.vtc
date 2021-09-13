@@ -22,12 +22,17 @@ varnish v1 -arg "-j none"
 varnish v1 -vcl+backend {
 	import querystring;
 
+	sub vcl_init {
+		new sorter = querystring.filter(sort = true);
+	}
+
 	sub vcl_recv {
 		return (synth(200));
 	}
 
 	sub vcl_synth {
 		set resp.http.Sorted-URL = querystring.sort(req.url);
+		set resp.http.Sorter = sorter.apply();
 	}
 } -start
 
@@ -35,28 +40,35 @@ client c1 {
 	txreq -url "/?b&a"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b"
+	expect resp.http.Sorter == "/?a&b"
 
 	txreq -url "/?a&b"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b"
+	expect resp.http.Sorter == "/?a&b"
 
 	txreq -url "/?b&a&"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b"
+	expect resp.http.Sorter == "/?a&b"
 
 	txreq -url "/?&b&a"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b"
+	expect resp.http.Sorter == "/?a&b"
 
 	txreq -url "/?b&&a"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b"
+	expect resp.http.Sorter == "/?a&b"
 
 	txreq -url "/?a&b&a"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&a&b"
+	expect resp.http.Sorter == "/?a&a&b"
 
 	txreq -url "/?b&a&ba"
 	rxresp
 	expect resp.http.Sorted-URL == "/?a&b&ba"
+	expect resp.http.Sorter == "/?a&b&ba"
 } -run
