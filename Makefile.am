@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = src
+SUBDIRS = . src
 
 ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
 
@@ -31,3 +31,8 @@ dist_doc_DATA = \
 include lcov.am
 include rpm.am
 include deb.am
+
+# dirty hack to work around VPATH limitations
+all-local:
+	cd src && \
+	$(AM_V_VMODTOOL) $(PYTHON) $(VMODTOOL) -o vcc_querystring_if vmod_querystring.vcc

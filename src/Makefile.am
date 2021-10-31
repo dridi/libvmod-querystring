@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2018  Dridi Boukelmoune
+# Copyright (C) 2012-2021  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -73,5 +73,5 @@ TESTS = \
 
 # misc
 
-EXTRA_DIST = vmod_querystring.vcc $(TESTS)
+EXTRA_DIST = $(TESTS)
 CLEANFILES = vmod_querystring.pdf

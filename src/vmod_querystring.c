@@ -208,6 +208,7 @@ qs_match_regex(VRT_CTX, const struct qs_filter *qsf, const char *s,
 	return (VRT_re_match(ctx, s, qsf->ptr));
 }
 
+#ifndef HAVE_VCL_REGEX
 static void
 qs_free_regex(void *priv)
 {
@@ -218,6 +219,7 @@ qs_free_regex(void *priv)
 	VRE_free(&re);
 	AZ(re);
 }
+#endif
 
 static int
 qs_match_glob(VRT_CTX, const struct qs_filter *qsf, const char *s,
@@ -569,6 +571,26 @@ vmod_filter_add_glob(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
 }
 
+#ifdef HAVE_VCL_REGEX
+VCL_VOID
+vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
+    VCL_REGEX regex)
+{
+	struct qs_filter *qsf;
+
+	ASSERT_CLI();
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(obj, VMOD_QUERYSTRING_FILTER_MAGIC);
+	AN(regex);
+
+	ALLOC_OBJ(qsf, QS_FILTER_MAGIC);
+	AN(qsf);
+	qsf->ptr = TRUST_ME(regex);
+	qsf->match = qs_match_regex;
+	qsf->free = NULL;
+	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
+}
+#else
 VCL_VOID
 vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
     VCL_STRING regex)
@@ -609,6 +631,7 @@ vmod_filter_add_regex(VRT_CTX, struct VPFX(querystring_filter) *obj,
 	qsf->free = qs_free_regex;
 	VTAILQ_INSERT_TAIL(&obj->filters, qsf, list);
 }
+#endif /* HAVE_VCL_REGEX */
 
 VCL_STRING
 vmod_filter_apply(VRT_CTX, struct VPFX(querystring_filter) *obj,

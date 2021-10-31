@@ -115,7 +115,7 @@ Description
     underlying ``fnmatch`` function may fail, in which case the query-param
     is kept to avoid spurious filtering and the error is logged.
 
-$Method VOID .add_regex(STRING)
+$Method VOID .add_regex(@QS_REGEX@)
 
 Description
     The ``string`` argument is compiled to a regular expression that will be
@@ -188,7 +188,7 @@ Example
 COPYRIGHT
 =========
 
-Copyright (C) 2012-2018  Dridi Boukelmoune.
+Copyright (C) 2012-2021  Dridi Boukelmoune.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 
 This is free software: you are free to change and redistribute it.

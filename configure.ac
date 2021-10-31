@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019  Dridi Boukelmoune
+# Copyright (C) 2012-2021  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,10 +20,10 @@ AC_INIT([libvmod-querystring],
 	[https://github.com/dridi/libvmod-querystring/issues],
 	[vmod-querystring],
 	[https://github.com/dridi/libvmod-querystring])
-AC_COPYRIGHT([Copyright (C) 2012-2020  Dridi Boukelmoune])
+AC_COPYRIGHT([Copyright (C) 2012-2021  Dridi Boukelmoune])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_SRCDIR([src/vmod_querystring.vcc])
+AC_CONFIG_SRCDIR([src/vmod_querystring.vcc.in])
 AC_CONFIG_HEADER([config.h])
 
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
@@ -100,12 +100,17 @@ QS_CHECK_SYM([WS_ReserveAll], [#include <cache/cache.h>],
 QS_CHECK_SYM([WS_Reservation], [#include <cache/cache.h>],
 	[$VARNISHAPI_CFLAGS])
 
+QS_CHECK_TYPE([VCL_REGEX], [QS_REGEX=REGEX], [QS_REGEX=STRING],
+	[#include <cache/cache.h>], [$VARNISHAPI_CFLAGS])
+AC_SUBST([QS_REGEX])
+
 AC_CONFIG_FILES([
 	Makefile
 	debian/changelog
 	debian/control
 	debian/copyright
 	src/Makefile
+	src/vmod_querystring.vcc
 	vmod-querystring.spec
 ])
 

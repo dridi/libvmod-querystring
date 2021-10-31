@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019  Dridi Boukelmoune
+# Copyright (C) 2012-2021  Dridi Boukelmoune
 # All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -106,6 +106,34 @@ AC_COMPILE_IFELSE(
 			[Define if $1 exists.])
 		AC_MSG_RESULT([yes])
 	], [
+		AC_MSG_RESULT([no])
+	])
+CFLAGS="$qs_save_CFLAGS"
+])
+
+# QS_CHECK_TYPE(TYPE, ACTION-IF-YES, ACTION-IF-NO, PROLOGUE, CFLAGS)
+# --------------------------------------------------------------------
+AC_DEFUN([QS_CHECK_TYPE], [
+qs_save_CFLAGS="$CFLAGS"
+CFLAGS="$qs_CFLAGS $5"
+AC_MSG_CHECKING([for $1])
+AC_COMPILE_IFELSE(
+	[
+		AC_LANG_SOURCE([
+			$4
+			int
+			main(void) {
+				(void)sizeof($1);
+				return (0);
+			}
+		])
+	], [
+		AC_DEFINE([HAVE_]m4_toupper([$1]), [1],
+			[Define if $1 exists.])
+		$2
+		AC_MSG_RESULT([yes])
+	], [
+		$3
 		AC_MSG_RESULT([no])
 	])
 CFLAGS="$qs_save_CFLAGS"
