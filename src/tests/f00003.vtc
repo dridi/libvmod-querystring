@@ -67,4 +67,8 @@ client c1 {
 	txreq -url "/?=empty_name"
 	rxresp
 	expect resp.http.Cleaned-URL == "/"
+
+	txreq -url "/?empty_value="
+	rxresp
+	expect resp.http.Cleaned-URL == "/?empty_value="
 } -run
