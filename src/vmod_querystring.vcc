@@ -19,10 +19,10 @@ a good idea not to fail such requests and instead get rid of the noise that
 might misguide Varnish and hurt your hit rate. Empty parameters are ignored,
 and parameters are considered empty when their names are empty::
 
-    next=empty&&previous=empty&=no-name-means-empty&no-value-is-fine
+    next=empty&&previous=empty&=no-name-means-empty&name-only-is-fine
 
     Once cleaned:
-    next=empty&previous=empty&no-value-is-fine
+    next=empty&previous=empty&name-only-is-fine
 
 And since this module works with query-strings, a filter's input is assumed to
 be a URL. The query-string is then the part of the URL after a question mark
