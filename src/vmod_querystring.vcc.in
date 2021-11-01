@@ -1,4 +1,4 @@
-$Module querystring 3 Varnish Query-String Module
+$Module querystring 3 "Varnish Query-String Module"
 $ABI vrt
 $Synopsis manual
 
