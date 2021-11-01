@@ -1,6 +1,13 @@
 vmod-querystring changelog
 ==========================
 
+Changes in version 2.0.3 (2021-11-01)
+-------------------------------------
+
+* Support for the VCL REGEX type when available
+* Varnish 6.6 support
+* Varnish 7.0 support
+
 Changes in version 2.0.2 (2020-09-21)
 -------------------------------------
 
