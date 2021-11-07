@@ -17,6 +17,7 @@ export VARNISHAPI_DATAROOTDIR
 autoreconf -i "$srcdir"
 
 "$srcdir"/configure \
+	--enable-maintainer-mode \
 	--enable-silent-rules \
 	--enable-warnings \
 	--enable-docs \

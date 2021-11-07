@@ -27,7 +27,10 @@ AC_CONFIG_SRCDIR([src/vmod_querystring.vcc.in])
 AC_CONFIG_HEADER([config.h])
 
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
+AM_MAINTAINER_MODE([disable])
+AM_SILENT_RULES([no])
 AM_PROG_AR
+AM_SANITY_CHECK
 
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
