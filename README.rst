@@ -230,11 +230,6 @@ of the generated ``configure`` script. Once ``bootstrap`` is done, you can
 later run the ``configure`` script directly if you need to reconfigure your
 build tree or use more than one VPATH.
 
-If your Varnish installation did not use the default ``/usr`` prefix, you need
-this in your environment before running ``./bootstrap``::
-
-    export ACLOCAL_PATH=${PREFIX}/share/aclocal
-
 See also
 ========
 
