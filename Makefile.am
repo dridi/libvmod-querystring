@@ -34,5 +34,5 @@ include deb.am
 
 # dirty hack to work around VPATH limitations
 all-local:
-	cd src && \
-	$(AM_V_VMODTOOL) $(PYTHON) $(VMODTOOL) -o vcc_querystring_if vmod_querystring.vcc
+	$(AM_V_VMODTOOL) cd src && \
+	$(PYTHON) $(VMODTOOL) -o vcc_querystring_if vmod_querystring.vcc
