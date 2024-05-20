@@ -2,13 +2,6 @@
 vmod-querystring
 ================
 
-.. image:: https://travis-ci.org/Dridi/libvmod-querystring.svg
-   :alt: Travis CI badge
-   :target: https://travis-ci.org/Dridi/libvmod-querystring/
-.. image:: https://codecov.io/gh/Dridi/libvmod-querystring/branch/master/graph/badge.svg
-   :alt: Codecov badge
-   :target: https://codecov.io/gh/Dridi/libvmod-querystring
-
 Description
 ===========
 
